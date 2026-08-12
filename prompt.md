@@ -12,6 +12,8 @@ Your job is to formalize the 3 admitted results in Kedlaya.lean. The main refere
     (a) if a result in his papers is not used in the proof of the 3 admitted results, you should **NOT** formalize it.
     (b) Some result states in an `if and only if` form, but we only need one direction of it, you should **NOT** formalize the other direction.
     (3) Kedlaya states his results for general (algebraically closed) fields `K` of characteristic `p`, but we only need the case of `K=F_p^bar`, so you must be specialized to this case.
+5. The size of this project is expected to be very large, so you should try to formalize the results in a **modular** way. Multiple files are allowed and recommended.
+6. Please keep the code well-documented.
 
 # Notes on the 3 admitted results
 1. `kedlaya_2001a_theorem15_half`
