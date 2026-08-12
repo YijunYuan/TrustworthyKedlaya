@@ -6,6 +6,7 @@ Authors: Yijun Yuan
 module
 
 public import TrustworthyKedlaya.Frobenius
+public import TrustworthyKedlaya.Rescale
 public import TrustworthyKedlaya.SupportSets
 
 /-!
@@ -36,13 +37,17 @@ namespace TrustworthyKedlaya.UP
 
 variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 
-/-- **UP is stable under the Frobenius** `x ↦ x^p`. -/
-theorem IsUP.pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) : IsUP p (x ^ p) := by
+/-- **Frobenius preserves slice witnesses verbatim** (up to the support shift
+`b ↦ pb + (p-1)`): the periodicity data `(M, N)` of `x` transfers unchanged to
+`x ^ p`.  This witness-level form is what the Artin-Schreier constructions iterate. -/
+theorem SliceWitness.pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ} {M N : ℕ+}
+    (hx : SliceWitness p x a b c M N) :
+    SliceWitness p (x ^ p) a (p * b + (p - 1)) c M N := by
   have hpq : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp.out.pos.ne'
-  obtain ⟨a, b, c, hsupp, M, N, hper⟩ := hx
+  obtain ⟨hsupp, hper⟩ := hx
   have haq : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
   have hall := isTwistPeriodic_slice_upgrade p hsupp hper
-  refine ⟨a, p * b + (p - 1), c, ?_, M, N, ?_⟩
+  refine ⟨?_, ?_⟩
   · -- support: `p · S_{a,b,c} ⊆ S_{a,pb+(p-1),c}`
     intro g hg
     rw [HahnSeries.mem_support, coeff_pow_char] at hg
@@ -87,6 +92,11 @@ theorem IsUP.pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) : IsUP p (x 
     rw [key (n + N), key n,
       hall ((p - 1) + c) m' (j + 1) (consDig v dig) (by omega)
         (consDig_lt p hv hdig) (by rw [consDig_sum]; omega) n hn]
+
+/-- **UP is stable under the Frobenius** `x ↦ x^p`. -/
+theorem IsUP.pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) : IsUP p (x ^ p) := by
+  obtain ⟨a, b, c, M, N, hw⟩ := isUP_iff_exists_sliceWitness.mp hx
+  exact isUP_iff_exists_sliceWitness.mpr ⟨a, p * b + (p - 1), c, M, N, hw.pow⟩
 
 /-- **UP is stable under the inverse Frobenius**: if `x ^ p` is UP then so is `x`. -/
 theorem IsUP.of_pow {y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : IsUP p (y ^ p)) : IsUP p y := by
