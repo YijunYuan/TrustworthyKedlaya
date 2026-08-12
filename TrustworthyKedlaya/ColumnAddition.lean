@@ -514,4 +514,41 @@ theorem carryDigit_eq_of_decomp {u v z : ℕ →₀ ℕ} {κ : ℕ} (hκ : κ �
     linarith
   exact ⟨hbit, fun d => by rw [← hrdef d, hreq]⟩
 
+/-- **Decomposition components vanish on the tail of a gap**: if canonical strings
+`u, v` of digit sums `≤ c₁, ≤ c₂` decompose a canonical target `z` whose digits
+vanish on the gap columns `[j, j+n)` (with integer carry `κ ≤ 1`), then with
+`s = c₁ + c₂` and `K = ⌊s/(p-1)⌋ < n`, both `u` and `v` vanish on the columns
+`[j+K, j+n)`, and no carry of the column reduction crosses `[j+K, j+n]`. -/
+theorem decomp_eq_zero_on_gap {u v z : ℕ →₀ ℕ} {κ c₁ c₂ j n : ℕ} (hκ : κ ≤ 1)
+    (hu : ∀ i, u i < p) (hv : ∀ i, v i < p) (hz : ∀ i, z i < p)
+    (hval : fracVal p u + fracVal p v = (κ : ℚ) + fracVal p z)
+    (hc₁ : (u.sum fun _ v => v) ≤ c₁) (hc₂ : (v.sum fun _ v => v) ≤ c₂)
+    (hgap : ∀ d, j ≤ d → d < j + n → z d = 0)
+    (hKn : (c₁ + c₂) / (p - 1) < n) :
+    (∀ d, j + (c₁ + c₂) / (p - 1) ≤ d → d < j + n → u d = 0 ∧ v d = 0) ∧
+      ∀ d, j + (c₁ + c₂) / (p - 1) ≤ d → d ≤ j + n → carryBit p (u + v) d = 0 := by
+  have hp1 : 1 < p := hp.out.one_lt
+  set s := c₁ + c₂ with hs
+  set K := s / (p - 1) with hKdef
+  have hw : ∀ i, (u + v) i ≤ 2 * p - 2 := add_apply_le p u v hu hv
+  obtain ⟨hbit0, hdig⟩ := carryDigit_eq_of_decomp p hκ hu hv hz hval
+  have hgap' : ∀ d, j ≤ d → d < j + n → carryDigit p (u + v) d = 0 := by
+    intro d h1 h2
+    rw [hdig d]
+    exact hgap d h1 h2
+  have hsum : ((u + v).sum fun _ v => v) ≤ s := by
+    rw [Finsupp.sum_add_index' (fun _ => rfl) (fun _ _ _ => rfl)]
+    omega
+  have hK : s < (K + 1) * (p - 1) := by
+    have hpos : 0 < p - 1 := by omega
+    have h1 := Nat.div_add_mod s (p - 1)
+    have h2 := Nat.mod_lt s hpos
+    rw [hKdef]
+    nlinarith [h1, h2]
+  obtain ⟨hbits, hcols⟩ := gap_confinement p (u + v) hw hsum hK hgap' hKn
+  refine ⟨fun d h1 h2 => ?_, hbits⟩
+  have := hcols d h1 h2
+  simp only [Finsupp.add_apply] at this
+  omega
+
 end TrustworthyKedlaya.UP
