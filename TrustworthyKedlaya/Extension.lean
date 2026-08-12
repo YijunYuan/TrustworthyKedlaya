@@ -128,6 +128,87 @@ theorem spectralNorm_pow_finrank_eq_zpow (x : L) (hx : x ≠ 0) :
     field_simp
   rw [hexp, Real.rpow_natCast, hm₀, ← zpow_natCast, ← zpow_mul]
 
+/-- **The value group of a finite extension of `K⸨X⸩` is discrete**: there are `e ∣ [L : K⸨X⸩]`
+and a uniformizing element `π` with `‖π‖^e = ‖X‖` such that every nonzero element of `L` has
+spectral norm an integer power of `‖π‖`. In particular the value group of `L` is `‖X‖^{(1/e)ℤ}`
+and the ramification index divides the degree. -/
+theorem exists_spectralNorm_uniformizer :
+    ∃ (e : ℕ) (π : L), 0 < e ∧ e ∣ Module.finrank K⸨X⸩ L ∧
+      spectralNorm K⸨X⸩ L π ^ e = ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ ∧
+      ∀ x : L, x ≠ 0 → ∃ m : ℤ, spectralNorm K⸨X⸩ L x = spectralNorm K⸨X⸩ L π ^ m := by
+  let _ : NormedField L := spectralNorm.normedField K⸨X⸩ L
+  have hnorm : ∀ y : L, ‖y‖ = spectralNorm K⸨X⸩ L y := fun _ => rfl
+  set q : ℝ := ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ with hq
+  have hq0 : 0 < q := norm_X_pos
+  have hq1 : q < 1 := norm_X_lt_one
+  set d : ℕ := Module.finrank K⸨X⸩ L with hd
+  have hd0 : 0 < d := Module.finrank_pos
+  -- the group of achieved exponents: `m ∈ H` iff some nonzero `x` has `‖x‖^d = q^m`
+  set H : AddSubgroup ℤ :=
+    { carrier := {m : ℤ | ∃ x : L, x ≠ 0 ∧ ‖x‖ ^ d = q ^ m}
+      zero_mem' := ⟨1, one_ne_zero, by simp⟩
+      add_mem' := by
+        rintro a b ⟨x, hx, hxa⟩ ⟨y, hy, hyb⟩
+        exact ⟨x * y, mul_ne_zero hx hy, by
+          rw [norm_mul, mul_pow, hxa, hyb, ← zpow_add₀ hq0.ne']⟩
+      neg_mem' := by
+        rintro a ⟨x, hx, hxa⟩
+        exact ⟨x⁻¹, inv_ne_zero hx, by
+          rw [norm_inv, inv_pow, hxa, ← zpow_neg]⟩ } with hH
+  have hdH : (d : ℤ) ∈ H := by
+    refine ⟨algebraMap K⸨X⸩ L (HahnSeries.single 1 1), ?_, ?_⟩
+    · simp
+    · rw [hnorm, spectralNorm_extends, ← hq, zpow_natCast]
+  obtain ⟨g, hg⟩ := Int.subgroup_cyclic H
+  -- normalize the generator to be positive
+  have hg_mem : g ∈ H := hg ▸ AddSubgroup.mem_closure_singleton.mpr ⟨1, one_smul _ _⟩
+  have hgd : g ∣ (d : ℤ) := by
+    obtain ⟨k, hk⟩ := AddSubgroup.mem_closure_singleton.mp (hg ▸ hdH)
+    exact ⟨k, by rw [← hk, smul_eq_mul, mul_comm]⟩
+  have hg0 : g ≠ 0 := by
+    rintro rfl
+    exact hd0.ne' (by exact_mod_cast (zero_dvd_iff.mp hgd))
+  have hdvd_all : ∀ m ∈ H, g ∣ m := by
+    intro m hm
+    obtain ⟨k, hk⟩ := AddSubgroup.mem_closure_singleton.mp (hg ▸ hm)
+    exact ⟨k, by rw [← hk, smul_eq_mul, mul_comm]⟩
+  -- pass to the positive generator `gn = |g|`
+  set gn : ℕ := g.natAbs with hgn
+  have hgn0 : 0 < gn := Int.natAbs_pos.mpr hg0
+  have hgn_mem : (gn : ℤ) ∈ H := by
+    rcases Int.natAbs_eq g with h | h
+    · exact h ▸ hg_mem
+    · have hng : ((gn : ℤ)) = -g := by omega
+      rw [hng]
+      exact H.neg_mem hg_mem
+  have hgn_dvd : ∀ m ∈ H, (gn : ℤ) ∣ m := fun m hm =>
+    (Int.natAbs_dvd.mpr (hdvd_all m hm))
+  obtain ⟨e, he⟩ : gn ∣ d := Int.ofNat_dvd.mp (Int.natAbs_dvd.mpr hgd)
+  have he0 : 0 < e := by
+    rcases Nat.eq_zero_or_pos e with rfl | h
+    · exact absurd (by simpa using he) hd0.ne'
+    · exact h
+  obtain ⟨π, hπ0, hπ⟩ := hgn_mem
+  have hπ_pos : 0 < ‖π‖ := norm_pos_iff.mpr hπ0
+  refine ⟨e, π, he0, ⟨gn, by rw [he, mul_comm]⟩, ?_, ?_⟩
+  · -- `‖π‖ ^ e = q`, by taking `gn`-th roots of `‖π‖ ^ d = q ^ gn`
+    rw [← hnorm]
+    refine (pow_left_strictMonoOn₀ (M₀ := ℝ) (n := gn) hgn0.ne').injOn
+      (pow_nonneg hπ_pos.le _) hq0.le ?_
+    rw [← pow_mul, mul_comm e gn, ← he, hπ, zpow_natCast]
+  · -- every nonzero `x` has norm a power of `‖π‖`
+    intro x hx
+    obtain ⟨m, hm⟩ := spectralNorm_pow_finrank_eq_zpow (K := K) x hx
+    rw [← hnorm, ← hnorm] at *
+    have hmH : m ∈ H := ⟨x, hx, hm⟩
+    obtain ⟨j, hj⟩ := hgn_dvd m hmH
+    refine ⟨j, ?_⟩
+    have hx_pos : 0 < ‖x‖ := norm_pos_iff.mpr hx
+    refine (pow_left_strictMonoOn₀ (M₀ := ℝ) (n := d) hd0.ne').injOn
+      hx_pos.le (zpow_nonneg hπ_pos.le _) ?_
+    rw [hm, hj, zpow_mul, ← hπ, ← zpow_natCast ‖π‖ d, ← zpow_mul,
+      ← zpow_natCast (‖π‖ ^ j) d, ← zpow_mul, mul_comm]
+
 end Extension
 
 end TrustworthyKedlaya.Ext
