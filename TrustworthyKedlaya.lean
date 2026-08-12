@@ -14,6 +14,7 @@ import TrustworthyKedlaya.FrobeniusUP
 import TrustworthyKedlaya.Galois
 import TrustworthyKedlaya.GapContraction
 import TrustworthyKedlaya.Kedlaya
+import TrustworthyKedlaya.LaurentRoots
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.Multiplicative
 import TrustworthyKedlaya.PAdicHahnSeries
