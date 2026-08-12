@@ -238,7 +238,8 @@ theorem pow_char_bijective :
     simp only [coeff_pow_char] at hcoeff
     have hp0 : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp.out.pos.ne'
     rw [mul_div_cancel_left₀ g hp0] at hcoeff
-    exact (frobeniusEquiv R p).injective (by simpa [frobeniusEquiv_apply, frobenius_def] using hcoeff)
+    exact (frobeniusEquiv R p).injective
+      (by simpa [frobeniusEquiv_apply, frobenius_def] using hcoeff)
   · intro x
     exact ⟨invFrobeniusHahn p x, invFrobeniusHahn_pow x⟩
 

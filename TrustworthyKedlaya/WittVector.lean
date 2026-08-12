@@ -37,13 +37,16 @@ vector construction:
 
 - `TrustworthyKedlaya.Fpbar` (`𝔽ᵃ_[p]`): the algebraic closure of `𝔽ₚ`.
 - `TrustworthyKedlaya.OQpUn` (`ℤᵘⁿ_[p]`): the Witt vectors over `𝔽ᵃ_[p]`.
-- `TrustworthyKedlaya.QpUn` (`ℚᵘⁿ_[p]`): the fraction field of `ℤᵘⁿ_[p]` with its valuation topology.
+- `TrustworthyKedlaya.QpUn` (`ℚᵘⁿ_[p]`): the fraction field of `ℤᵘⁿ_[p]` with its
+  valuation topology.
 - `TrustworthyKedlaya.QpUn.Qp_embd`: the valuation-preserving embedding `ℚ_[p] → ℚᵘⁿ_[p]`.
 
 ## Main statements
 
-- `TrustworthyKedlaya.injective_teichmuller`: the Teichmüller lift `𝔽ᵃ_[p] → ℤᵘⁿ_[p]` is injective.
-- `TrustworthyKedlaya.QpUn.Qp_embd_keep_val`: the embedding `ℚ_[p] → ℚᵘⁿ_[p]` preserves the valuation.
+- `TrustworthyKedlaya.injective_teichmuller`: the Teichmüller lift `𝔽ᵃ_[p] → ℤᵘⁿ_[p]`
+  is injective.
+- `TrustworthyKedlaya.QpUn.Qp_embd_keep_val`: the embedding `ℚ_[p] → ℚᵘⁿ_[p]`
+  preserves the valuation.
 - The valuation on `ℚᵘⁿ_[p]` is rank-one discrete, making `ℚᵘⁿ_[p]` a complete nontrivially normed
   field. These are standard facts of algebraic number theory, so the proofs are only lightly
   commented.
