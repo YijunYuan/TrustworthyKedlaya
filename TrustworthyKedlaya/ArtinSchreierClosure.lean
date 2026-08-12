@@ -28,6 +28,8 @@ scaling by `p`, forcing its minimum to be `0`.
 
 - `TrustworthyKedlaya.eq_single_zero_of_pow_char_eq_self`: fixed points of the
   Frobenius of `𝔽̄_p((t^ℚ))` are the constants (with value in `𝔽_p`).
+- `TrustworthyKedlaya.UP.exists_artinSchreier_root_isUP`: every UP series has a
+  UP Artin-Schreier root (the construction).
 - `TrustworthyKedlaya.UP.isUP_of_artinSchreier_root`: the packaged statement
   (`prop:up-as-closed`).
 
@@ -98,12 +100,12 @@ namespace UP
 variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 
 variable {p} in
-/-- **UP is closed under Artin-Schreier roots** (`prop:up-as-closed`): if `y` is
-uniformly periodic and `x^p - x = y`, then `x` is uniformly periodic.  Truncate a
-witness of `y` at `0`, take the three roots (`ArtinSchreierNeg`, constants,
-`ArtinSchreierPos`), and absorb the remaining `𝔽_p`-constant ambiguity. -/
-theorem isUP_of_artinSchreier_root {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : IsUP p y)
-    (hxy : x ^ p - x = y) : IsUP p x := by
+/-- **Every UP series has a UP Artin-Schreier root** (the construction half of
+`prop:up-as-closed`): if `y` is uniformly periodic then `X^p - X = y` has a root in
+`𝔽̄_p((t^ℚ))`, and one such root is uniformly periodic.  Truncate a witness of `y`
+at `0` and take the three roots (`ArtinSchreierNeg`, constants, `ArtinSchreierPos`). -/
+theorem exists_artinSchreier_root_isUP {y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : IsUP p y) :
+    ∃ x : HahnSeries ℚ (𝔽ᵃ_[p]), x ^ p - x = y ∧ IsUP p x := by
   obtain ⟨a, b, c, M, N, hsupp, hper⟩ := isUP_iff_exists_sliceWitness.mp hy
   -- truncate the witness at `0`
   have hwneg : SliceWitness p (hahnRestrict (Set.Iio 0) y) a b c M N :=
@@ -126,16 +128,24 @@ theorem isUP_of_artinSchreier_root {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : Is
     · simp
     · simp [HahnSeries.coeff_single_of_ne hg]
   -- their sum is a UP root of `X^p - X = y`
-  set x' := xneg + HahnSeries.single (0 : ℚ) μ + xpos with hx'
-  have hAS' : x' ^ p - x' = y := by
-    have hsplit : x' ^ p - x'
-        = (xneg ^ p - xneg)
-          + (HahnSeries.single (0 : ℚ) μ ^ p - HahnSeries.single (0 : ℚ) μ)
-          + (xpos ^ p - xpos) := by
-      rw [hx', add_pow_char, add_pow_char]
-      ring
-    rw [hsplit, hASneg, hASμ, hASpos, ← hahnRestrict_tridecomp]
-  have hUP' : IsUP p x' := (hUPneg.add (isUP_single_zero p μ)).add hUPpos
+  refine ⟨xneg + HahnSeries.single (0 : ℚ) μ + xpos, ?_,
+    (hUPneg.add (isUP_single_zero p μ)).add hUPpos⟩
+  have hsplit : (xneg + HahnSeries.single (0 : ℚ) μ + xpos) ^ p
+      - (xneg + HahnSeries.single (0 : ℚ) μ + xpos)
+      = (xneg ^ p - xneg)
+        + (HahnSeries.single (0 : ℚ) μ ^ p - HahnSeries.single (0 : ℚ) μ)
+        + (xpos ^ p - xpos) := by
+    rw [add_pow_char, add_pow_char]
+    ring
+  rw [hsplit, hASneg, hASμ, hASpos, ← hahnRestrict_tridecomp]
+
+variable {p} in
+/-- **UP is closed under Artin-Schreier roots** (`prop:up-as-closed`): if `y` is
+uniformly periodic and `x^p - x = y`, then `x` is uniformly periodic.  `x` differs
+from the constructed UP root by a Frobenius fixed point, i.e. an `𝔽_p`-constant. -/
+theorem isUP_of_artinSchreier_root {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : IsUP p y)
+    (hxy : x ^ p - x = y) : IsUP p x := by
+  obtain ⟨x', hAS', hUP'⟩ := exists_artinSchreier_root_isUP hy
   -- any root differs from `x'` by a Frobenius fixed point, i.e. an `𝔽_p`-constant
   have hfix : (x - x') ^ p = x - x' := by
     have hx1 : x ^ p = y + x := by rw [← hxy]; ring
