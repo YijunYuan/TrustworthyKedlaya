@@ -21,6 +21,7 @@ import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.PGroupGalois
 import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.SupportSets
+import TrustworthyKedlaya.TameKummer
 import TrustworthyKedlaya.Truncation
 import TrustworthyKedlaya.TwistPeriodicity
 import TrustworthyKedlaya.WittVector
