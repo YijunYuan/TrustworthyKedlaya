@@ -575,6 +575,50 @@ theorem gapDig_one_apply_zero (n : ℕ) (dig : ℕ →₀ ℕ) :
     gapDig 1 (n + 1) dig 0 = 0 := by
   rw [gapDig_apply, if_neg (by omega), if_neg (by omega)]
 
+/-- Remove the block `[i₀, i₀+L)` of digit positions: `dropGapDig i₀ L e` keeps the
+digits below `i₀` and shifts the digits at positions `≥ i₀ + L` down by `L`.  When the
+digits of `e` vanish on the removed block this is a section of gap insertion
+(`gapDig_dropGapDig`), letting any expansion with a long run of zeros be realized as a
+twist evaluation point with a large gap. -/
+noncomputable def dropGapDig (i₀ L : ℕ) (e : ℕ →₀ ℕ) : ℕ →₀ ℕ :=
+  e.filter (fun i => i < i₀)
+    + (e.filter (fun i => i₀ + L ≤ i)).comapDomain (· + L) (add_left_injective L).injOn
+
+omit hp in
+/-- Pointwise description of `dropGapDig`. -/
+theorem dropGapDig_apply (i₀ L : ℕ) (e : ℕ →₀ ℕ) (i : ℕ) :
+    dropGapDig i₀ L e i = if i < i₀ then e i else e (i + L) := by
+  rw [dropGapDig, Finsupp.add_apply, Finsupp.comapDomain_apply, Finsupp.filter_apply,
+    Finsupp.filter_apply]
+  by_cases h1 : i < i₀
+  · rw [if_pos h1, if_pos h1, if_neg (by omega), add_zero]
+  · rw [if_neg h1, if_neg h1, if_pos (by omega), zero_add]
+
+omit hp in
+/-- Dropping a block of positions does not create digits `≥ p`. -/
+theorem dropGapDig_lt {e : ℕ →₀ ℕ} (he : ∀ i, e i < p) (i₀ L i : ℕ) :
+    dropGapDig i₀ L e i < p := by
+  rw [dropGapDig_apply]
+  split <;> exact he _
+
+omit hp in
+/-- If the digits of `e` vanish on the block `[i₀, i₀+L)`, then `e` is the gap
+insertion, at gap position `i₀ + 1` and gap size `L`, of its gap-dropped string. -/
+theorem gapDig_dropGapDig {i₀ L : ℕ} {e : ℕ →₀ ℕ}
+    (hgap : ∀ i, i₀ ≤ i → i < i₀ + L → e i = 0) :
+    gapDig (i₀ + 1) L (dropGapDig i₀ L e) = e := by
+  ext i
+  rw [gapDig_apply]
+  simp only [Nat.add_sub_cancel, dropGapDig_apply]
+  by_cases h1 : i < i₀
+  · rw [if_pos h1, if_pos h1]
+  · rw [if_neg h1]
+    by_cases h2 : i₀ + L ≤ i
+    · rw [if_pos h2, if_neg (by omega)]
+      congr 1
+      omega
+    · rw [if_neg h2, hgap i (by omega) (by omega)]
+
 /-- **Scaling by `p`**: `p · S_{a,b,c} ⊆ S_{a, pb+(p-1), c}`.  Digits shift up one
 position; the leading fractional digit joins the integer part, so the digit-sum level
 is unchanged. -/
