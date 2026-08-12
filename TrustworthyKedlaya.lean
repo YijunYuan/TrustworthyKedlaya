@@ -2,6 +2,7 @@ import TrustworthyKedlaya.Additive
 import TrustworthyKedlaya.Basic
 import TrustworthyKedlaya.DefeqGuards
 import TrustworthyKedlaya.Digits
+import TrustworthyKedlaya.Extension
 import TrustworthyKedlaya.FiniteImage
 import TrustworthyKedlaya.Frobenius
 import TrustworthyKedlaya.FrobeniusUP
