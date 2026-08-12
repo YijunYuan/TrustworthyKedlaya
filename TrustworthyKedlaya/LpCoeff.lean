@@ -21,10 +21,10 @@ provides that calculus (Wang-Yuan, Lemma 2.2):
   valuation vanish, and the coefficient at the valuation does not (2.2(1));
 - `TrustworthyKedlaya.pAdicHahnSeries.single`: the one-term series `[a] p^q`,
   with `coeff_single_mul`: multiplying by `[a] p^q` scales coefficients by `a`
-  and shifts positions by `q` (2.2(2) and 2.2(3) in one statement).
-
-The remaining item of Lemma 2.2 — additivity of `Cₓ` at positions at or below both
-valuations, 2.2(4) — is the next step of `lem:lp-coeff-calculus`.
+  and shifts positions by `q` (2.2(2) and 2.2(3) in one statement);
+- `TrustworthyKedlaya.pAdicHahnSeries.coeff_add_of_le_val` / `coeff_sub_of_le_val` /
+  `coeff_sum_of_le_val`: at a position at or below the valuations of all operands,
+  the coefficient map is additive (2.2(4)).
 -/
 
 @[expose] public section
@@ -178,5 +178,88 @@ theorem coeff_teichmuller_mul (a : Fpbar p) (x : 𝕃_[p]) (r : ℚ) :
 theorem coeff_ppow_mul (q : ℚ) (x : 𝕃_[p]) (r : ℚ) :
     (single q 1 * x).coeff r = x.coeff (r - q) := by
   rw [coeff_single_mul, one_mul]
+
+/-! ### Additivity at dominated positions -/
+
+/-- **Additivity of the coefficient maps** (Wang-Yuan, Lemma 2.2(4)): at a position at or
+below both valuations, the coefficient of a sum is the sum of the coefficients.
+
+The sum `f_x + f_y` of the canonical lifted representatives represents `x + y` but need
+not be canonical; the defect `Δ = f_x + f_y - f_{x+y}` is a null series vanishing strictly
+below `q`.  If additivity failed at `q`, the coefficient `[x_q] + [y_q] - [(x+y)_q]` of
+`Δ` at `q` would have nonzero Witt coefficient `0`, hence be a unit — contradicting
+`null_series_no_unit_leading`. -/
+theorem coeff_add_of_le_val {x y : 𝕃_[p]} {q : ℚ}
+    (hx : (q : WithTop ℚ) ≤ val p x) (hy : (q : WithTop ℚ) ≤ val p y) :
+    (x + y).coeff q = x.coeff q + y.coeff q := by
+  by_contra hne
+  set fx : LiftedPAdicHahnSeries p :=
+    LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x) with hfx_def
+  set fy : LiftedPAdicHahnSeries p :=
+    LiftedPAdicHahnSeries.fromCoeff y.coeff (support_IsPWO y) with hfy_def
+  set fz : LiftedPAdicHahnSeries p :=
+    LiftedPAdicHahnSeries.fromCoeff (x + y).coeff (support_IsPWO (x + y)) with hfz_def
+  -- `Δ = fx + fy - fz` is a null series: its class in `𝕃_[p]` is `x + y - (x + y) = 0`
+  have hΔ : fx + fy - fz ∈ NullSeriesIdeal p := by
+    rw [← Ideal.Quotient.eq_zero_iff_mem, map_sub, map_add]
+    have h1 : Ideal.Quotient.mk (NullSeriesIdeal p) fx = x := fromCoeff_of_coeff_eq_self x
+    have h2 : Ideal.Quotient.mk (NullSeriesIdeal p) fy = y := fromCoeff_of_coeff_eq_self y
+    have h3 : Ideal.Quotient.mk (NullSeriesIdeal p) fz = x + y :=
+      fromCoeff_of_coeff_eq_self (x + y)
+    rw [h1, h2, h3, sub_self]
+  -- `Δ` vanishes strictly below `q`: all three coefficient functions do
+  have hbelow : ∀ q' < q, (fx + fy - fz).coeff q' = 0 := by
+    intro q' hq'
+    have hq'x : x.coeff q' = 0 :=
+      coeff_eq_zero_of_lt_val (lt_of_lt_of_le (WithTop.coe_lt_coe.mpr hq') hx)
+    have hq'y : y.coeff q' = 0 :=
+      coeff_eq_zero_of_lt_val (lt_of_lt_of_le (WithTop.coe_lt_coe.mpr hq') hy)
+    have hq'z : (x + y).coeff q' = 0 :=
+      coeff_eq_zero_of_lt_val
+        (lt_of_lt_of_le (WithTop.coe_lt_coe.mpr hq') ((val p).map_le_add hx hy))
+    rw [HahnSeries.coeff_sub, HahnSeries.coeff_add]
+    change teichmuller p (x.coeff q') + teichmuller p (y.coeff q')
+        - teichmuller p ((x + y).coeff q') = 0
+    rw [hq'x, hq'y, hq'z, WittVector.teichmuller_zero]
+    simp
+  -- if additivity failed at `q`, the coefficient of `Δ` there would be a unit
+  have hq_unit : IsUnit ((fx + fy - fz).coeff q) := by
+    apply WittVector.isUnit_of_coeff_zero_ne_zero
+    intro h0
+    apply hne
+    have hcoeff : (fx + fy - fz).coeff q
+        = teichmuller p (x.coeff q) + teichmuller p (y.coeff q)
+          - teichmuller p ((x + y).coeff q) := by
+      rw [HahnSeries.coeff_sub, HahnSeries.coeff_add]; rfl
+    rw [hcoeff, ← WittVector.constantCoeff_apply, map_sub, map_add,
+      WittVector.constantCoeff_apply, WittVector.constantCoeff_apply,
+      WittVector.constantCoeff_apply, WittVector.teichmuller_coeff_zero,
+      WittVector.teichmuller_coeff_zero, WittVector.teichmuller_coeff_zero] at h0
+    exact (sub_eq_zero.mp h0).symm
+  exact null_series_no_unit_leading hΔ hq_unit hbelow
+
+/-- Subtraction rule (Wang-Yuan, Lemma 2.2(4), the `−` case). -/
+theorem coeff_sub_of_le_val {x y : 𝕃_[p]} {q : ℚ}
+    (hx : (q : WithTop ℚ) ≤ val p x) (hy : (q : WithTop ℚ) ≤ val p y) :
+    (x - y).coeff q = x.coeff q - y.coeff q := by
+  have hxy : (q : WithTop ℚ) ≤ val p (x - y) :=
+    le_trans (le_min hx hy) ((val p).map_sub x y)
+  have h := coeff_add_of_le_val hxy hy
+  rw [sub_add_cancel] at h
+  exact eq_sub_of_add_eq h.symm
+
+/-- Iterated additivity (Wang-Yuan, Lemma 2.2(4)): at a position at or below the
+valuations of all summands, the coefficient of a finite sum is the sum of the
+coefficients. -/
+theorem coeff_sum_of_le_val {ι : Type*} {s : Finset ι} {f : ι → 𝕃_[p]} {q : ℚ}
+    (h : ∀ i ∈ s, (q : WithTop ℚ) ≤ val p (f i)) :
+    (∑ i ∈ s, f i).coeff q = ∑ i ∈ s, (f i).coeff q := by
+  induction s using Finset.cons_induction with
+  | empty => simp [coeff_zero_eq]
+  | cons a s ha ih =>
+    rw [Finset.sum_cons, Finset.sum_cons,
+      coeff_add_of_le_val (h a (Finset.mem_cons_self a s))
+        ((val p).map_le_sum fun i hi => h i (Finset.mem_cons_of_mem hi)),
+      ih fun i hi => h i (Finset.mem_cons_of_mem hi)]
 
 end TrustworthyKedlaya.pAdicHahnSeries
