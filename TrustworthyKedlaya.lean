@@ -17,6 +17,7 @@ import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.Multiplicative
 import TrustworthyKedlaya.PAdicHahnSeries
+import TrustworthyKedlaya.PGroupGalois
 import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.Truncation
