@@ -167,6 +167,21 @@ theorem fracVal_nonneg (d : ℕ →₀ ℕ) : 0 ≤ fracVal p d :=
   Finsupp.sum_nonneg fun _ _ =>
     mul_nonneg (Nat.cast_nonneg _) (zpow_nonneg (Nat.cast_nonneg _) _)
 
+/-- A nonzero digit expansion has positive fractional value. -/
+theorem fracVal_pos (hp : 0 < p) {d : ℕ →₀ ℕ} (hd : d ≠ 0) : 0 < fracVal p d := by
+  obtain ⟨i, hi⟩ : ∃ i, d i ≠ 0 := by
+    by_contra h
+    push Not at h
+    exact hd (Finsupp.ext h)
+  have hp0 : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp
+  rw [fracVal, Finsupp.sum]
+  refine Finset.sum_pos'
+    (fun j _ => mul_nonneg (Nat.cast_nonneg _) (zpow_nonneg (Nat.cast_nonneg _) _))
+    ⟨i, Finsupp.mem_support_iff.mpr hi, ?_⟩
+  have h1 : (1 : ℚ) ≤ (d i : ℚ) := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr hi
+  have h2 : (0 : ℚ) < (p : ℚ) ^ (-(i + 1 : ℤ)) := zpow_pos hp0 _
+  nlinarith
+
 theorem fracVal_eq_sum_range (d : ℕ →₀ ℕ) {L : ℕ} (h : d.support ⊆ range L) :
     fracVal p d = ∑ i ∈ range L, (d i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)) :=
   Finsupp.sum_of_support_subset d h _ (fun i _ => by simp)
