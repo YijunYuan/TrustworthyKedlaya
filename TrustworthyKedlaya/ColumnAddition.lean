@@ -464,4 +464,54 @@ theorem gap_confinement (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {s 
     exact (apply_eq_zero_of_carryDigit_eq_zero p w hw
       (hgap d (by omega) hdn) hbit).1
 
+/-! ### The bridge from decompositions
+
+A decomposition `fracVal u + fracVal v = κ + fracVal z` of a canonical target `z`
+(with integer carry `κ`) is recognized by the column reduction: the reduced string of
+`w = u + v` is exactly `z`, and the integer carry is exactly `κ`.  Together with
+`gap_confinement` this pins the digits of `u` and `v` on the gap of a gapped target. -/
+
+omit hp in
+/-- Canonical digit strings have columnwise sum bounded by `2(p-1)`. -/
+theorem add_apply_le (u v : ℕ →₀ ℕ) (hu : ∀ i, u i < p) (hv : ∀ i, v i < p) :
+    ∀ i, (u + v) i ≤ 2 * p - 2 := by
+  intro i
+  have h1 := hu i
+  have h2 := hv i
+  simp only [Finsupp.add_apply]
+  omega
+
+/-- **The column reduction recognizes decompositions**: if `u`, `v` are canonical
+strings with `fracVal u + fracVal v = κ + fracVal z` for a canonical string `z` and
+an integer carry `κ ≤ 1`, then the column reduction of `w = u + v` returns exactly
+the carry `κ` and the digits of `z`. -/
+theorem carryDigit_eq_of_decomp {u v z : ℕ →₀ ℕ} {κ : ℕ} (hκ : κ ≤ 1)
+    (hu : ∀ i, u i < p) (hv : ∀ i, v i < p) (hz : ∀ i, z i < p)
+    (hval : fracVal p u + fracVal p v = (κ : ℚ) + fracVal p z) :
+    carryBit p (u + v) 0 = κ ∧ ∀ d, carryDigit p (u + v) d = z d := by
+  have hp1 : 1 < p := hp.out.one_lt
+  have hw : ∀ i, (u + v) i ≤ 2 * p - 2 := add_apply_le p u v hu hv
+  obtain ⟨r, hrdef, hrlt, hrval⟩ := exists_carrySum p (u + v) hw
+  have hwval : fracVal p (u + v) = fracVal p u + fracVal p v := fracVal_add p u v
+  -- the two integer carries agree
+  have hbit : carryBit p (u + v) 0 = κ := by
+    have h01 : carryBit p (u + v) 0 ≤ 1 := carryBit_le_one p (u + v) 0
+    have hr1 : fracVal p r < 1 := fracVal_lt_one p hp1 hrlt
+    have hz1 : fracVal p z < 1 := fracVal_lt_one p hp1 hz
+    have hr0 : 0 ≤ fracVal p r := fracVal_nonneg p r
+    have hz0 : 0 ≤ fracVal p z := fracVal_nonneg p z
+    have hdiff : ((carryBit p (u + v) 0 : ℚ) - κ) = fracVal p z - fracVal p r := by
+      rw [hwval, hval] at hrval
+      linarith
+    interval_cases h : carryBit p (u + v) 0 <;> interval_cases κ <;>
+      first
+      | rfl
+      | (exfalso; norm_num at hdiff; linarith)
+  -- hence the fractional values agree, and canonical strings are unique
+  have hreq : r = z := by
+    refine eq_of_fracVal_eq p hp1 hrlt hz ?_
+    rw [hwval, hval, hbit] at hrval
+    linarith
+  exact ⟨hbit, fun d => by rw [← hrdef d, hreq]⟩
+
 end TrustworthyKedlaya.UP
