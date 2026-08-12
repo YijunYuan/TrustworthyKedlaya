@@ -496,6 +496,85 @@ theorem fracVal_consDig (hp0 : 0 < p) (v : ℕ) (d : ℕ →₀ ℕ) :
     rw [hpow]
     ring
 
+omit hp in
+/-- Pointwise description of `gapDig`. -/
+theorem gapDig_apply (j n : ℕ) (b : ℕ →₀ ℕ) (i : ℕ) :
+    gapDig j n b i
+      = if i < j - 1 then b i else if j - 1 + n ≤ i then b (i - n) else 0 := by
+  rw [gapDig, Finsupp.add_apply, Finsupp.filter_apply]
+  have hemb : Finsupp.embDomain ⟨fun i => i + n, add_left_injective n⟩
+      (b.filter (fun i => j - 1 ≤ i)) i
+        = if j - 1 + n ≤ i then b (i - n) else 0 := by
+    by_cases hn : n ≤ i
+    · conv_lhs => rw [show i = (i - n) + n by omega,
+        show ((i - n) + n) = (⟨fun i => i + n, add_left_injective n⟩ : ℕ ↪ ℕ) (i - n)
+          from rfl]
+      rw [Finsupp.embDomain_apply_self, Finsupp.filter_apply]
+      by_cases hb : j - 1 ≤ i - n
+      · rw [if_pos hb, if_pos (by omega)]
+      · rw [if_neg hb, if_neg (by omega)]
+    · rw [Finsupp.embDomain_of_notMem_range _ _ _
+        (by rintro ⟨k, hk⟩; simp only [Function.Embedding.coeFn_mk] at hk; omega),
+        if_neg (by omega)]
+  rw [hemb]
+  by_cases h1 : i < j - 1
+  · rw [if_pos h1, if_pos h1, if_neg (by omega), add_zero]
+  · rw [if_neg h1, if_neg h1, zero_add]
+
+omit hp in
+/-- Pointwise description of `consDig`. -/
+theorem consDig_apply (v : ℕ) (d : ℕ →₀ ℕ) (i : ℕ) :
+    consDig v d i = if i = 0 then v else d (i - 1) := by
+  cases i with
+  | zero =>
+    rw [if_pos rfl, consDig, Finsupp.add_apply, Finsupp.single_eq_same,
+      Finsupp.embDomain_of_notMem_range _ _ _
+        (by rintro ⟨k, hk⟩; simp only [Function.Embedding.coeFn_mk] at hk; omega),
+      add_zero]
+  | succ i =>
+    rw [if_neg (by omega), consDig, Finsupp.add_apply, Finsupp.single_eq_of_ne (by omega),
+      show (i + 1) = (⟨fun i => i + 1, add_left_injective 1⟩ : ℕ ↪ ℕ) i from rfl,
+      Finsupp.embDomain_apply_self, zero_add]
+    rfl
+
+omit hp in
+/-- Prepending a digit commutes with gap insertion, moving the gap position by one:
+the digits of `(v + w)/p` with gap at `j + 1` are the digits of `w` with gap at `j`,
+prepended by `v`. -/
+theorem gapDig_consDig {j : ℕ} (hj : 0 < j) (n v : ℕ) (dig : ℕ →₀ ℕ) :
+    gapDig (j + 1) n (consDig v dig) = consDig v (gapDig j n dig) := by
+  ext i
+  simp only [gapDig_apply, consDig_apply]
+  split_ifs <;> first | rfl | (exfalso; omega) | (congr 1; omega)
+
+omit hp in
+/-- Dropping the leading digit commutes with gap insertion for gap position `≥ 2`. -/
+theorem unshiftDig_gapDig {j : ℕ} (hj : 2 ≤ j) (n : ℕ) (dig : ℕ →₀ ℕ) :
+    unshiftDig (gapDig j n dig) = gapDig (j - 1) n (unshiftDig dig) := by
+  ext i
+  simp only [unshiftDig_apply, gapDig_apply]
+  split_ifs <;> first | rfl | (exfalso; omega) | (congr 1; omega)
+
+omit hp in
+/-- For gap position `1`, dropping the leading digit shrinks the gap by one. -/
+theorem unshiftDig_gapDig_one (n : ℕ) (dig : ℕ →₀ ℕ) :
+    unshiftDig (gapDig 1 (n + 1) dig) = gapDig 1 n dig := by
+  ext i
+  simp only [unshiftDig_apply, gapDig_apply]
+  split_ifs <;> first | rfl | (exfalso; omega) | (congr 1; omega)
+
+omit hp in
+/-- For gap position `≥ 2` the leading digit survives gap insertion. -/
+theorem gapDig_apply_zero {j : ℕ} (hj : 2 ≤ j) (n : ℕ) (dig : ℕ →₀ ℕ) :
+    gapDig j n dig 0 = dig 0 := by
+  rw [gapDig_apply, if_pos (by omega)]
+
+omit hp in
+/-- For gap position `1` and a positive gap the leading digit is `0`. -/
+theorem gapDig_one_apply_zero (n : ℕ) (dig : ℕ →₀ ℕ) :
+    gapDig 1 (n + 1) dig 0 = 0 := by
+  rw [gapDig_apply, if_neg (by omega), if_neg (by omega)]
+
 /-- **Scaling by `p`**: `p · S_{a,b,c} ⊆ S_{a, pb+(p-1), c}`.  Digits shift up one
 position; the leading fractional digit joins the integer part, so the digit-sum level
 is unchanged. -/
