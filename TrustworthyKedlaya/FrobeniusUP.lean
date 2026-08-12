@@ -187,4 +187,14 @@ theorem isUP_invFrobeniusHahn {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x)
     IsUP p (invFrobeniusHahn p x) :=
   IsUP.of_pow p (by rwa [invFrobeniusHahn_pow])
 
+variable {p} in
+/-- **Iterated inverse Frobenius**: if `x ^ (p ^ e)` is UP then so is `x`. -/
+theorem IsUP.of_pow_pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} {e : ℕ}
+    (h : IsUP p (x ^ p ^ e)) : IsUP p x := by
+  induction e with
+  | zero => simpa using h
+  | succ e IH =>
+    refine IH (IsUP.of_pow p ?_)
+    rwa [pow_succ, pow_mul] at h
+
 end TrustworthyKedlaya.UP

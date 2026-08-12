@@ -5,26 +5,35 @@ Authors: Yijun Yuan
 -/
 module
 
+public import TrustworthyKedlaya.FrobeniusUP
 public import TrustworthyKedlaya.TowerEmbedding
+public import Mathlib.RingTheory.Polynomial.SeparableDegree
 
 /-!
-# Separable algebraic elements are UP
+# Integral elements of the Hahn field are UP
 
-A Hahn series `x ∈ 𝔽̄_p((t^ℚ))` that is integral over `B = 𝔽̄_p((t))` with
-separable minimal polynomial is uniformly periodic (Kedlaya (2001a), proof of
-Theorem 15; `lem:separable-up` of the blueprint).
+A Hahn series `x ∈ 𝔽̄_p((t^ℚ))` that is integral over `B = 𝔽̄_p((t))` is
+uniformly periodic (Kedlaya (2001a), proof of Theorem 15; `lem:separable-up`
+and `thm:integral-implies-up` of the blueprint).
 
-The splitting field `L` of the minimal polynomial `P` is finite Galois over `B`
-(the normal closure of `B(x)`), so it embeds over `B` into `𝔽̄_p((t^ℚ))` with UP
-image by `TrustworthyKedlaya.UP.exists_ringHom_forall_isUP`.  The images of the
-`deg P` distinct roots of `P` in `L` are `deg P` distinct roots of `P` in
-`𝔽̄_p((t^ℚ))`; since `P` has at most `deg P` roots there and `x` is one of them,
-`x` lies in the (UP) image.
+Separable case: the splitting field `L` of the minimal polynomial `P` is finite
+Galois over `B` (the normal closure of `B(x)`), so it embeds over `B` into
+`𝔽̄_p((t^ℚ))` with UP image by `TrustworthyKedlaya.UP.exists_ringHom_forall_isUP`.
+The images of the `deg P` distinct roots of `P` in `L` are `deg P` distinct
+roots of `P` in `𝔽̄_p((t^ℚ))`; since `P` has at most `deg P` roots there and `x`
+is one of them, `x` lies in the (UP) image.
+
+General case: in characteristic `p` the minimal polynomial is `Q(X^{p^e})` with
+`Q` separable (separable contraction), so `x^{p^e}` is UP by the separable case
+and `x` is UP by iterated inverse-Frobenius stability
+(`TrustworthyKedlaya.UP.IsUP.of_pow_pow`).
 
 ## Main statements
 
-- `TrustworthyKedlaya.UP.isUP_of_isIntegral_separable`: the packaged statement
+- `TrustworthyKedlaya.UP.isUP_of_isIntegral_separable`: the separable case
   (`lem:separable-up`).
+- `TrustworthyKedlaya.UP.isUP_of_isIntegral`: the general case
+  (`thm:integral-implies-up`).
 
 ## References
 
@@ -98,5 +107,24 @@ theorem isUP_of_isIntegral_separable {x : HahnSeries ℚ (𝔽ᵃ_[p])}
     have := (P.map (intHahnEmbedding p)).card_roots'
     rwa [Polynomial.natDegree_map] at this
   omega
+
+/-- **Integral over `𝔽̄_p((t))` implies uniformly periodic**
+(`thm:integral-implies-up`; Kedlaya (2001a), Theorem 15, one direction): every
+Hahn series integral over `𝔽̄_p((t))` is uniformly periodic.  In characteristic
+`p` the minimal polynomial is `Q(X^{p^e})` with `Q` separable, so `x^{p^e}` is
+UP by the separable case, and `x` is UP by inverse-Frobenius stability. -/
+theorem isUP_of_isIntegral {x : HahnSeries ℚ (𝔽ᵃ_[p])}
+    (hint : IsIntegral ((𝔽ᵃ_[p])⸨X⸩) x) : IsUP p x := by
+  have hCharB : CharP ((𝔽ᵃ_[p])⸨X⸩) p :=
+    charP_of_injective_algebraMap (algebraMap (𝔽ᵃ_[p]) ((𝔽ᵃ_[p])⸨X⸩)).injective p
+  -- contract the minimal polynomial to a separable polynomial `Q` with `Q(X^{p^e}) = P`
+  obtain ⟨Q, hQsep, e, hQe⟩ := (minpoly.irreducible hint).hasSeparableContraction p
+  -- `x^{p^e}` is integral with separable minimal polynomial, hence UP
+  have hzQ : Polynomial.aeval (x ^ p ^ e) Q = 0 := by
+    rw [← Polynomial.expand_aeval (p ^ e) Q x, hQe]
+    exact minpoly.aeval _ _
+  have hzsep : (minpoly ((𝔽ᵃ_[p])⸨X⸩) (x ^ p ^ e)).Separable :=
+    hQsep.of_dvd (minpoly.dvd _ _ hzQ)
+  exact IsUP.of_pow_pow (isUP_of_isIntegral_separable (hint.pow _) hzsep)
 
 end TrustworthyKedlaya.UP
