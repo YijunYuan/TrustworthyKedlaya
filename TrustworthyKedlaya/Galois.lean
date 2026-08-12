@@ -322,6 +322,168 @@ theorem not_dvd_natCard_range_tameCharacter (p : ℕ) [Fact p.Prime] [CharP K p]
 
 end Range
 
+section WildInertia
+
+theorem mem_ker_tameCharacter_iff {u : Lˣ} {g : L ≃ₐ[K⸨X⸩] L} :
+    g ∈ (tameCharacter K u).ker ↔ residue K (g (u : L) / u) = 1 := by
+  rw [MonoidHom.mem_ker, Units.ext_iff]
+  simp only [tameCharacter, MonoidHom.coe_mk, OneHom.coe_mk, Units.val_mk0, Units.val_one]
+
+/-- An automorphism in the kernel of the tame character whose order is prime to `p` is
+the identity: averaging the uniformizer `u` over the powers of `σ` produces a
+`σ`-fixed element of the same norm, whose powers `1, u', …, u'^{d-1}` span `L` over
+`B`; `σ` fixes the span pointwise. -/
+theorem eq_one_of_mem_ker_tameCharacter (p : ℕ) [Fact p.Prime] [CharP K p] {u : Lˣ}
+    (hu : spectralNorm K⸨X⸩ L (u : L) ^ Module.finrank K⸨X⸩ L =
+      ‖(HahnSeries.single 1 1 : K⸨X⸩)‖)
+    {σ : L ≃ₐ[K⸨X⸩] L} (hσ : σ ∈ (tameCharacter K u).ker) {m : ℕ} (hm0 : 0 < m)
+    (hmp : ¬ p ∣ m) (hσm : σ ^ m = 1) : σ = 1 := by
+  let _ : NormedField L := spectralNorm.normedField K⸨X⸩ L
+  have hnorm : ∀ y : L, ‖y‖ = spectralNorm K⸨X⸩ L y := fun _ => rfl
+  have _ : IsUltrametricDist L :=
+    IsUltrametricDist.isUltrametricDist_of_forall_norm_add_le_max_norm
+      (isNonarchimedean_spectralNorm (K := K⸨X⸩) (L := L))
+  set d : ℕ := Module.finrank K⸨X⸩ L with hd
+  have hd0 : 0 < d := Module.finrank_pos
+  -- every power of `σ` lies in the kernel, so each `σ^k(u)/u` has residue `1`
+  have hterm : ∀ k : ℕ, ‖(σ ^ k) (u : L) / u - 1‖ < 1 := fun k => by
+    have hres : residue K ((σ ^ k) (u : L) / u) = 1 :=
+      mem_ker_tameCharacter_iff.mp (pow_mem hσ k)
+    have h := residue_spec (K := K)
+      (y := (σ ^ k) (u : L) / u) (spectralNorm_algEquiv_apply_div (σ ^ k) u).le
+    rw [hres, map_one, map_one] at h
+    rw [hnorm]
+    exact h
+  -- `m` is a unit: it is a nonzero constant
+  have hmK : ((m : K)) ≠ 0 := by
+    rw [Ne, CharP.cast_eq_zero_iff K p]
+    exact hmp
+  have hmcast : algebraMap K⸨X⸩ L (HahnSeries.C (m : K)) = (m : L) := by
+    rw [map_natCast (HahnSeries.C : K →+* K⸨X⸩) m, map_natCast]
+  have hmnorm : ‖(m : L)‖ = 1 := by
+    rw [hnorm, ← hmcast, spectralNorm_C hmK]
+  have hmL : ((m : L)) ≠ 0 := by
+    intro hc
+    rw [hc, norm_zero] at hmnorm
+    exact zero_ne_one hmnorm
+  -- the average of `u` over the powers of `σ`
+  set u' : L := (m : L)⁻¹ * ∑ k ∈ Finset.range m, (σ ^ k) (u : L) with hu'def
+  have hσu' : σ u' = u' := by
+    rw [hu'def, map_mul, map_inv₀, map_natCast, map_sum]
+    congr 1
+    calc ∑ k ∈ Finset.range m, σ ((σ ^ k) (u : L))
+        = ∑ k ∈ Finset.range m, (σ ^ (k + 1)) (u : L) :=
+          Finset.sum_congr rfl fun k _ => by rw [pow_succ', AlgEquiv.mul_apply]
+      _ = ∑ k ∈ Finset.range m, (σ ^ k) (u : L) := by
+          have hshift := (Finset.sum_range_succ' (fun k => (σ ^ k) (u : L)) m).symm.trans
+            (Finset.sum_range_succ (fun k => (σ ^ k) (u : L)) m)
+          rw [hσm, pow_zero] at hshift
+          exact add_right_cancel hshift
+  -- `u'/u` is within distance `< 1` of `1`, so `u'` is a uniformizer too
+  have hufrac : u' / u - 1 =
+      (m : L)⁻¹ * ∑ k ∈ Finset.range m, ((σ ^ k) (u : L) / u - 1) := by
+    rw [Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one,
+      hu'def]
+    field_simp
+    rw [mul_sub, Finset.mul_sum]
+    congr 1
+    · exact Finset.sum_congr rfl fun k _ => by
+        rw [← mul_div_assoc, mul_div_cancel_left₀ _ (Units.ne_zero u)]
+    · exact mul_comm _ _
+  have hsum_lt : ‖u' / u - 1‖ < 1 := by
+    rw [hufrac, norm_mul, norm_inv, hmnorm, inv_one, one_mul]
+    obtain ⟨i, _, hi_le⟩ := IsUltrametricDist.exists_norm_finsetSum_le_of_nonempty
+      (Finset.nonempty_range_iff.mpr hm0.ne') (fun k => (σ ^ k) (u : L) / u - 1)
+    exact lt_of_le_of_lt hi_le (hterm i)
+  have hu'u : ‖u' / u‖ = 1 := by
+    have hle : ‖u' / u‖ ≤ 1 := by
+      have hsplit : u' / u = (u' / u - 1) + 1 := by ring
+      rw [hsplit]
+      exact le_trans (IsUltrametricDist.norm_add_le_max _ _)
+        (max_le hsum_lt.le norm_one.le)
+    have hone : (1 : L) = u' / u + -(u' / u - 1) := by ring
+    have hmax := IsUltrametricDist.norm_add_le_max (u' / u) (-(u' / u - 1))
+    rw [← hone, norm_one, norm_neg] at hmax
+    have hge : 1 ≤ ‖u' / u‖ := by
+      by_contra hlt
+      push Not at hlt
+      exact absurd hmax (not_le.mpr (max_lt hlt hsum_lt))
+    exact le_antisymm hle hge
+  have hu'0 : u' ≠ 0 := by
+    intro hc
+    rw [hc, zero_div, norm_zero] at hu'u
+    exact zero_ne_one hu'u
+  have hu'normu : ‖u'‖ = ‖(u : L)‖ := by
+    rw [norm_div] at hu'u
+    exact (div_eq_one_iff_eq (norm_ne_zero_iff.mpr u.ne_zero)).mp hu'u
+  -- `u'` has the two uniformizer properties, via the chosen uniformizer `π`
+  obtain ⟨π, hπd, hπall⟩ := exists_spectralNorm_uniformizer_pow_finrank (K := K) (L := L)
+  have huπ : ‖(u : L)‖ = spectralNorm K⸨X⸩ L π := by
+    refine (pow_left_strictMonoOn₀ (M₀ := ℝ) (n := d) hd0.ne').injOn
+      (norm_nonneg _) (spectralNorm_nonneg _) ?_
+    rw [hnorm, hu, hπd]
+  have hu'e : spectralNorm K⸨X⸩ L u' ^ d = ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ := by
+    rw [← hnorm, hu'normu, hnorm, hu]
+  have hu'all : ∀ x : L, x ≠ 0 →
+      ∃ j : ℤ, spectralNorm K⸨X⸩ L x = spectralNorm K⸨X⸩ L u' ^ j := by
+    intro x hx
+    obtain ⟨j, hj⟩ := hπall x hx
+    refine ⟨j, ?_⟩
+    rw [hj, ← hnorm u', hu'normu, huπ]
+  -- the powers of `u'` span `L`, and `σ` fixes them all
+  have hspan := span_pow_eq_top_of_spectralNorm_pow_eq (K := K) (L := L) hd0 hu'e hu'all
+  refine AlgEquiv.ext fun x => ?_
+  rw [AlgEquiv.one_apply]
+  have hx : x ∈ Submodule.span K⸨X⸩ (Set.range fun i : Fin d => u' ^ (i : ℕ)) := by
+    rw [hspan]
+    exact Submodule.mem_top
+  induction hx using Submodule.span_induction with
+  | mem y hy => obtain ⟨i, rfl⟩ := hy; rw [map_pow, hσu']
+  | zero => rw [map_zero]
+  | add a b _ _ ha hb => rw [map_add, ha, hb]
+  | smul c a _ ha => rw [map_smul, ha]
+
+/-- **The wild subgroup is a `p`-group**: the kernel of the tame character of `L/B` at a
+uniformizer `u` consists of automorphisms of `p`-power order. -/
+theorem isPGroup_ker_tameCharacter (p : ℕ) [Fact p.Prime] [CharP K p] {u : Lˣ}
+    (hu : spectralNorm K⸨X⸩ L (u : L) ^ Module.finrank K⸨X⸩ L =
+      ‖(HahnSeries.single 1 1 : K⸨X⸩)‖) :
+    IsPGroup p (tameCharacter K u).ker := by
+  rw [IsPGroup.iff_card]
+  have hcard0 : Nat.card (tameCharacter K u).ker ≠ 0 := Nat.card_pos.ne'
+  refine ⟨(Nat.card (tameCharacter K u).ker).primeFactorsList.length,
+    Nat.eq_prime_pow_of_unique_prime_dvd hcard0 fun {q} hq hqdvd => ?_⟩
+  by_contra hqp
+  have : Fact q.Prime := ⟨hq⟩
+  obtain ⟨g, hg⟩ := exists_prime_orderOf_dvd_card' (G := (tameCharacter K u).ker) q hqdvd
+  have hσ : (g : L ≃ₐ[K⸨X⸩] L) ∈ (tameCharacter K u).ker := SetLike.coe_mem g
+  have hσq : (g : L ≃ₐ[K⸨X⸩] L) ^ q = 1 := by
+    have hgq : g ^ q = 1 := by rw [← hg]; exact pow_orderOf_eq_one g
+    rw [← SubgroupClass.coe_pow, hgq]
+    rfl
+  have hpq : ¬ p ∣ q := fun hdvd =>
+    hqp ((Nat.prime_dvd_prime_iff_eq (Fact.out : p.Prime) hq).mp hdvd).symm
+  have h1 : (g : L ≃ₐ[K⸨X⸩] L) = 1 :=
+    eq_one_of_mem_ker_tameCharacter p hu hσ hq.pos hpq hσq
+  have hg1 : g = 1 := Subtype.ext h1
+  rw [hg1, orderOf_one] at hg
+  exact hq.one_lt.ne hg
+
+/-- The quotient of the Galois group by the wild subgroup is cyclic: it is isomorphic to
+the image of the tame character. -/
+theorem isCyclic_quotient_ker_tameCharacter (u : Lˣ) :
+    IsCyclic ((L ≃ₐ[K⸨X⸩] L) ⧸ (tameCharacter K u).ker) := by
+  rw [(QuotientGroup.quotientKerEquivRange (tameCharacter K u)).isCyclic]
+  exact isCyclic_range_tameCharacter u
+
+/-- The quotient of the Galois group by the wild subgroup has order prime to `p`. -/
+theorem not_dvd_natCard_quotient_ker_tameCharacter (p : ℕ) [Fact p.Prime] [CharP K p]
+    (u : Lˣ) : ¬ p ∣ Nat.card ((L ≃ₐ[K⸨X⸩] L) ⧸ (tameCharacter K u).ker) := by
+  rw [Nat.card_congr (QuotientGroup.quotientKerEquivRange (tameCharacter K u)).toEquiv]
+  exact not_dvd_natCard_range_tameCharacter p u
+
+end WildInertia
+
 end TameCharacter
 
 end TrustworthyKedlaya.Ext
