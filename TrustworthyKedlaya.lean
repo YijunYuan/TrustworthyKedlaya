@@ -3,6 +3,7 @@ import TrustworthyKedlaya.ArtinSchreierClosure
 import TrustworthyKedlaya.ArtinSchreierNeg
 import TrustworthyKedlaya.ArtinSchreierPos
 import TrustworthyKedlaya.Basic
+import TrustworthyKedlaya.ColumnAddition
 import TrustworthyKedlaya.DefeqGuards
 import TrustworthyKedlaya.Digits
 import TrustworthyKedlaya.Extension

@@ -1,0 +1,387 @@
+/-
+Copyright (c) 2026 Shanwen Wang, Yijun Yuan. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Yijun Yuan
+-/
+module
+
+public import TrustworthyKedlaya.Digits
+
+/-!
+# Column addition of fractional digit expansions
+
+Adding two canonical fractional base-`p` expansions columnwise produces a string `w`
+with digits `≤ 2(p-1)`.  This file reduces such a `w` back to canonical form *column
+by column*: the carry bit out of column `j` is read off the tail sum from column `j`
+on (`carryBit`), the resulting digit is `r_j = w_j + ε_{j+1} - p·ε_j` (`carryDigit`),
+and the values satisfy `κ + fracVal r = fracVal w` with `κ = ε_0 ∈ {0,1}` the integer
+carry (`exists_carrySum`).
+
+The zero-column case analysis is the engine of the no-carries-across-a-widening-gap
+lemma of Kedlaya (2001a): a carry entering a zero column of the result propagates
+out and pins the column of `w` to `p - 1` (`carryBit_propagate`); a zero column
+emitting a carry consumes at least `p - 1` of the digit budget of `w`
+(`le_apply_of_carryDigit_eq_zero`); and a zero column with no carries on either side
+is a zero column of `w` (`apply_eq_zero_of_carryDigit_eq_zero`).
+
+## Main statements
+
+- `TrustworthyKedlaya.UP.carryTail` / `carryBit` / `carryDigit`: tail sums, carry
+  bits, and result digits of the column reduction.
+- `TrustworthyKedlaya.UP.carryDigit_add_eq`: the exact column identity
+  `r_j + p·ε_j = w_j + ε_{j+1}`.
+- `TrustworthyKedlaya.UP.exists_carrySum`: the packaged reduction, producing the
+  canonical string `r` with `κ + fracVal r = fracVal w`.
+
+## References
+
+- K. S. Kedlaya, *The algebraic closure of the power series field in positive
+  characteristic*, Proc. Amer. Math. Soc. 129 (2001) [Ked01a], proof of Theorem 8.
+-/
+
+@[expose] public section
+
+namespace TrustworthyKedlaya.UP
+
+open Finset
+
+variable (p : ℕ) [hp : Fact (Nat.Prime p)]
+
+/-! ### Tail sums -/
+
+/-- The tail value `∑_{k ≥ j} w_k · p^{-(k+1)}` of a digit string from column `j` on. -/
+def carryTail (w : ℕ →₀ ℕ) (j : ℕ) : ℚ :=
+  ∑ k ∈ w.support.filter (fun k => j ≤ k), (w k : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ))
+
+omit hp in
+/-- The tail from column `0` is the full fractional value. -/
+theorem carryTail_zero_eq (w : ℕ →₀ ℕ) : carryTail p w 0 = fracVal p w := by
+  rw [carryTail, fracVal, Finsupp.sum,
+    Finset.filter_true_of_mem fun _ _ => Nat.zero_le _]
+
+omit hp in
+theorem carryTail_nonneg (w : ℕ →₀ ℕ) (j : ℕ) : 0 ≤ carryTail p w j :=
+  Finset.sum_nonneg fun _ _ =>
+    mul_nonneg (Nat.cast_nonneg _) (zpow_nonneg (Nat.cast_nonneg _) _)
+
+omit hp in
+/-- Column identity: the tail from `j` is the digit at `j` plus the tail from `j+1`. -/
+theorem carryTail_succ (w : ℕ →₀ ℕ) (j : ℕ) :
+    carryTail p w j = (w j : ℚ) * (p : ℚ) ^ (-(j + 1 : ℤ)) + carryTail p w (j + 1) := by
+  have hsplit : w.support.filter (fun k => j ≤ k)
+      = w.support.filter (fun k => k = j) ∪ w.support.filter (fun k => j + 1 ≤ k) := by
+    ext k
+    by_cases hk : k ∈ w.support
+    · simp only [mem_filter, mem_union, hk, true_and]
+      omega
+    · simp [hk]
+  have hdisj : Disjoint (w.support.filter (fun k => k = j))
+      (w.support.filter (fun k => j + 1 ≤ k)) := by
+    rw [Finset.disjoint_left]
+    intro k h1 h2
+    rw [mem_filter] at h1 h2
+    omega
+  rw [carryTail, hsplit, Finset.sum_union hdisj, carryTail]
+  congr 1
+  rw [Finset.sum_filter, Finset.sum_ite_eq' w.support j
+    (fun k => (w k : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)))]
+  by_cases hj : j ∈ w.support
+  · rw [if_pos hj]
+  · rw [if_neg hj, Finsupp.notMem_support_iff.mp hj]
+    simp
+
+omit hp in
+/-- Beyond the support the tails vanish. -/
+theorem carryTail_eq_zero (w : ℕ →₀ ℕ) {L j : ℕ} (hL : w.support ⊆ range L)
+    (hj : L ≤ j) : carryTail p w j = 0 := by
+  rw [carryTail]
+  refine Finset.sum_eq_zero fun k hk => ?_
+  rw [mem_filter] at hk
+  exact absurd (mem_range.mp (hL hk.1)) (by omega)
+
+/-- Tail sums of a string with digits `≤ 2(p-1)` stay below `2·p^{-j}`. -/
+theorem carryTail_lt_two_mul (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) (j : ℕ) :
+    carryTail p w j < 2 * (p : ℚ) ^ (-(j : ℤ)) := by
+  obtain ⟨L, hL⟩ := w.support.exists_nat_subset_range
+  have hp0 : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  have hdig : ∀ i : ℕ, (w i : ℚ) ≤ 2 * (p : ℚ) - 2 := by
+    intro i
+    have h2p : (2 : ℕ) ≤ 2 * p := by have := hp.out.two_le; omega
+    have h1 : (w i : ℚ) ≤ ((2 * p - 2 : ℕ) : ℚ) := by exact_mod_cast hw i
+    have h2 : ((2 * p - 2 : ℕ) : ℚ) = 2 * (p : ℚ) - 2 := by
+      push_cast [Nat.cast_sub h2p]
+      ring
+    rwa [h2] at h1
+  have key : ∀ n j : ℕ, L ≤ j + n → carryTail p w j < 2 * (p : ℚ) ^ (-(j : ℤ)) := by
+    intro n
+    induction n with
+    | zero =>
+      intro j hj
+      rw [carryTail_eq_zero p w hL (by omega)]
+      have := zpow_pos hp0 (-(j : ℤ))
+      linarith
+    | succ n ih =>
+      intro j hj
+      by_cases hLj : L ≤ j
+      · rw [carryTail_eq_zero p w hL hLj]
+        have := zpow_pos hp0 (-(j : ℤ))
+        linarith
+      · have hstep := carryTail_succ p w j
+        have htail := ih (j + 1) (by omega)
+        have hq0 : (0 : ℚ) < (p : ℚ) ^ (-(j + 1 : ℤ)) := zpow_pos hp0 _
+        have hzp : (p : ℚ) ^ (-(j : ℤ)) = (p : ℚ) ^ (-(j + 1 : ℤ)) * (p : ℚ) := by
+          rw [← zpow_add_one₀ hp0.ne']
+          congr 1
+          ring
+        have hcast : (-(↑(j + 1) : ℤ)) = -(j + 1 : ℤ) := by push_cast; ring
+        rw [hcast] at htail
+        have h5 : (w j : ℚ) * (p : ℚ) ^ (-(j + 1 : ℤ))
+            ≤ (2 * (p : ℚ) - 2) * (p : ℚ) ^ (-(j + 1 : ℤ)) :=
+          mul_le_mul_of_nonneg_right (hdig j) hq0.le
+        rw [hstep, hzp]
+        nlinarith [htail, h5, hq0]
+  exact key L j (by omega)
+
+/-! ### Carry bits -/
+
+/-- The carry bit out of column `j`: `1` exactly when the tail from column `j` reaches
+`p^{-j}`, so that the columns `≥ j` overflow into column `j - 1`.  `carryBit w 0` is
+the integer carry of the whole string. -/
+def carryBit (w : ℕ →₀ ℕ) (j : ℕ) : ℕ :=
+  if (p : ℚ) ^ (-(j : ℤ)) ≤ carryTail p w j then 1 else 0
+
+omit hp in
+theorem carryBit_le_one (w : ℕ →₀ ℕ) (j : ℕ) : carryBit p w j ≤ 1 := by
+  rw [carryBit]
+  split <;> omega
+
+omit hp in
+/-- The lower remainder bound: the announced carry is really contained in the tail. -/
+theorem carryBit_le (w : ℕ →₀ ℕ) (j : ℕ) :
+    (carryBit p w j : ℚ) * (p : ℚ) ^ (-(j : ℤ)) ≤ carryTail p w j := by
+  rw [carryBit]
+  split_ifs with h
+  · rwa [Nat.cast_one, one_mul]
+  · rw [Nat.cast_zero, zero_mul]
+    exact carryTail_nonneg p w j
+
+/-- The upper remainder bound: after removing the carry, less than `p^{-j}` remains. -/
+theorem lt_carryBit (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) (j : ℕ) :
+    carryTail p w j < (carryBit p w j : ℚ) * (p : ℚ) ^ (-(j : ℤ)) + (p : ℚ) ^ (-(j : ℤ)) := by
+  have h2 := carryTail_lt_two_mul p w hw j
+  rw [carryBit]
+  split_ifs with h
+  · rw [Nat.cast_one, one_mul]
+    linarith
+  · push Not at h
+    rw [Nat.cast_zero, zero_mul, zero_add]
+    exact h
+
+/-- No carry emerges from a column outside the support: the tail from an empty column
+is too small to overflow. -/
+theorem carryBit_eq_zero_of_notMem (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {j : ℕ}
+    (hj : j ∉ w.support) : carryBit p w j = 0 := by
+  have hp0 : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  have hq0 : (0 : ℚ) < (p : ℚ) ^ (-(j + 1 : ℤ)) := zpow_pos hp0 _
+  have hzp : (p : ℚ) ^ (-(j : ℤ)) = (p : ℚ) ^ (-(j + 1 : ℤ)) * (p : ℚ) := by
+    rw [← zpow_add_one₀ hp0.ne']
+    congr 1
+    ring
+  have h2 := carryTail_lt_two_mul p w hw (j + 1)
+  have hcast : (-(↑(j + 1) : ℤ)) = -(j + 1 : ℤ) := by push_cast; ring
+  rw [hcast] at h2
+  have hp2 : (2 : ℚ) ≤ (p : ℚ) := by exact_mod_cast hp.out.two_le
+  rw [carryBit, if_neg]
+  push Not
+  rw [carryTail_succ, Finsupp.notMem_support_iff.mp hj, Nat.cast_zero, zero_mul,
+    zero_add, hzp]
+  nlinarith [h2, hq0, hp2]
+
+/-! ### The column digits -/
+
+/-- The result digit of column `j`: the column of `w` plus the incoming carry minus
+`p` times the outgoing carry. -/
+def carryDigit (w : ℕ →₀ ℕ) (j : ℕ) : ℕ :=
+  w j + carryBit p w (j + 1) - p * carryBit p w j
+
+/-- The two-sided column bound `p·ε_j ≤ w_j + ε_{j+1} < p·ε_j + p`: the outgoing
+carry is forced by the column and the incoming carry, with a genuine digit left. -/
+theorem carryBit_bounds (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) (j : ℕ) :
+    p * carryBit p w j ≤ w j + carryBit p w (j + 1) ∧
+      w j + carryBit p w (j + 1) < p * carryBit p w j + p := by
+  have hp0 : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  have hq0 : (0 : ℚ) < (p : ℚ) ^ (-(j + 1 : ℤ)) := zpow_pos hp0 _
+  have hzp : (p : ℚ) ^ (-(j : ℤ)) = (p : ℚ) ^ (-(j + 1 : ℤ)) * (p : ℚ) := by
+    rw [← zpow_add_one₀ hp0.ne']
+    congr 1
+    ring
+  have hcast : (-(↑(j + 1) : ℤ)) = -(j + 1 : ℤ) := by push_cast; ring
+  have hcol := carryTail_succ p w j
+  have hlo := carryBit_le p w j
+  have hhi := lt_carryBit p w hw j
+  have hlo' := carryBit_le p w (j + 1)
+  have hhi' := lt_carryBit p w hw (j + 1)
+  rw [hcast] at hlo' hhi'
+  rw [hzp] at hlo hhi
+  -- lower bound: `p·ε_j < w_j + ε_{j+1} + 1` in ℚ
+  have hA : ((p : ℚ) * carryBit p w j) * (p : ℚ) ^ (-(j + 1 : ℤ))
+      < ((w j : ℚ) + carryBit p w (j + 1) + 1) * (p : ℚ) ^ (-(j + 1 : ℤ)) := by
+    nlinarith [hcol, hlo, hhi']
+  have hA' : (p : ℚ) * carryBit p w j < (w j : ℚ) + carryBit p w (j + 1) + 1 :=
+    lt_of_mul_lt_mul_right (by linarith [hA]) hq0.le
+  -- upper bound: `w_j + ε_{j+1} < p·ε_j + p` in ℚ
+  have hB : ((w j : ℚ) + carryBit p w (j + 1)) * (p : ℚ) ^ (-(j + 1 : ℤ))
+      < ((p : ℚ) * carryBit p w j + p) * (p : ℚ) ^ (-(j + 1 : ℤ)) := by
+    nlinarith [hcol, hhi, hlo']
+  have hB' : (w j : ℚ) + carryBit p w (j + 1) < (p : ℚ) * carryBit p w j + p :=
+    lt_of_mul_lt_mul_right (by linarith [hB]) hq0.le
+  constructor
+  · have : (p * carryBit p w j : ℕ) < w j + carryBit p w (j + 1) + 1 := by
+      exact_mod_cast hA'
+    omega
+  · exact_mod_cast hB'
+
+/-- Column digits are digits. -/
+theorem carryDigit_lt (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) (j : ℕ) :
+    carryDigit p w j < p := by
+  have h := carryBit_bounds p w hw j
+  rw [carryDigit]
+  omega
+
+/-- The exact column identity `r_j + p·ε_j = w_j + ε_{j+1}` (subtraction-free form). -/
+theorem carryDigit_add_eq (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) (j : ℕ) :
+    carryDigit p w j + p * carryBit p w j = w j + carryBit p w (j + 1) := by
+  have h := carryBit_bounds p w hw j
+  rw [carryDigit]
+  omega
+
+/-- The column identity in values: the `j`-th result term telescopes the remainders. -/
+theorem carryDigit_column (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) (j : ℕ) :
+    (carryDigit p w j : ℚ) * (p : ℚ) ^ (-(j + 1 : ℤ))
+      = (carryTail p w j - (carryBit p w j : ℚ) * (p : ℚ) ^ (-(j : ℤ)))
+        - (carryTail p w (j + 1)
+            - (carryBit p w (j + 1) : ℚ) * (p : ℚ) ^ (-(j + 1 : ℤ))) := by
+  have hp0 : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  have hzp : (p : ℚ) ^ (-(j : ℤ)) = (p : ℚ) ^ (-(j + 1 : ℤ)) * (p : ℚ) := by
+    rw [← zpow_add_one₀ hp0.ne']
+    congr 1
+    ring
+  have hcol := carryTail_succ p w j
+  have hadd := carryDigit_add_eq p w hw j
+  have hq : (carryDigit p w j : ℚ) + (p : ℚ) * carryBit p w j
+      = (w j : ℚ) + carryBit p w (j + 1) := by
+    exact_mod_cast congrArg (fun n : ℕ => (n : ℚ)) hadd
+  have hqA : ((carryDigit p w j : ℚ) + (p : ℚ) * carryBit p w j) * (p : ℚ) ^ (-(j + 1 : ℤ))
+      = ((w j : ℚ) + (carryBit p w (j + 1) : ℚ)) * (p : ℚ) ^ (-(j + 1 : ℤ)) := by
+    rw [hq]
+  rw [hzp, hcol]
+  nlinarith [hqA]
+
+/-- Beyond the support (of both the column and its right neighbour) the result digit
+vanishes. -/
+theorem carryDigit_eq_zero_of_notMem (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {j : ℕ}
+    (hj : j ∉ w.support) (hj1 : j + 1 ∉ w.support) : carryDigit p w j = 0 := by
+  rw [carryDigit, carryBit_eq_zero_of_notMem p w hw hj,
+    carryBit_eq_zero_of_notMem p w hw hj1, Finsupp.notMem_support_iff.mp hj]
+  omega
+
+/-! ### The zero-column case analysis
+
+At a column `j` where the result digit `r_j = 0`, the column identity
+`r_j + p·ε_j = w_j + ε_{j+1}` leaves three cases according to the carries: these are
+the engine of the gap-confinement argument (`lem:digit-carry-gap`). -/
+
+/-- A carry entering a zero column of the result propagates out, and pins the column
+to `w_j = p - 1`. -/
+theorem carryBit_propagate (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {j : ℕ}
+    (hr : carryDigit p w j = 0) (hin : carryBit p w (j + 1) = 1) :
+    carryBit p w j = 1 ∧ w j = p - 1 := by
+  have hid := carryDigit_add_eq p w hw j
+  have hb := carryBit_le_one p w j
+  have hp2 := hp.out.two_le
+  rw [hr, hin] at hid
+  rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hb with h0 | h1
+  · rw [h0] at hid
+    omega
+  · rw [h1] at hid
+    exact ⟨h1, by omega⟩
+
+/-- A zero column of the result emitting a carry that did not come in from the right
+consumes `w_j = p` of the digit budget. -/
+theorem apply_eq_of_carryDigit_eq_zero (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {j : ℕ}
+    (hr : carryDigit p w j = 0) (hin : carryBit p w (j + 1) = 0)
+    (hout : carryBit p w j = 1) : w j = p := by
+  have hid := carryDigit_add_eq p w hw j
+  rw [hr, hin, hout] at hid
+  omega
+
+/-- A zero column of the result emitting a carry consumes at least `p - 1` of the
+digit budget of `w`, whichever way the incoming carry went. -/
+theorem le_apply_of_carryDigit_eq_zero (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {j : ℕ}
+    (hr : carryDigit p w j = 0) (hout : carryBit p w j = 1) : p - 1 ≤ w j := by
+  have hid := carryDigit_add_eq p w hw j
+  have hb := carryBit_le_one p w (j + 1)
+  rw [hr, hout] at hid
+  omega
+
+/-- A zero column of the result with no outgoing carry has no incoming carry and is a
+zero column of `w`. -/
+theorem apply_eq_zero_of_carryDigit_eq_zero (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2)
+    {j : ℕ} (hr : carryDigit p w j = 0) (hout : carryBit p w j = 0) :
+    w j = 0 ∧ carryBit p w (j + 1) = 0 := by
+  have hid := carryDigit_add_eq p w hw j
+  rw [hr, hout] at hid
+  omega
+
+/-! ### The packaged column reduction -/
+
+/-- **Column addition of digit strings** (`lem:carry-seq`): a string `w` of columns
+`≤ 2(p-1)` — e.g. the columnwise sum of two canonical strings — reduces to a canonical
+string `r` given columnwise by `carryDigit`, plus an integer carry
+`κ = carryBit w 0 ∈ {0,1}`, with `κ + fracVal r = fracVal w`.  By
+`eq_of_fracVal_eq`, `r` is *the* canonical expansion of `fracVal w - κ`. -/
+theorem exists_carrySum (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) :
+    ∃ r : ℕ →₀ ℕ, (∀ j, r j = carryDigit p w j) ∧ (∀ j, r j < p) ∧
+      (carryBit p w 0 : ℚ) + fracVal p r = fracVal p w := by
+  obtain ⟨L, hL⟩ := w.support.exists_nat_subset_range
+  have hvanish : ∀ j : ℕ, carryDigit p w j ≠ 0 → j ∈ range L := by
+    intro j hj
+    rw [mem_range]
+    by_contra hjL
+    push Not at hjL
+    refine hj (carryDigit_eq_zero_of_notMem p w hw ?_ ?_)
+    · exact fun hmem => absurd (mem_range.mp (hL hmem)) (by omega)
+    · exact fun hmem => absurd (mem_range.mp (hL hmem)) (by omega)
+  refine ⟨Finsupp.onFinset (range L) (fun j => carryDigit p w j) hvanish,
+    fun j => rfl, fun j => carryDigit_lt p w hw j, ?_⟩
+  set r : ℕ →₀ ℕ := Finsupp.onFinset (range L) (fun j => carryDigit p w j) hvanish
+    with hr
+  have hrsupp : r.support ⊆ range L := Finsupp.support_onFinset_subset
+  rw [fracVal_eq_sum_range p r hrsupp]
+  set g : ℕ → ℚ :=
+    fun j => carryTail p w j - (carryBit p w j : ℚ) * (p : ℚ) ^ (-(j : ℤ)) with hg
+  have hterm : ∀ j ∈ range L, (r j : ℚ) * (p : ℚ) ^ (-(j + 1 : ℤ)) = g j - g (j + 1) := by
+    intro j _
+    have hcast : (-(↑(j + 1) : ℤ)) = -(j + 1 : ℤ) := by push_cast; ring
+    rw [hg]
+    simp only [hcast]
+    exact carryDigit_column p w hw j
+  rw [Finset.sum_congr rfl hterm, Finset.sum_range_sub' g L]
+  have hbitL : carryBit p w L = 0 :=
+    carryBit_eq_zero_of_notMem p w hw
+      (fun hmem => absurd (mem_range.mp (hL hmem)) (by omega))
+  have htailL : carryTail p w L = 0 := carryTail_eq_zero p w hL le_rfl
+  have hg0 : g 0 = fracVal p w - (carryBit p w 0 : ℚ) := by
+    rw [hg]
+    simp only []
+    rw [carryTail_zero_eq]
+    norm_num
+  have hgL : g L = 0 := by
+    rw [hg]
+    simp only []
+    rw [hbitL, htailL]
+    norm_num
+  rw [hg0, hgL]
+  ring
+
+end TrustworthyKedlaya.UP
