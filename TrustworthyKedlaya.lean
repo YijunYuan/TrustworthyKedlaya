@@ -11,6 +11,7 @@ import TrustworthyKedlaya.FiniteImage
 import TrustworthyKedlaya.Frobenius
 import TrustworthyKedlaya.FrobeniusUP
 import TrustworthyKedlaya.Galois
+import TrustworthyKedlaya.GapContraction
 import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.PAdicHahnSeries
