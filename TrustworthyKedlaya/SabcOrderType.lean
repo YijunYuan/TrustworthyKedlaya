@@ -80,6 +80,12 @@ theorem Ordinal.typeLT_set_le_of_rank {α : Type u} [LinearOrder α] {s : Set α
     (fun x y hxy => Ordinal.ToType.mk.lt_iff_lt.mpr (by exact hψ hxy))
   rwa [Ordinal.type_toType] at h
 
+/-- Equal sets have equal order types (the well-order instances are irrelevant). -/
+theorem Ordinal.typeLT_set_congr {α : Type u} [LinearOrder α] {s t : Set α}
+    [WellFoundedLT ↥s] [WellFoundedLT ↥t] (hst : s = t) : typeLT ↥s = typeLT ↥t := by
+  subst hst
+  rfl
+
 /-- **Cutting a well-founded set at one of its elements strictly lowers the order
 type.**  This is the set-level counterpart of `Ordinal.typein_lt_type`. -/
 theorem Ordinal.typeLT_inter_Iio_lt {α : Type u} [LinearOrder α] {t : Set α} {x : α}
@@ -429,5 +435,184 @@ theorem digitRank_lt_of_fracVal_lt (hp : 1 < p) :
       · -- `e` leads strictly earlier: then `fracVal d < fracVal e`, absurd.
         have := fracVal_lt_fracVal_of_lead p hp hd hene (Or.inl (by rw [← hje, ← hjd]; exact hj))
         exact absurd hlt (asymm this)
+
+/-! ### The order-type bound for the truncated support sets -/
+
+variable [hp : Fact (Nat.Prime p)]
+
+instance (a : ℕ+) (b c : ℕ) (R : ℚ) : WellFoundedLT ↥(Sabc p a b c ∩ Set.Iic R) :=
+  ((Sabc_isWF p a b c).mono Set.inter_subset_left).wellFoundedLT
+
+open Classical in
+/-- The rank of a point of `S_{a,b,c}` (junk value `0` off the set): `ω^(c+1)` times an
+odd multiple of the integer block index of a chosen presentation, plus the digit rank of
+its fractional expansion. -/
+noncomputable def SabcRank (a : ℕ+) (b c : ℕ) (s : ℚ) : Ordinal :=
+  if hs : s ∈ Sabc p a b c then
+    omega0 ^ ((c : Ordinal) + 1) * ((2 * (hs.choose + b).toNat + 1 : ℕ) : Ordinal)
+      + digitRank p c hs.choose_spec.choose
+  else 0
+
+omit hp in
+theorem SabcRank_of_mem {a : ℕ+} {b c : ℕ} {s : ℚ} (hs : s ∈ Sabc p a b c) :
+    SabcRank p a b c s
+      = omega0 ^ ((c : Ordinal) + 1) * ((2 * (hs.choose + b).toNat + 1 : ℕ) : Ordinal)
+        + digitRank p c hs.choose_spec.choose := by
+  rw [SabcRank, dif_pos hs]
+
+omit hp in
+/-- A member of `S_{a,b,c}` has a presentation `a·s = n - fracVal dd` whose data
+computes its rank.  (Packaging the choice this way keeps all goals free of `choose`
+terms.) -/
+theorem SabcRank_spec {a : ℕ+} {b c : ℕ} {s : ℚ} (hs : s ∈ Sabc p a b c) :
+    ∃ (n : ℤ) (dd : ℕ →₀ ℕ), -(b : ℤ) ≤ n ∧ (∀ i, dd i < p) ∧
+      (dd.sum fun _ v => v) ≤ c ∧ (a : ℚ) * s = (n : ℚ) - fracVal p dd ∧
+      SabcRank p a b c s
+        = omega0 ^ ((c : Ordinal) + 1) * ((2 * (n + b).toNat + 1 : ℕ) : Ordinal)
+          + digitRank p c dd := by
+  obtain ⟨hn, hdd, hsum, hval⟩ := hs.choose_spec.choose_spec
+  refine ⟨hs.choose, hs.choose_spec.choose, hn, hdd, hsum, ?_, SabcRank_of_mem p hs⟩
+  have h1 : (a : ℚ) * s
+      = (a : ℚ) * ((1 / (a : ℚ)) * ((hs.choose : ℚ)
+          - hs.choose_spec.choose.sum fun i v => (v : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)))) :=
+    congrArg (fun t : ℚ => (a : ℚ) * t) hval
+  rw [h1, fracVal_def]
+  field_simp
+
+/-- **Kedlaya (2001b), Section 4 (first half): order type of the truncated support
+sets.**  For every cutoff `R`, the order type of `S_{a,b,c} ∩ (-∞, R]` is less than
+`ω^(c+2)`. -/
+theorem typeLT_Sabc_inter_Iic_lt (a : ℕ+) (b c : ℕ) (R : ℚ) :
+    typeLT ↥(Sabc p a b c ∩ Set.Iic R) < omega0 ^ ((c : Ordinal) + 2) := by
+  have hp1 : 1 < p := hp.out.one_lt
+  have hap : (0 : ℚ) < (a : ℚ) := by exact_mod_cast a.pos
+  set N : ℕ := ((⌊(a : ℚ) * R⌋ + 1 + b).toNat) with hN
+  -- The rank of a member, via a choice of presentation.
+  refine lt_of_le_of_lt (Ordinal.typeLT_set_le_of_rank
+    (β := omega0 ^ ((c : Ordinal) + 1) * ((2 * N + 3 : ℕ) : Ordinal))
+    (fun x => SabcRank p a b c x.1) ?_ ?_) ?_
+  · -- Strict monotonicity of the rank.
+    intro x y hxy
+    change SabcRank p a b c x.1 < SabcRank p a b c y.1
+    have hx : x.1 ∈ Sabc p a b c := x.2.1
+    have hy : y.1 ∈ Sabc p a b c := y.2.1
+    obtain ⟨nx, dx, hnx, hdx, hsx, hax, hrx⟩ := SabcRank_spec p hx
+    obtain ⟨ny, dy, hny, hdy, hsy, hay, hry⟩ := SabcRank_spec p hy
+    rw [hrx, hry]
+    have hlt : (a : ℚ) * x.1 < (a : ℚ) * y.1 :=
+      mul_lt_mul_of_pos_left (by exact_mod_cast hxy) hap
+    have hfx0 : 0 ≤ fracVal p dx := fracVal_nonneg p dx
+    have hfy0 : 0 ≤ fracVal p dy := fracVal_nonneg p dy
+    have hfx1 : fracVal p dx < 1 := fracVal_lt_one p hp1 hdx
+    have hfy1 : fracVal p dy < 1 := fracVal_lt_one p hp1 hdy
+    rcases lt_trichotomy nx ny with hn | hn | hn
+    · -- Different integer parts: the `ω^(c+1)` block index strictly increases.
+      have hK : (nx + b).toNat < (ny + b).toNat := by omega
+      calc omega0 ^ ((c : Ordinal) + 1) * ((2 * (nx + b).toNat + 1 : ℕ) : Ordinal)
+            + digitRank p c dx
+          ≤ omega0 ^ ((c : Ordinal) + 1) * ((2 * (nx + b).toNat + 1 : ℕ) : Ordinal)
+            + omega0 ^ ((c : Ordinal) + 1) :=
+            add_le_add le_rfl (digitRank_le p c dx hsx)
+        _ = omega0 ^ ((c : Ordinal) + 1) * (((2 * (nx + b).toNat + 1 : ℕ) : Ordinal) + 1) := by
+            rw [mul_add, mul_one]
+        _ < omega0 ^ ((c : Ordinal) + 1) * ((2 * (ny + b).toNat + 1 : ℕ) : Ordinal) := by
+            apply mul_lt_mul_of_pos_left ?_ (Ordinal.opow_pos _ omega0_pos)
+            rw [← Nat.cast_add_one]
+            exact Nat.cast_lt.mpr (by omega)
+        _ ≤ omega0 ^ ((c : Ordinal) + 1) * ((2 * (ny + b).toNat + 1 : ℕ) : Ordinal)
+            + digitRank p c dy := le_add_right le_rfl
+    · -- Equal integer parts: compare the fractional expansions.
+      have hfrac : fracVal p dy < fracVal p dx := by
+        rw [hn] at hax
+        linarith
+      rw [hn]
+      exact (add_lt_add_iff_left _).mpr
+        (digitRank_lt_of_fracVal_lt p hp1 c hdx hdy hsx hsy hfrac)
+    · -- `nx > ny` is impossible: `a·x < a·y ≤ ny ≤ nx - 1 < a·x`.
+      exfalso
+      have h1 : ((ny : ℚ)) ≤ (nx : ℚ) - 1 := by exact_mod_cast (by omega : ny ≤ nx - 1)
+      linarith
+  · -- The rank is bounded by `ω^(c+1)·(2N+3)`.
+    intro x
+    have hx : x.1 ∈ Sabc p a b c := x.2.1
+    obtain ⟨nx, dx, hnx, hdx, hsx, hax, hrx⟩ := SabcRank_spec p hx
+    rw [hrx]
+    have hfx1 : fracVal p dx < 1 := fracVal_lt_one p hp1 hdx
+    have hfx0 : 0 ≤ fracVal p dx := fracVal_nonneg p dx
+    -- `nx ≤ ⌊aR⌋ + 1`, hence the block index is at most `N`.
+    have hxR : (a : ℚ) * x.1 ≤ (a : ℚ) * R := mul_le_mul_of_nonneg_left x.2.2 hap.le
+    have hnfloor : nx ≤ ⌊(a : ℚ) * R⌋ + 1 := by
+      have h1 : ((nx - 1 : ℤ) : ℚ) ≤ (a : ℚ) * R := by
+        push_cast
+        linarith
+      have h2 : nx - 1 ≤ ⌊(a : ℚ) * R⌋ := Int.le_floor.mpr h1
+      omega
+    have hKN : (nx + b).toNat ≤ N := by omega
+    calc omega0 ^ ((c : Ordinal) + 1) * ((2 * (nx + b).toNat + 1 : ℕ) : Ordinal)
+          + digitRank p c dx
+        ≤ omega0 ^ ((c : Ordinal) + 1) * ((2 * (nx + b).toNat + 1 : ℕ) : Ordinal)
+          + omega0 ^ ((c : Ordinal) + 1) :=
+          add_le_add le_rfl (digitRank_le p c dx hsx)
+      _ = omega0 ^ ((c : Ordinal) + 1) * (((2 * (nx + b).toNat + 1 : ℕ) : Ordinal) + 1) := by
+          rw [mul_add, mul_one]
+      _ < omega0 ^ ((c : Ordinal) + 1) * ((2 * N + 3 : ℕ) : Ordinal) := by
+          apply mul_lt_mul_of_pos_left ?_ (Ordinal.opow_pos _ omega0_pos)
+          rw [← Nat.cast_add_one]
+          exact Nat.cast_lt.mpr (by omega)
+  · -- `ω^(c+1)·(2N+3) < ω^(c+2)`.
+    have h2 : omega0 ^ ((c : Ordinal) + 2) = omega0 ^ ((c : Ordinal) + 1) * omega0 := by
+      rw [show ((c : Ordinal) + 2) = ((c : Ordinal) + 1) + 1 by
+            rw [add_assoc, one_add_one_eq_two],
+        Ordinal.opow_add, Ordinal.opow_one]
+    calc omega0 ^ ((c : Ordinal) + 1) * ((2 * N + 3 : ℕ) : Ordinal)
+        < omega0 ^ ((c : Ordinal) + 1) * omega0 :=
+          mul_lt_mul_of_pos_left (natCast_lt_omega0 _) (Ordinal.opow_pos _ omega0_pos)
+      _ = omega0 ^ ((c : Ordinal) + 2) := h2.symm
+
+/-! ### The `ω^ω` bound -/
+
+/-- **Kedlaya (2001b), Section 4 (consequence): the `ω^ω` bound.**  A well-ordered
+subset of `ℚ` which is, for every `n : ℕ`, contained in some `S_{aₙ,bₙ,cₙ} ∪ (n, ∞)`
+has order type at most `ω^ω`. -/
+theorem typeLT_le_omega0_opow_omega0 {S : Set ℚ} (hS : S.IsWF)
+    (h : ∀ n : ℕ, ∃ (a : ℕ+) (b c : ℕ), S ⊆ Sabc p a b c ∪ Set.Ioi (n : ℚ)) :
+    haveI := hS.wellFoundedLT
+    typeLT ↥S ≤ omega0 ^ omega0 := by
+  have hI := hS.wellFoundedLT
+  refine Ordinal.typeLT_set_le_of_rank
+    (fun x =>
+      haveI := (hS.mono (Set.inter_subset_left : S ∩ Set.Iio x.1 ⊆ S)).wellFoundedLT
+      typeLT ↥(S ∩ Set.Iio x.1)) ?_ ?_
+  · -- The initial-segment type is strictly monotone in the cut point.
+    intro x y hxy
+    have hIx := (hS.mono (Set.inter_subset_left : S ∩ Set.Iio x.1 ⊆ S)).wellFoundedLT
+    have hIy := (hS.mono (Set.inter_subset_left : S ∩ Set.Iio y.1 ⊆ S)).wellFoundedLT
+    have hIxy : WellFoundedLT ↥((S ∩ Set.Iio y.1) ∩ Set.Iio x.1) :=
+      (hS.mono ((Set.inter_subset_left).trans Set.inter_subset_left)).wellFoundedLT
+    change typeLT ↥(S ∩ Set.Iio x.1) < typeLT ↥(S ∩ Set.Iio y.1)
+    have hset : S ∩ Set.Iio x.1 = (S ∩ Set.Iio y.1) ∩ Set.Iio x.1 := by
+      rw [Set.inter_assoc, Set.Iio_inter_Iio, min_eq_right (Subtype.coe_le_coe.mpr hxy.le)]
+    have hlt : typeLT ↥((S ∩ Set.Iio y.1) ∩ Set.Iio x.1) < typeLT ↥(S ∩ Set.Iio y.1) :=
+      Ordinal.typeLT_inter_Iio_lt ⟨x.2, hxy⟩
+    exact lt_of_le_of_lt (le_of_eq (Ordinal.typeLT_set_congr hset)) hlt
+  · -- Every initial segment sits inside a truncated support set, of type `< ω^ω`.
+    intro x
+    have hIx := (hS.mono (Set.inter_subset_left : S ∩ Set.Iio x.1 ⊆ S)).wellFoundedLT
+    change typeLT ↥(S ∩ Set.Iio x.1) < omega0 ^ omega0
+    obtain ⟨a, b, c, hsub⟩ := h ⌈x.1⌉₊
+    have hsubset : S ∩ Set.Iio x.1 ⊆ Sabc p a b c ∩ Set.Iic ((⌈x.1⌉₊ : ℕ) : ℚ) := by
+      rintro z ⟨hzS, hzlt⟩
+      have hzn : z ≤ ((⌈x.1⌉₊ : ℕ) : ℚ) := le_of_lt (lt_of_lt_of_le hzlt (Nat.le_ceil _))
+      rcases hsub hzS with hzin | hzout
+      · exact ⟨hzin, hzn⟩
+      · exact absurd hzout (not_lt.mpr hzn)
+    have hincl : typeLT ↥(S ∩ Set.Iio x.1)
+        ≤ typeLT ↥(Sabc p a b c ∩ Set.Iic ((⌈x.1⌉₊ : ℕ) : ℚ)) :=
+      Ordinal.typeLT_set_le_of_strictMono (Set.inclusion hsubset) fun _ _ hab => hab
+    refine lt_of_le_of_lt hincl (lt_of_lt_of_le (typeLT_Sabc_inter_Iic_lt p a b c _) ?_)
+    apply Ordinal.opow_le_opow_right omega0_pos
+    have : ((c : Ordinal) + 2) = ((c + 2 : ℕ) : Ordinal) := by norm_cast
+    rw [this]
+    exact (natCast_lt_omega0 (c + 2)).le
 
 end TrustworthyKedlaya.UP
