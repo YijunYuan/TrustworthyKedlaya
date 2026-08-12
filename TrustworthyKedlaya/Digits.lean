@@ -406,4 +406,196 @@ theorem exists_carry_normalization [hp : Fact p.Prime] (e : ℕ →₀ ℕ) :
     omega
   · exact mul_right_cancel₀ hpLne hval
 
+/-! ### Digit sums of quotients: the division-by-`k` dichotomy
+
+Dividing a base-`p` digit string that vanishes on a widening gap by an integer `k`
+coprime to `p` either terminates exactly (when `k` divides both the head and the tail
+numerators separately), or the remainder cycles through a nonzero orbit across the gap
+and deposits a nonzero quotient digit at least once every `k` positions, forcing the
+digit sum of the quotient to grow linearly with the gap length.  These lemmas are the
+arithmetic engine behind the slice-width upgrade for UP series (`lem:up-rescale`). -/
+
+/-- **Remainder-orbit lemma.**  If `k ∤ A` and `k` is coprime to `p`, the base-`p` digit
+stream of the quotients `A p^d / k` never stays zero for `k` consecutive positions:
+a vanishing digit means the remainder is multiplied exactly by `p`, and `k` consecutive
+exact multiplications would force `p^k · r < k` for a remainder `r ≥ 1`, contradicting
+`p^k > k`. -/
+theorem exists_digit_div_ne_zero (hp : 1 < p) {k A : ℕ} (hcop : Nat.Coprime p k)
+    (hkA : ¬ k ∣ A) (d₀ : ℕ) :
+    ∃ d, d₀ < d ∧ d ≤ d₀ + k ∧ (A * p ^ d / k) % p ≠ 0 := by
+  have hk0 : k ≠ 0 := by
+    rintro rfl
+    rw [Nat.coprime_zero_right] at hcop
+    omega
+  by_contra hzero
+  push Not at hzero
+  -- All digits in the window vanish, so each step multiplies the remainder exactly by `p`.
+  set r : ℕ → ℕ := fun i => A * p ^ i % k with hr
+  have hrlt : ∀ i, r i < k := fun i => Nat.mod_lt _ (by omega)
+  have hrne : ∀ i, r i ≠ 0 := by
+    intro i h
+    have hdvd : k ∣ A * p ^ i := Nat.dvd_of_mod_eq_zero h
+    exact hkA ((Nat.Coprime.pow_right i hcop.symm).dvd_of_dvd_mul_right hdvd)
+  have hstep : ∀ i, (A * p ^ (i + 1) / k) % p = 0 → r (i + 1) = p * r i := by
+    intro i hdig
+    have hsplit : A * p ^ (i + 1) = k * (p * (A * p ^ i / k)) + p * r i := by
+      have := Nat.div_add_mod (A * p ^ i) k
+      calc A * p ^ (i + 1) = p * (A * p ^ i) := by ring
+        _ = p * (k * (A * p ^ i / k) + r i) := by rw [this]
+        _ = k * (p * (A * p ^ i / k)) + p * r i := by ring
+    have hdiv : A * p ^ (i + 1) / k = p * (A * p ^ i / k) + p * r i / k := by
+      rw [hsplit, Nat.mul_add_div (by omega)]
+    have hql : p * r i / k < p := by
+      rw [Nat.div_lt_iff_lt_mul (by omega : 0 < k)]
+      exact mul_lt_mul_of_pos_left (hrlt i) (by omega : (0 : ℕ) < p)
+    have hq0 : p * r i / k = 0 := by
+      have h := hdig
+      rw [hdiv, Nat.mul_add_mod, Nat.mod_eq_of_lt hql] at h
+      exact h
+    have hlt : p * r i < k := (Nat.div_eq_zero_iff.mp hq0).resolve_left (by omega)
+    have hmod : A * p ^ (i + 1) % k = (p * r i) % k := by
+      rw [hsplit, Nat.mul_add_mod]
+    rw [hr]
+    simp only
+    rw [hmod, Nat.mod_eq_of_lt hlt]
+  -- Iterate across the gap window.
+  have hiter : ∀ t, t ≤ k → r (d₀ + t) = p ^ t * r d₀ := by
+    intro t ht
+    induction t with
+    | zero => simp
+    | succ t ih =>
+      have hd : d₀ < d₀ + t + 1 := by omega
+      have hd' : d₀ + t + 1 ≤ d₀ + k := by omega
+      have h1 := hstep (d₀ + t) (hzero (d₀ + t + 1) hd hd')
+      rw [show d₀ + (t + 1) = d₀ + t + 1 by omega, h1, ih (by omega)]
+      ring
+  have hfinal := hiter k le_rfl
+  have hge : p ^ k ≤ p ^ k * r d₀ := by
+    calc p ^ k = p ^ k * 1 := (mul_one _).symm
+      _ ≤ p ^ k * r d₀ := Nat.mul_le_mul_left _ (Nat.pos_of_ne_zero (hrne d₀))
+  have hpk : k + 1 ≤ p ^ k := by
+    have h2 : k < 2 ^ k := Nat.lt_two_pow_self
+    have h3 : 2 ^ k ≤ p ^ k := Nat.pow_le_pow_left (by omega) k
+    omega
+  have := hrlt (d₀ + k)
+  omega
+
+/-- The base-`p` digit sum of `Q` dominates the sum of the extracted digits
+`Q / p^s % p` over any finite set of places. -/
+theorem sum_div_pow_mod_le_digits_sum (hp : 1 < p) (Q : ℕ) (P : Finset ℕ) :
+    ∑ s ∈ P, Q / p ^ s % p ≤ (p.digits Q).sum := by
+  set L : ℕ := max (p.digits Q).length (P.sup id + 1) with hL
+  have hlen : (p.digits Q).length ≤ L := le_max_left _ _
+  have hPL : P ⊆ range L := by
+    intro s hs
+    rw [mem_range]
+    exact lt_of_le_of_lt (Finset.le_sup (f := id) hs) (by omega)
+  have hsum : (p.digits Q).sum = ∑ s ∈ range L, Q / p ^ s % p := by
+    rw [sum_eq_sum_getD (p.digits Q) hlen]
+    exact Finset.sum_congr rfl fun s _ => Nat.getD_digits Q s hp
+  rw [hsum]
+  exact Finset.sum_le_sum_of_subset hPL
+
+/-- Multiplying by a power of the base preserves the base-`p` digit sum. -/
+theorem sum_digits_pow_mul (hp : 1 < p) (t m : ℕ) :
+    (p.digits (p ^ t * m)).sum = (p.digits m).sum := by
+  induction t with
+  | zero => simp
+  | succ t ih => rw [pow_succ', mul_assoc, sum_digits_base_mul p hp, ih]
+
+/-- **Digit-sum growth for inexact division.**  If `k` is coprime to `p`, `k ∤ A` and
+`G < p^m`, then whatever the gap length `n ≥ k(c+1)`, the base-`p` digit sum of
+`(A p^{m+n} + G) / k` exceeds `c`: the quotient digits across the gap window come from
+the nonzero remainder orbit of `A`, which deposits a nonzero digit at least once every
+`k` positions. -/
+theorem le_digits_sum_div_of_not_dvd (hp : 1 < p) {k A G m c n : ℕ}
+    (hcop : Nat.Coprime p k) (hkA : ¬ k ∣ A) (hG : G < p ^ m)
+    (hn : k * (c + 1) ≤ n) :
+    c + 1 ≤ (p.digits ((A * p ^ (m + n) + G) / k)).sum := by
+  have hk0 : k ≠ 0 := by
+    rintro rfl
+    rw [Nat.coprime_zero_right] at hcop
+    omega
+  set T : ℕ := k with hT
+  have hT1 : 1 ≤ T := by omega
+  set Q : ℕ := (A * p ^ (m + n) + G) / k with hQ
+  -- Pick one witness digit in each length-`T` window of the gap.
+  have hex : ∀ i : ℕ, ∃ d, i * T < d ∧ d ≤ i * T + T ∧ (A * p ^ d / k) % p ≠ 0 :=
+    fun i => exists_digit_div_ne_zero p hp hcop hkA (i * T)
+  choose f hf1 hf2 hf3 using hex
+  -- Each witness digit of the orbit is literally a digit of `Q` at place `m + n - f i`.
+  have hfn : ∀ i, i ≤ c → f i ≤ n := fun i hi =>
+    (hf2 i).trans (by calc i * T + T = (i + 1) * T := by ring
+      _ ≤ (c + 1) * T := Nat.mul_le_mul_right T (by omega)
+      _ ≤ n := by rw [mul_comm]; exact hn)
+  have hdigit : ∀ i, i ≤ c → Q / p ^ (m + n - f i) % p = (A * p ^ (f i) / k) % p := by
+    intro i hi
+    have hfi : f i ≤ n := hfn i hi
+    set s : ℕ := m + n - f i with hs
+    have hsm : m ≤ s := by omega
+    have hsplit : A * p ^ (m + n) + G = p ^ s * (A * p ^ (f i)) + G := by
+      have hexp : m + n = s + f i := by omega
+      rw [hexp, pow_add]
+      ring
+    have hGz : G / p ^ s = 0 :=
+      Nat.div_eq_of_lt (hG.trans_le (Nat.pow_le_pow_right (by omega) hsm))
+    have hdivs : Q / p ^ s = A * p ^ (f i) / k := by
+      rw [hQ, Nat.div_div_eq_div_mul, mul_comm k (p ^ s), ← Nat.div_div_eq_div_mul,
+        hsplit, Nat.mul_add_div (by positivity), hGz, add_zero]
+    rw [hdivs]
+  -- The witness places are pairwise distinct, giving `c + 1` nonzero digits of `Q`.
+  set P : Finset ℕ := (range (c + 1)).image (fun i => m + n - f i) with hP
+  have hinj : Set.InjOn (fun i => m + n - f i) (range (c + 1)) := by
+    intro i hi i' hi' h
+    rw [coe_range, Set.mem_Iio] at hi hi'
+    by_contra hne
+    -- distinct indices give witnesses in disjoint windows
+    wlog hlt : i < i' generalizing i i'
+    · exact this hi' hi h.symm (Ne.symm hne) (by omega)
+    have h1 : f i ≤ i * T + T := hf2 i
+    have h2 : i' * T < f i' := hf1 i'
+    have h3 : i * T + T ≤ i' * T := by
+      calc i * T + T = (i + 1) * T := by ring
+        _ ≤ i' * T := Nat.mul_le_mul_right T (by omega)
+    have h4 : f i ≤ n := hfn i (by omega)
+    have h5 : f i' ≤ n := hfn i' (by omega)
+    simp only at h
+    omega
+  have hcard : P.card = c + 1 := by
+    rw [hP, Finset.card_image_of_injOn hinj, Finset.card_range]
+  have hone : ∀ s ∈ P, 1 ≤ Q / p ^ s % p := by
+    intro s hs
+    rw [hP, Finset.mem_image] at hs
+    obtain ⟨i, hi, rfl⟩ := hs
+    rw [mem_range] at hi
+    rw [hdigit i (by omega)]
+    exact Nat.one_le_iff_ne_zero.mpr (hf3 i)
+  calc c + 1 = ∑ _s ∈ P, 1 := by rw [Finset.sum_const, hcard, smul_eq_mul, mul_one]
+    _ ≤ ∑ s ∈ P, Q / p ^ s % p := Finset.sum_le_sum hone
+    _ ≤ (p.digits Q).sum := sum_div_pow_mod_le_digits_sum p hp Q P
+
+/-- If `C < p^{L-t}`, the canonical digit finsupp of `C / p^L` is supported in
+`[t, L)`: small numerators only occupy the low places. -/
+theorem digitFinsupp_support_subset_Ico (hp : 1 < p) {C L t : ℕ} (hC : C < p ^ (L - t)) :
+    (digitFinsupp p C L).support ⊆ Finset.Ico t L := by
+  intro i hi
+  have hiL : i < L := mem_range.mp (digitFinsupp_support_subset p C L hi)
+  rw [Finset.mem_Ico]
+  refine ⟨?_, hiL⟩
+  by_contra hit
+  push Not at hit
+  have hne : digitFinsupp p C L i ≠ 0 := Finsupp.mem_support_iff.mp hi
+  have happ : digitFinsupp p C L i = C / p ^ (L - 1 - i) % p := by
+    simp only [digitFinsupp, Finsupp.onFinset_apply, if_pos hiL]
+  have hdivne : C / p ^ (L - 1 - i) ≠ 0 := by
+    intro h
+    rw [happ, h] at hne
+    exact hne (Nat.zero_mod p)
+  have hle : p ^ (L - 1 - i) ≤ C := by
+    by_contra hlt
+    exact hdivne (Nat.div_eq_of_lt (by omega))
+  have hmono : p ^ (L - t) ≤ p ^ (L - 1 - i) :=
+    Nat.pow_le_pow_right (by omega) (by omega)
+  omega
+
 end TrustworthyKedlaya.UP
