@@ -151,4 +151,101 @@ lemma IsTwistPeriodic.add {f g : ℚ → 𝔽ᵃ_[p]} {c : ℕ} {Mf Mg Nf Ng : �
   intro j dig hj hd hs n hn
   rw [twistSeq_add, twistSeq_add, hf' j dig hj hd hs n hn, hg' j dig hj hd hs n hn]
 
+/-! ### Periodicity from a Frobenius-affine recursion
+
+The engine behind Artin-Schreier stability of UP (Kedlaya (2001a), proof of Lemma 4):
+a sequence solving `c_{n+1}^p = c_n + y_n` with values in a finite subfield `𝔽_{p^d}`,
+where `(y_n)` is eventually `N`-periodic, is itself eventually `N·p·d`-periodic.
+Membership in `𝔽_{p^d}` is phrased as the fixed-point equation `x ^ p ^ d = x`. -/
+
+/-- Elements of the finite subfield `𝔽_{p^d} = {x : x^{p^d} = x}` are fixed by
+`p^{d·k}`-th powers for every `k`. -/
+lemma pow_pow_mul_eq_self {x : 𝔽ᵃ_[p]} {d : ℕ} (hx : x ^ p ^ d = x) (k : ℕ) :
+    x ^ p ^ (d * k) = x := by
+  induction k with
+  | zero => simp
+  | succ k ih => rw [Nat.mul_succ, pow_add, pow_mul, ih, hx]
+
+/-- Iterating eventual periodicity. -/
+lemma eventually_periodic_iterate {y : ℕ → 𝔽ᵃ_[p]} {M N : ℕ}
+    (hyp : ∀ n, M ≤ n → y (n + N) = y n) (k : ℕ) :
+    ∀ n, M ≤ n → y (n + N * k) = y n := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    intro n hn
+    have h1 : n + N * (k + 1) = (n + N * k) + N := by ring
+    rw [h1, hyp _ (le_trans hn (Nat.le_add_right _ _)), ih n hn]
+
+/-- Telescoping the Frobenius-affine recursion `c_{n+1}^p = c_n + y_n`:
+`c_{n+m}^{p^m} = c_n + ∑_{i<m} y_{n+i}^{p^i}`. -/
+lemma pow_pow_of_frobenius_affine {c y : ℕ → 𝔽ᵃ_[p]}
+    (hrec : ∀ n, c (n + 1) ^ p = c n + y n) (n : ℕ) :
+    ∀ m, c (n + m) ^ p ^ m = c n + ∑ i ∈ Finset.range m, y (n + i) ^ p ^ i := by
+  intro m
+  induction m with
+  | zero => simp
+  | succ m ih =>
+    calc c (n + (m + 1)) ^ p ^ (m + 1)
+        = c ((n + m) + 1) ^ p ^ (m + 1) := rfl
+      _ = (c ((n + m) + 1) ^ p) ^ p ^ m := by rw [← pow_mul, ← pow_succ']
+      _ = (c (n + m) + y (n + m)) ^ p ^ m := by rw [hrec]
+      _ = c (n + m) ^ p ^ m + y (n + m) ^ p ^ m := by rw [add_pow_char_pow]
+      _ = c n + (∑ i ∈ Finset.range m, y (n + i) ^ p ^ i) + y (n + m) ^ p ^ m := by
+          rw [ih]
+      _ = c n + ∑ i ∈ Finset.range (m + 1), y (n + i) ^ p ^ i := by
+          rw [Finset.sum_range_succ, add_assoc]
+
+/-- **Periodicity from a Frobenius-affine recursion** (the orbit lemma of Kedlaya
+(2001a)).  Let `c, y : ℕ → 𝔽̄_p` take values in the finite subfield `𝔽_{p^d}` (cut out
+by `x^{p^d} = x`), let `y_{n+N} = y_n` for `n ≥ M`, and let `c_{n+1}^p = c_n + y_n`
+for all `n`.  Then `c_{n + N·p·d} = c_n` for all `n ≥ M`: the solution is eventually
+periodic with period `N·p·d` and the same preperiod `M`. -/
+theorem eventually_periodic_of_frobenius_affine {c y : ℕ → 𝔽ᵃ_[p]} {d M N : ℕ}
+    (hc : ∀ n, c n ^ p ^ d = c n) (hy : ∀ n, y n ^ p ^ d = y n)
+    (hyp : ∀ n, M ≤ n → y (n + N) = y n)
+    (hrec : ∀ n, c (n + 1) ^ p = c n + y n) :
+    ∀ n, M ≤ n → c (n + N * p * d) = c n := by
+  intro n hn
+  have key := pow_pow_of_frobenius_affine hrec n (N * p * d)
+  -- `p^{Npd}`-th powers fix the subfield, so the left side is `c_{n+Npd}` itself.
+  have hfix : c (n + N * p * d) ^ p ^ (N * p * d) = c (n + N * p * d) := by
+    have h1 : N * p * d = d * (N * p) := by ring
+    rw [h1]
+    exact pow_pow_mul_eq_self (hc _) _
+  -- Each of the `p` blocks of `N·d` consecutive correction terms has the same sum.
+  have hblock : ∀ r : ℕ,
+      (∑ j ∈ Finset.range (N * d), y (n + (N * d * r + j)) ^ p ^ (N * d * r + j))
+        = ∑ j ∈ Finset.range (N * d), y (n + j) ^ p ^ j := by
+    intro r
+    refine Finset.sum_congr rfl fun j _ => ?_
+    have hidx : n + (N * d * r + j) = (n + j) + N * (d * r) := by ring
+    have hy1 : y (n + (N * d * r + j)) = y (n + j) := by
+      rw [hidx]
+      exact eventually_periodic_iterate hyp (d * r) (n + j)
+        (le_trans hn (Nat.le_add_right n j))
+    have hexp : (y (n + j) : 𝔽ᵃ_[p]) ^ p ^ (N * d * r + j)
+        = (y (n + j) ^ p ^ (N * d * r)) ^ p ^ j := by
+      rw [← pow_mul, ← pow_add]
+    have hyfix : y (n + j) ^ p ^ (N * d * r) = y (n + j) := by
+      have h2 : N * d * r = d * (N * r) := by ring
+      rw [h2]
+      exact pow_pow_mul_eq_self (hy _) _
+    rw [hy1, hexp, hyfix]
+  -- Hence the whole correction sum is `p` times one block, which vanishes in char `p`.
+  have hsum : ∑ i ∈ Finset.range (N * p * d), y (n + i) ^ p ^ i = 0 := by
+    have hsplit : ∀ r : ℕ,
+        (∑ i ∈ Finset.range (N * d * r), y (n + i) ^ p ^ i)
+          = r • ∑ j ∈ Finset.range (N * d), y (n + j) ^ p ^ j := by
+      intro r
+      induction r with
+      | zero => simp
+      | succ r ih =>
+        have h3 : N * d * (r + 1) = N * d * r + N * d := by ring
+        rw [h3, Finset.sum_range_add, ih, hblock r, succ_nsmul]
+    have hm : N * p * d = N * d * p := by ring
+    rw [hm, hsplit p, nsmul_eq_mul, CharP.cast_eq_zero (𝔽ᵃ_[p]) p, zero_mul]
+  rw [hfix, hsum, add_zero] at key
+  exact key
+
 end TrustworthyKedlaya.UP
