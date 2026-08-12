@@ -615,4 +615,162 @@ theorem twistSeq_slice_add (x y : HahnSeries ℚ (𝔽ᵃ_[p])) (a : ℕ+) (m : 
       = fun z => x.coeff (((m : ℚ) + z) / (a : ℚ)) + y.coeff (((m : ℚ) + z) / (a : ℚ))
     from funext fun z => HahnSeries.coeff_add, twistSeq_add]
 
+/-! ### The ladder: uniform periodicity of the Artin-Schreier root -/
+
+/-- **The ladder** (`lem:as-root-neg`, periodicity part): if `x^p = x + y`, `y` has a
+width-`a` slice witness with data `(b, c, M, N)` and negative support, and `x` is
+supported in `S_{a,b,C} ∩ (-∞,0)`, then `x` has a width-`a` slice witness with data
+`(b, C, M + L, N·p·D)`, where `p^L > b` and `𝔽_{p^D}` is the common subfield of the
+pair.  Gap-one twist sequences at slice `0` satisfy the Frobenius-affine recursion
+(orbit lemma); at slices `m ≤ -1` the coupling walks down to slice `p^ℓ·m < -b` where
+everything vanishes; gap positions `j ≥ 2` reduce to `j - 1` with no parameter
+growth. -/
+theorem sliceWitness_of_asPair {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c C : ℕ}
+    {M N : ℕ+} (hAS : x ^ p = x + y)
+    (hsuppy : y.support ⊆ Sabc p a b c) (hnegy : y.support ⊆ Set.Iio 0)
+    (hpery : ∀ m : ℤ, -(b : ℤ) ≤ m →
+      IsTwistPeriodic p (fun z => y.coeff (((m : ℚ) + z) / (a : ℚ))) c M N)
+    (hsuppx : x.support ⊆ Sabc p a b C) (hnegx : x.support ⊆ Set.Iio 0) :
+    ∃ M' N' : ℕ+, SliceWitness p x a b C M' N' := by
+  have hinj1 : ∀ s t : 𝔽ᵃ_[p], s ^ p = t ^ p → s = t := fun s t hst =>
+    (frobeniusEquiv (𝔽ᵃ_[p]) p).injective
+      (by simpa [frobeniusEquiv_apply, frobenius_def] using hst)
+  -- the two uniform ingredients: subfield exponent `D` and escape exponent `L`
+  obtain ⟨D, hD0, hyD⟩ := exists_uniform_subfield_slices p hsuppy hnegy hpery C
+  have hxD := pow_pow_eq_self_of_asPair p hAS hsuppx hnegx hyD
+  set L : ℕ := (Nat.log p b).succ with hLdef
+  have hbL : b < p ^ L := Nat.lt_pow_succ_log_self hp.out.one_lt b
+  set NN : ℕ := (N : ℕ) * p * D with hNNdef
+  -- `y`'s twist sequences at every slice and the working level, iterated to period `NN`
+  have hally := isTwistPeriodic_slice_upgrade p hsuppy hpery
+  have hyper : ∀ (m' : ℤ) (j : ℕ), 0 < j → ∀ (dig : ℕ →₀ ℕ), (∀ i, dig i < p) →
+      (dig.sum fun _ v => v) ≤ C → ∀ n : ℕ, (M : ℕ) ≤ n →
+      twistSeq p (fun z => y.coeff (((m' : ℚ) + z) / (a : ℚ))) j dig (n + NN)
+        = twistSeq p (fun z => y.coeff (((m' : ℚ) + z) / (a : ℚ))) j dig n := by
+    intro m' j hj dig hdig hsum n hn
+    have h1 := eventually_periodic_iterate
+      (hally C m' j dig hj hdig hsum) (p * D) n hn
+    rwa [← mul_assoc] at h1
+  -- the master claim: all gap positions, all slices, level `C`, data `(M + L, NN)`
+  have master : ∀ (j : ℕ), 0 < j → ∀ (m : ℤ) (dig : ℕ →₀ ℕ), (∀ i, dig i < p) →
+      (dig.sum fun _ v => v) ≤ C → ∀ n : ℕ, (M : ℕ) + L ≤ n →
+      twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) j dig (n + NN)
+        = twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) j dig n := by
+    intro j
+    induction j with
+    | zero => omega
+    | succ j ih =>
+      rcases Nat.eq_zero_or_pos j with rfl | hj0
+      · -- gap position 1: trichotomy on the slice
+        intro _ m dig hdig hsum n hn
+        rcases lt_trichotomy m 0 with hm | rfl | hm
+        · -- slices `m ≤ -1`: the downward ladder
+          have ladder : ∀ (ℓ : ℕ) (m : ℤ), m ≤ -1 → (b : ℤ) < -m * (p : ℤ) ^ ℓ →
+              ∀ (dig : ℕ →₀ ℕ), (∀ i, dig i < p) → (dig.sum fun _ v => v) ≤ C →
+              ∀ n : ℕ, (M : ℕ) + ℓ ≤ n →
+              twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) 1 dig (n + NN)
+                = twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) 1 dig n := by
+            intro ℓ
+            induction ℓ with
+            | zero =>
+              intro m hm hesc dig hdig hsum n _
+              have hmb : m < -(b : ℤ) := by
+                rw [pow_zero, mul_one] at hesc
+                omega
+              rw [twistSeq_slice_eq_zero p hsuppx hdig (Or.inl hmb) 1 (n + NN),
+                twistSeq_slice_eq_zero p hsuppx hdig (Or.inl hmb) 1 n]
+            | succ ℓ ihl =>
+              intro m hm hesc dig hdig hsum n hn
+              rcases lt_or_ge m (-(b : ℤ)) with hmb | hmb
+              · rw [twistSeq_slice_eq_zero p hsuppx hdig (Or.inl hmb) 1 (n + NN),
+                  twistSeq_slice_eq_zero p hsuppx hdig (Or.inl hmb) 1 n]
+              · obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+                apply hinj1
+                rw [show k + 1 + NN = (k + NN) + 1 from by omega,
+                  twistSeq_couple_gap_one p hAS m dig (k + NN),
+                  twistSeq_couple_gap_one p hAS m dig k,
+                  twistSeq_slice_add, twistSeq_slice_add]
+                have hpm1 : p * m ≤ -1 := by
+                  have hp2 : (2 : ℤ) ≤ (p : ℤ) := by exact_mod_cast hp.out.two_le
+                  nlinarith
+                have hesc' : (b : ℤ) < -(p * m) * (p : ℤ) ^ ℓ := by
+                  have : -(p * m) * (p : ℤ) ^ ℓ = -m * (p : ℤ) ^ (ℓ + 1) := by ring
+                  rw [this]
+                  exact hesc
+                rw [ihl (p * m) hpm1 hesc' dig hdig hsum k (by omega),
+                  hyper (p * m) 1 one_pos dig hdig hsum k (by omega)]
+          have hesc : (b : ℤ) < -m * (p : ℤ) ^ L := by
+            have h1 : (b : ℤ) < (p : ℤ) ^ L := by exact_mod_cast hbL
+            have h2 : (1 : ℤ) ≤ -m := by omega
+            have h3 : (0 : ℤ) < (p : ℤ) ^ L :=
+              pow_pos (by exact_mod_cast hp.out.pos) L
+            nlinarith
+          exact ladder L m (by omega) hesc dig hdig hsum n hn
+        · -- slice `0`: the orbit lemma
+          have hrec : ∀ k : ℕ,
+              twistSeq p (fun z => x.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig (k + 1) ^ p
+                = twistSeq p (fun z => x.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig k
+                  + twistSeq p (fun z => y.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig k := by
+            intro k
+            have h1 := twistSeq_couple_gap_one p (a := a) hAS 0 dig k
+            simp only [mul_zero] at h1
+            rw [h1, twistSeq_slice_add]
+          have hcx : ∀ k : ℕ,
+              twistSeq p (fun z => x.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig k ^ p ^ D
+                = twistSeq p (fun z => x.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig k := by
+            intro k
+            rw [twistSeq_eq_neg_fracVal_gapDig]
+            exact hxD 0 (gapDig 1 k dig) (gapDig_lt p hdig hp.out.pos 1 k)
+              (by rw [gapDig_sum]; exact hsum)
+          have hcy : ∀ k : ℕ,
+              twistSeq p (fun z => y.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig k ^ p ^ D
+                = twistSeq p (fun z => y.coeff ((((0 : ℤ) : ℚ) + z) / (a : ℚ))) 1 dig k := by
+            intro k
+            rw [twistSeq_eq_neg_fracVal_gapDig]
+            exact hyD 0 (gapDig 1 k dig) (gapDig_lt p hdig hp.out.pos 1 k)
+              (by rw [gapDig_sum]; exact hsum)
+          exact eventually_periodic_of_frobenius_affine hcx hcy
+            (hally C 0 1 dig one_pos hdig hsum) hrec n (by omega)
+        · -- slices `m ≥ 1`: everything vanishes
+          have hz : ∀ k : ℕ,
+              twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) 1 dig k = 0 := by
+            intro k
+            rw [twistSeq_eq_neg_fracVal_gapDig]
+            exact coeff_slice_eq_zero_of_pos_slice p hnegx (by omega)
+              (gapDig_lt p hdig hp.out.pos 1 k)
+          rw [hz (n + NN), hz n]
+      · -- gap positions `j + 1 ≥ 2`: couple down to gap position `j`
+        intro _ m dig hdig hsum n hn
+        apply hinj1
+        have hj2 : 2 ≤ j + 1 := by omega
+        rw [twistSeq_couple_gap_ge_two p hAS m hj2 dig (n + NN),
+          twistSeq_couple_gap_ge_two p hAS m hj2 dig n]
+        simp only [Nat.add_sub_cancel]
+        rw [twistSeq_slice_add, twistSeq_slice_add,
+          ih hj0 (p * m - dig 0) (unshiftDig dig) (fun i => hdig (i + 1))
+            ((unshiftDig_sum_le dig).trans hsum) n hn,
+          hyper (p * m - dig 0) j hj0 (unshiftDig dig) (fun i => hdig (i + 1))
+            ((unshiftDig_sum_le dig).trans hsum) n (by omega)]
+  -- package the slice witness
+  refine ⟨M + ⟨L, Nat.succ_pos _⟩,
+    ⟨NN, Nat.mul_pos (Nat.mul_pos N.pos hp.out.pos) hD0⟩, hsuppx, fun m _ => ?_⟩
+  intro j dig hj hdig hsum n hn
+  exact master j hj m dig hdig hsum n (by exact_mod_cast hn)
+
+/-- **Artin-Schreier roots of negatively supported UP series** (`lem:as-root-neg`):
+if `y` has a width-`a` slice witness with data `(b, c, M, N)` and support in
+`(-∞, 0)`, then there is a Hahn series `x` with `x^p - x = y`, support in `(-∞, 0)`,
+and a width-`a` slice witness with data `(b, b + c)`; in particular `x` is uniformly
+periodic. -/
+theorem exists_artinSchreier_root_of_support_neg {y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    {b c : ℕ} {M N : ℕ+} (hneg : y.support ⊆ Set.Iio 0)
+    (hw : SliceWitness p y a b c M N) :
+    ∃ x : HahnSeries ℚ (𝔽ᵃ_[p]), x ^ p - x = y ∧ x.support ⊆ Set.Iio 0 ∧ IsUP p x ∧
+      ∃ M' N' : ℕ+, SliceWitness p x a b (b + c) M' N' := by
+  obtain ⟨hsupp, hper⟩ := hw
+  obtain ⟨x, hAS, hxsupp, hxneg⟩ := exists_hahn_asRoot_of_neg_support p hsupp hneg
+  obtain ⟨M', N', hwx⟩ := sliceWitness_of_asPair p hAS hsupp hneg hper hxsupp hxneg
+  exact ⟨x, by rw [hAS]; exact add_sub_cancel_left x y, hxneg,
+    isUP_iff_exists_sliceWitness.mpr ⟨a, b, b + c, M', N', hwx⟩, M', N', hwx⟩
+
 end TrustworthyKedlaya.UP
