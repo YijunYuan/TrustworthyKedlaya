@@ -128,7 +128,7 @@ open LaurentSeries in
 arises from an algebraic element of `𝔽̄_p((t^ℚ))`. -/
 theorem kedlaya_2017_theorem13_4 :
     closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier =
-    closure { f : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]), IsAlgebraic 𝔽ᵃ_[p] f' ∧
+    closure { f : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]), IsAlgebraic (𝔽ᵃ_[p])⸨X⸩ f' ∧
       (exists_canonical_expansion f).choose.val = f'.coeff }
     := by admit
 
