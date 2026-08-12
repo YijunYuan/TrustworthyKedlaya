@@ -60,6 +60,19 @@ theorem le_val_natCast_mul (n : ℕ) (x : 𝕃_[p]) : val p x ≤ val p ((n : �
     rw [Nat.cast_succ, add_mul, one_mul]
     exact (val p).map_le_add ih le_rfl
 
+/-- Natural-number multiples act coefficientwise at dominated positions: the
+"integer multiples" extension of Wang-Yuan, Lemma 2.2(3)-(4), needed for the binomial
+coefficients of the Newton step.  The right-hand `n` is reduced mod `p` in `𝔽ᵃ_[p]`. -/
+theorem coeff_natCast_mul {x : 𝕃_[p]} {q : ℚ} (hx : (q : WithTop ℚ) ≤ val p x) (n : ℕ) :
+    ((n : 𝕃_[p]) * x).coeff q = n * x.coeff q := by
+  induction n with
+  | zero => simp [coeff_zero_eq]
+  | succ n ih =>
+    have hn : (q : WithTop ℚ) ≤ val p ((n : 𝕃_[p]) * x) :=
+      le_trans hx (le_val_natCast_mul n x)
+    rw [Nat.cast_succ, add_mul, one_mul, coeff_add_of_le_val hn hx, ih,
+      Nat.cast_succ, add_mul, one_mul]
+
 /-- Powers scale a valuation lower bound linearly. -/
 theorem le_val_pow {x : 𝕃_[p]} {s : ℚ} (h : (s : WithTop ℚ) ≤ val p x) (n : ℕ) :
     ((n * s : ℚ) : WithTop ℚ) ≤ val p (x ^ n) := by

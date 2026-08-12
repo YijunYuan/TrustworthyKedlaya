@@ -179,6 +179,47 @@ theorem coeff_ppow_mul (q : ℚ) (x : 𝕃_[p]) (r : ℚ) :
     (single q 1 * x).coeff r = x.coeff (r - q) := by
   rw [coeff_single_mul, one_mul]
 
+/-- Two `p`-adic Hahn series with the same canonical coefficient function are equal. -/
+theorem ext_coeff {x y : 𝕃_[p]} (h : x.coeff = y.coeff) : x = y := by
+  have key : ∀ (s t : ℚ → Fpbar p) (hs : (Function.support s).IsPWO)
+      (ht : (Function.support t).IsPWO), s = t → fromCoeff s hs = fromCoeff t ht := by
+    rintro s t hs ht rfl
+    rfl
+  rw [← fromCoeff_of_coeff_eq_self x, ← fromCoeff_of_coeff_eq_self y]
+  exact key _ _ _ _ h
+
+/-- One-term series multiply by adding positions and multiplying digits:
+`[a]p^q · [b]p^r = [ab]p^(q+r)`. -/
+theorem single_mul_single (q r : ℚ) (a b : Fpbar p) :
+    single q a * single (p := p) r b = single (q + r) (a * b) := by
+  apply ext_coeff
+  funext u
+  rw [coeff_single_mul, coeff_single, coeff_single]
+  dsimp only
+  by_cases hu : u = q + r
+  · rw [if_pos (by rw [hu]; ring), if_pos hu]
+  · rw [if_neg (fun hc : u - q = r => hu (by linarith)), if_neg hu, mul_zero]
+
+/-- The valuation of a one-term series is its position (Wang-Yuan, Lemma 2.2). -/
+theorem val_single (q : ℚ) {a : Fpbar p} (ha : a ≠ 0) :
+    val p (single (p := p) q a) = (q : WithTop ℚ) := by
+  have hcoeff : (single (p := p) q a).coeff = fun r => if r = q then a else 0 :=
+    coeff_single q a
+  have hne : single (p := p) q a ≠ 0 := by
+    intro h
+    rw [h, coeff_zero_eq] at hcoeff
+    have := congrFun hcoeff q
+    simp at this
+    exact ha this.symm
+  obtain ⟨m, hm⟩ := WithTop.ne_top_iff_exists.mp (fun h => hne (val_eq_top_iff.mp h))
+  have hmc := coeff_val_ne_zero hm.symm
+  rw [hcoeff] at hmc
+  dsimp only at hmc
+  by_cases hmq : m = q
+  · rw [← hm, hmq]
+  · rw [if_neg hmq] at hmc
+    exact absurd rfl hmc
+
 /-! ### Additivity at dominated positions -/
 
 /-- **Additivity of the coefficient maps** (Wang-Yuan, Lemma 2.2(4)): at a position at or
