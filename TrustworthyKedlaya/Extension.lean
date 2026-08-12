@@ -128,6 +128,11 @@ theorem spectralNorm_pow_finrank_eq_zpow (x : L) (hx : x ≠ 0) :
     field_simp
   rw [hexp, Real.rpow_natCast, hm₀, ← zpow_natCast, ← zpow_mul]
 
+/-- A finite extension of `K⸨X⸩` is a complete space under (the metric of) the
+spectral norm. -/
+theorem completeSpace_of_finite : @CompleteSpace L (spectralNorm.uniformSpace K⸨X⸩ L) :=
+  spectralNorm.completeSpace K⸨X⸩ L
+
 /-- **The value group of a finite extension of `K⸨X⸩` is discrete**: there are `e ∣ [L : K⸨X⸩]`
 and a uniformizing element `π` with `‖π‖^e = ‖X‖` such that every nonzero element of `L` has
 spectral norm an integer power of `‖π‖`. In particular the value group of `L` is `‖X‖^{(1/e)ℤ}`
@@ -367,6 +372,141 @@ theorem exists_residue [IsAlgClosed K] (x : L) (hx : spectralNorm K⸨X⸩ L x �
   rw [hbridge, ← not_lt] at hge
   rw [Function.comp_apply, ← NNReal.coe_le_coe, NNReal.coe_one, coe_nnnorm]
   exact not_lt.mp hge
+
+/-- **Finite extensions of `K⸨X⸩` are totally ramified when `K` is algebraically closed**:
+the ramification index equals the degree, i.e. there is `π : L` with
+`‖π‖ ^ [L : K⸨X⸩] = ‖X‖` whose powers give the norms of all nonzero elements.
+(In particular the `e` of `exists_spectralNorm_uniformizer` is exactly `[L : K⸨X⸩]`;
+this subsumes the Galois case of the blueprint statement.) -/
+theorem exists_spectralNorm_uniformizer_pow_finrank [IsAlgClosed K] :
+    ∃ π : L, spectralNorm K⸨X⸩ L π ^ Module.finrank K⸨X⸩ L =
+        ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ ∧
+      ∀ x : L, x ≠ 0 → ∃ m : ℤ, spectralNorm K⸨X⸩ L x = spectralNorm K⸨X⸩ L π ^ m := by
+  obtain ⟨e, π, he0, hed, hπe, hall⟩ := exists_spectralNorm_uniformizer (K := K) (L := L)
+  suffices heq : e = Module.finrank K⸨X⸩ L by
+    refine ⟨π, ?_, hall⟩
+    rw [← heq]
+    exact hπe
+  let _ : NormedField L := spectralNorm.normedField K⸨X⸩ L
+  have hnorm : ∀ y : L, ‖y‖ = spectralNorm K⸨X⸩ L y := fun _ => rfl
+  let _ : NormedAlgebra K⸨X⸩ L := spectralNorm.normedAlgebra K⸨X⸩ L
+  set q : ℝ := ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ with hq
+  have hq0 : 0 < q := norm_X_pos
+  have hq1 : q < 1 := norm_X_lt_one
+  rw [← hnorm π] at hπe hall
+  have hπ0 : 0 < ‖π‖ := by
+    rcases (norm_nonneg π).lt_or_eq with h | h
+    · exact h
+    · exact absurd (hπe.symm.trans (by rw [← h, zero_pow he0.ne'])) hq0.ne'
+  have hπ1 : ‖π‖ < 1 := by
+    by_contra hge
+    push Not at hge
+    exact absurd hπe (by
+      intro hcon
+      exact absurd (hcon ▸ one_le_pow₀ hge) (not_le.mpr hq1))
+  -- the candidate spanning set
+  set M : Submodule K⸨X⸩ L :=
+    Submodule.span K⸨X⸩ (Set.range fun i : Fin e => π ^ (i : ℕ)) with hM
+  -- one-step approximation: any element can be reduced by a factor `‖π‖` using `M`
+  have step : ∀ x : L, ∃ m ∈ M, ‖x - m‖ ≤ ‖π‖ * ‖x‖ := by
+    intro x
+    rcases eq_or_ne x 0 with rfl | hx
+    · exact ⟨0, M.zero_mem, by simp⟩
+    obtain ⟨k, hk⟩ := hall x hx
+    rw [← hnorm x] at hk
+    have hi0 : 0 ≤ k % e := Int.emod_nonneg k (by exact_mod_cast he0.ne')
+    have hie : k % e < e := Int.emod_lt_of_pos k (by exact_mod_cast he0)
+    set inat : ℕ := (k % e).toNat with hinat
+    set b : K⸨X⸩ := (HahnSeries.single 1 1 : K⸨X⸩) ^ (k / e) with hb
+    have hb0 : b ≠ 0 := zpow_ne_zero _ (HahnSeries.single_ne_zero one_ne_zero)
+    set τ : L := algebraMap K⸨X⸩ L b * π ^ inat with hτ
+    have hτnorm : ‖τ‖ = ‖x‖ := by
+      rw [hτ, norm_mul, hnorm (algebraMap K⸨X⸩ L b), spectralNorm_extends, hb, norm_zpow,
+        norm_pow, hk]
+      rw [← hq, ← hπe, ← zpow_natCast ‖π‖ e, ← zpow_natCast ‖π‖ inat, ← zpow_mul,
+        ← zpow_add₀ hπ0.ne']
+      congr 1
+      rw [hinat, Int.toNat_of_nonneg hi0, mul_comm ((e : ℤ)) (k / (e : ℤ))]
+      exact Int.ediv_mul_add_emod k e
+    have hτ0 : τ ≠ 0 := by
+      intro hcon
+      rw [hcon, norm_zero] at hτnorm
+      exact hx (norm_eq_zero.mp hτnorm.symm)
+    obtain ⟨c, hc⟩ := exists_residue (x / τ) (by
+      rw [← hnorm, norm_div, hτnorm, div_self (norm_pos_iff.mpr hx).ne'])
+    rw [← hnorm] at hc
+    refine ⟨algebraMap K⸨X⸩ L (HahnSeries.C c) * τ, ?_, ?_⟩
+    · rw [hτ, ← mul_assoc, ← _root_.map_mul]
+      rw [← Algebra.smul_def]
+      refine M.smul_mem _ (Submodule.subset_span ?_)
+      exact ⟨⟨inat, by omega⟩, rfl⟩
+    · have hfactor : x - algebraMap K⸨X⸩ L (HahnSeries.C c) * τ =
+          τ * (x / τ - algebraMap K⸨X⸩ L (HahnSeries.C c)) := by
+        field_simp
+      rw [hfactor, norm_mul, hτnorm, mul_comm ‖x‖ _]
+      refine mul_le_mul_of_nonneg_right ?_ (norm_nonneg x)
+      -- discreteness: a norm `< 1` is at most `‖π‖`
+      rcases eq_or_ne (x / τ - algebraMap K⸨X⸩ L (HahnSeries.C c)) 0 with hy | hy
+      · rw [hy, norm_zero]
+        exact hπ0.le
+      · obtain ⟨j, hj⟩ := hall _ hy
+        rw [← hnorm] at hj
+        rw [hj] at hc ⊢
+        have hj1 : 1 ≤ j := by
+          by_contra hjle
+          push Not at hjle
+          have : (1 : ℝ) ≤ ‖π‖ ^ j := by
+            rcases Int.lt_iff_add_one_le.mp hjle |>.lt_or_eq with h | h
+            · calc (1 : ℝ) = ‖π‖ ^ (0 : ℤ) := (zpow_zero _).symm
+                _ ≤ ‖π‖ ^ j := by
+                  refine zpow_le_zpow_right_of_le_one₀ hπ0 hπ1.le ?_
+                  omega
+            · rw [show j = 0 by omega, zpow_zero]
+          exact absurd hc (not_lt.mpr this)
+        calc ‖π‖ ^ j ≤ ‖π‖ ^ (1 : ℤ) := zpow_le_zpow_right_of_le_one₀ hπ0 hπ1.le hj1
+          _ = ‖π‖ := zpow_one _
+  -- iterate the reduction: `M` approximates every element geometrically
+  have iterate : ∀ (j : ℕ) (x : L), ∃ m ∈ M, ‖x - m‖ ≤ ‖π‖ ^ j * ‖x‖ := by
+    intro j
+    induction j with
+    | zero => exact fun x => ⟨0, M.zero_mem, by simp⟩
+    | succ j ih =>
+      intro x
+      obtain ⟨m, hm, hbound⟩ := ih x
+      obtain ⟨m', hm', hbound'⟩ := step (x - m)
+      refine ⟨m + m', M.add_mem hm hm', ?_⟩
+      have hsub : x - (m + m') = x - m - m' := by ring
+      rw [hsub]
+      calc ‖x - m - m'‖ ≤ ‖π‖ * ‖x - m‖ := hbound'
+        _ ≤ ‖π‖ * (‖π‖ ^ j * ‖x‖) := mul_le_mul_of_nonneg_left hbound hπ0.le
+        _ = ‖π‖ ^ (j + 1) * ‖x‖ := by ring
+  -- `M` is a closed subspace containing a dense set, hence everything
+  have _ : FiniteDimensional K⸨X⸩ M :=
+    FiniteDimensional.span_of_finite _ (Set.finite_range _)
+  have hM_closed : IsClosed (M : Set L) := Submodule.closed_of_finiteDimensional M
+  have hM_top : M = ⊤ := by
+    rw [Submodule.eq_top_iff']
+    intro x
+    have hx_closure : x ∈ closure (M : Set L) := by
+      rw [Metric.mem_closure_iff]
+      intro ε hε
+      obtain ⟨j, hj⟩ := exists_pow_lt_of_lt_one
+        (div_pos hε (lt_of_le_of_lt (norm_nonneg x) (lt_add_one _))) hπ1
+      obtain ⟨m, hm, hbound⟩ := iterate j x
+      refine ⟨m, hm, ?_⟩
+      rw [dist_eq_norm]
+      have hx1 : (0 : ℝ) < ‖x‖ + 1 := lt_of_le_of_lt (norm_nonneg x) (lt_add_one _)
+      calc ‖x - m‖ ≤ ‖π‖ ^ j * ‖x‖ := hbound
+        _ ≤ ‖π‖ ^ j * (‖x‖ + 1) :=
+          mul_le_mul_of_nonneg_left (by linarith) (pow_nonneg hπ0.le j)
+        _ < ε / (‖x‖ + 1) * (‖x‖ + 1) := mul_lt_mul_of_pos_right hj hx1
+        _ = ε := div_mul_cancel₀ ε hx1.ne'
+    rwa [hM_closed.closure_eq] at hx_closure
+  -- count dimensions
+  have hle : Module.finrank K⸨X⸩ L ≤ e := by
+    have := finrank_le_of_span_eq_top (hM ▸ hM_top)
+    simpa using this
+  exact le_antisymm (Nat.le_of_dvd Module.finrank_pos hed) hle
 
 end Residue
 
