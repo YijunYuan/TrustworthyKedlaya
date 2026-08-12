@@ -16,7 +16,7 @@ The Frobenius `x ↦ x^p` of `𝔽̄_p((t^ℚ))` acts coefficientwise with the s
 `i ↦ p·i` (`TrustworthyKedlaya.coeff_pow_char`), and both it and its inverse preserve
 the class of uniformly periodic series:
 
-- `TrustworthyKedlaya.UP.IsUP.pow`: if `x` is UP then so is `x ^ p`;
+- `TrustworthyKedlaya.UP.IsUP.pow_char`: if `x` is UP then so is `x ^ p`;
 - `TrustworthyKedlaya.UP.IsUP.of_pow`: if `x ^ p` is UP then so is `x`;
 - `TrustworthyKedlaya.UP.isUP_invFrobeniusHahn`: the (unique) `p`-th root of a UP
   series is UP.
@@ -94,7 +94,7 @@ theorem SliceWitness.pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : �
         (consDig_lt p hv hdig) (by rw [consDig_sum]; omega) n hn]
 
 /-- **UP is stable under the Frobenius** `x ↦ x^p`. -/
-theorem IsUP.pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) : IsUP p (x ^ p) := by
+theorem IsUP.pow_char {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) : IsUP p (x ^ p) := by
   obtain ⟨a, b, c, M, N, hw⟩ := isUP_iff_exists_sliceWitness.mp hx
   exact isUP_iff_exists_sliceWitness.mpr ⟨a, p * b + (p - 1), c, M, N, hw.pow⟩
 

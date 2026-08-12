@@ -23,6 +23,7 @@ import TrustworthyKedlaya.PGroupGalois
 import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TameKummer
+import TrustworthyKedlaya.TowerEmbedding
 import TrustworthyKedlaya.Truncation
 import TrustworthyKedlaya.TwistPeriodicity
 import TrustworthyKedlaya.WittVector

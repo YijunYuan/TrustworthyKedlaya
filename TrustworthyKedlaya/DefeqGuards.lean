@@ -6,6 +6,7 @@ Authors: Yijun Yuan
 module
 
 import TrustworthyKedlaya.Kedlaya
+import TrustworthyKedlaya.TowerEmbedding
 import TrustworthyKedlaya.TwistPeriodicity
 
 /-!
@@ -28,6 +29,8 @@ example (c : ℕ) : UP.Tc p c = Tc p c := rfl
 
 example (f : ℚ → 𝔽ᵃ_[p]) (j : ℕ) (b : ℕ →₀ ℕ) (n : ℕ) :
     UP.twistSeq p f j b n = twistSeq p f j b n := rfl
+
+example : UP.intHahnEmbedding p = intHahnEmbedding p := rfl
 
 example (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
     UP.IsUP p x ↔
