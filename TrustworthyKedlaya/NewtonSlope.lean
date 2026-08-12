@@ -404,4 +404,77 @@ theorem coeff_taylor_single_eq_taylor_residuePoly {P : Polynomial 𝕃_[p]}
       coeff_zero_eq]
     simp
 
+/-! ### The Newton step -/
+
+/-- Some coefficient of `Res_P(T + c)` in degree `[1, deg P]` survives — e.g. the top
+one (the paper's choice, the multiplicity of `c`, is another).  This supplies the index
+hypothesis of `lastSlope_lt_lastSlope_taylor` in the transfinite recursion. -/
+theorem exists_taylor_residuePoly_coeff_ne_zero {P : Polynomial 𝕃_[p]} (hP : P ≠ 0)
+    (hn : P.natDegree ≠ 0) (h0 : P.coeff 0 ≠ 0) (c : Fpbar p) :
+    ∃ q, 1 ≤ q ∧ q ≤ P.natDegree
+      ∧ (Polynomial.taylor c (residuePoly P)).coeff q ≠ 0 := by
+  obtain ⟨k, hk1, _, hkc⟩ := exists_residuePoly_coeff_ne_zero hP hn h0
+  have hR_ne : residuePoly P ≠ 0 := fun h => hkc (by rw [h]; simp)
+  have hR_deg : 1 ≤ (residuePoly P).natDegree :=
+    le_trans hk1 (Polynomial.le_natDegree_of_ne_zero hkc)
+  have htay_ne : Polynomial.taylor c (residuePoly P) ≠ 0 := fun h =>
+    hR_ne (Polynomial.taylor_injective c (by rw [h, map_zero]))
+  have hlead := Polynomial.leadingCoeff_ne_zero.mpr htay_ne
+  rw [Polynomial.leadingCoeff, Polynomial.natDegree_taylor] at hlead
+  exact ⟨(residuePoly P).natDegree, hR_deg, natDegree_residuePoly_le P, hlead⟩
+
+/-- **Newton step, part 1** (Wang-Yuan, Proposition 2.7(1); `lem:newton-step`): shifting
+by `[c]p^s` with `c` a root of the residue polynomial strictly increases the valuation
+of the constant term. -/
+theorem val_lt_val_taylor_coeff_zero {P : Polynomial 𝕃_[p]} (h0 : P.coeff 0 ≠ 0)
+    {c : Fpbar p} (hc : (residuePoly P).eval c = 0) :
+    val p (P.coeff 0)
+      < val p ((Polynomial.taylor (single (lastSlope P) c) P).coeff 0) := by
+  have hge := le_val_taylor_coeff (le_val_coeff_of_lastSlope h0) (le_val_single _ c) 0
+  have hres := coeff_taylor_single_eq_taylor_residuePoly h0 c 0
+  rw [Polynomial.taylor_coeff_zero c (residuePoly P), hc] at hres
+  simp only [Nat.cast_zero, mul_zero, sub_zero] at hge hres
+  rw [← coe_valQ h0]
+  rcases hge.lt_or_eq with h | h
+  · exact h
+  · exact absurd hres (coeff_val_ne_zero h.symm)
+
+/-- **Newton step, part 2** (Wang-Yuan, Proposition 2.7(2); `lem:newton-step`): if the
+`T^q`-coefficient of `Res_P(T + c)` survives (for a root `c` of multiplicity exactly
+`q`) and the shifted polynomial keeps a nonzero constant term, the last slope strictly
+increases. -/
+theorem lastSlope_lt_lastSlope_taylor {P : Polynomial 𝕃_[p]}
+    (h0 : P.coeff 0 ≠ 0) {c : Fpbar p} (hc : (residuePoly P).eval c = 0)
+    {q : ℕ} (hq1 : 1 ≤ q) (hqn : q ≤ P.natDegree)
+    (hmul : (Polynomial.taylor c (residuePoly P)).coeff q ≠ 0)
+    (hQ0 : (Polynomial.taylor (single (lastSlope P) c) P).coeff 0 ≠ 0) :
+    lastSlope P < lastSlope (Polynomial.taylor (single (lastSlope P) c) P) := by
+  -- the coefficient at degree `q` sits exactly on the transported line
+  have hvq_ge := le_val_taylor_coeff (le_val_coeff_of_lastSlope h0) (le_val_single _ c) q
+  have hCq : ((Polynomial.taylor (single (lastSlope P) c) P).coeff q).coeff
+      (valQ (P.coeff 0) - lastSlope P * q) ≠ 0 := by
+    rw [coeff_taylor_single_eq_taylor_residuePoly h0 c q]
+    exact hmul
+  have hvq : val p ((Polynomial.taylor (single (lastSlope P) c) P).coeff q)
+      = ((valQ (P.coeff 0) - lastSlope P * q : ℚ) : WithTop ℚ) :=
+    le_antisymm (val_le_of_coeff_ne_zero hCq) hvq_ge
+  have hQq_ne : (Polynomial.taylor (single (lastSlope P) c) P).coeff q ≠ 0 := by
+    intro hzero
+    rw [hzero, coeff_zero_eq] at hCq
+    exact hCq rfl
+  have hqS : q ∈ slopeIndices (Polynomial.taylor (single (lastSlope P) c) P) :=
+    mem_slopeIndices.mpr
+      ⟨hq1, by rw [Polynomial.natDegree_taylor]; exact hqn, hQq_ne⟩
+  -- the constant term rose strictly above `v₀`
+  have hv0Q : valQ (P.coeff 0)
+      < valQ ((Polynomial.taylor (single (lastSlope P) c) P).coeff 0) := by
+    have h := val_lt_val_taylor_coeff_zero h0 hc
+    rw [← coe_valQ h0, ← coe_valQ hQ0] at h
+    exact_mod_cast h
+  -- compare through the ratio at `q`
+  refine lt_of_lt_of_le ?_ (le_lastSlope hqS)
+  rw [slopeAt, WithTop.coe_inj.mp ((coe_valQ hQq_ne).trans hvq),
+    lt_div_iff₀ (by exact_mod_cast Nat.pos_of_ne_zero (by omega))]
+  linarith
+
 end TrustworthyKedlaya.pAdicHahnSeries
