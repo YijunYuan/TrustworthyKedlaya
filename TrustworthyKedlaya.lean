@@ -1,3 +1,4 @@
 import TrustworthyKedlaya.Basic
+import TrustworthyKedlaya.DefeqGuards
 import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.TwistPeriodicity
