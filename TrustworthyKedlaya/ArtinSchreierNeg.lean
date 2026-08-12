@@ -379,4 +379,169 @@ theorem exists_hahn_asRoot_of_neg_support {y : HahnSeries ℚ (𝔽ᵃ_[p])} {a 
   have := hkey (g / (p : ℚ))
   rwa [mul_div_cancel₀ g hpq] at this
 
+/-! ### A common finite subfield for the Artin-Schreier pair -/
+
+/-- **All twist-point values of a width-`a` UP witness lie in one finite subfield**:
+there is `D ≥ 1` such that for *every* slice `m : ℤ` and every canonical digit
+expansion `e` of digit sum at most `C`, the value `y_{(m - fracVal e)/a}` is fixed by
+`v ↦ v^{p^D}`.  Only slices `-b ≤ m ≤ 0` contribute values (the others vanish), and
+each contributes a finite subfield by `IsTwistPeriodic.exists_uniform_subfield`. -/
+theorem exists_uniform_subfield_slices {y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (hsupp : y.support ⊆ Sabc p a b c) (hneg : y.support ⊆ Set.Iio 0)
+    (hper : ∀ m : ℤ, -(b : ℤ) ≤ m →
+      IsTwistPeriodic p (fun z => y.coeff (((m : ℚ) + z) / (a : ℚ))) c M N)
+    (C : ℕ) :
+    ∃ D : ℕ, 0 < D ∧ ∀ (m : ℤ) (e : ℕ →₀ ℕ), (∀ i, e i < p) → (e.sum fun _ v => v) ≤ C →
+      y.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ D
+        = y.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) := by
+  have hall := isTwistPeriodic_slice_upgrade p hsupp hper
+  have hslice : ∀ m : ℤ, ∃ d : ℕ, 0 < d ∧ ∀ e : ℕ →₀ ℕ, (∀ i, e i < p) →
+      (e.sum fun _ v => v) ≤ C →
+      y.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ d
+        = y.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) := by
+    intro m
+    obtain ⟨d, hd0, hd⟩ := (hall C m).exists_uniform_subfield
+    exact ⟨d, hd0, fun e he hsum => hd e he hsum⟩
+  choose dOf hdOf0 hdOf using hslice
+  refine ⟨∏ m ∈ Finset.Icc (-(b : ℤ)) 0, dOf m,
+    Finset.prod_pos fun m _ => hdOf0 m, ?_⟩
+  intro m e he hsum
+  rcases lt_or_ge m (-(b : ℤ)) with hm | hm
+  · rw [coeff_slice_eq_zero_of_slice_lt p hsupp hm he,
+      zero_pow (pow_ne_zero _ hp.out.ne_zero)]
+  rcases lt_or_ge 0 m with hm1 | hm1
+  · rw [coeff_slice_eq_zero_of_pos_slice p hneg hm1 he,
+      zero_pow (pow_ne_zero _ hp.out.ne_zero)]
+  · obtain ⟨k, hk⟩ := Finset.dvd_prod_of_mem dOf (Finset.mem_Icc.mpr ⟨hm, hm1⟩)
+    rw [hk]
+    exact pow_pow_mul_eq_self (hdOf m e he hsum) k
+
+/-- **Values of an Artin-Schreier root lie in the same finite subfield**: if
+`x^p = x + y` with `x` supported in `S_{a,b',c'} ∩ (-∞,0)` and all twist-point values
+of `y` at level `C` are fixed by `v ↦ v^{p^D}`, then so are all twist-point values of
+`x` at level `C`.  Iterating `(x_i)^p = x_{pi} + y_{pi}` drives the `x`-term below the
+support after finitely many steps, leaving a sum of subfield elements; injectivity of
+`p`-th powers then removes the accumulated exponent. -/
+theorem pow_pow_eq_self_of_asPair {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b' c' : ℕ}
+    (hAS : x ^ p = x + y)
+    (hsuppx : x.support ⊆ Sabc p a b' c') (hnegx : x.support ⊆ Set.Iio 0)
+    {C D : ℕ}
+    (hy : ∀ (m : ℤ) (e : ℕ →₀ ℕ), (∀ i, e i < p) → (e.sum fun _ v => v) ≤ C →
+      y.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ D
+        = y.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ))) :
+    ∀ (m : ℤ) (e : ℕ →₀ ℕ), (∀ i, e i < p) → (e.sum fun _ v => v) ≤ C →
+      x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ D
+        = x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) := by
+  have hpq : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp.out.pos.ne'
+  -- the coefficientwise Artin-Schreier relation
+  have hkey : ∀ g : ℚ, (x.coeff g) ^ p
+      = x.coeff ((p : ℚ) * g) + y.coeff ((p : ℚ) * g) := by
+    intro g
+    have h1 := congrArg (fun z : HahnSeries ℚ (𝔽ᵃ_[p]) => z.coeff ((p : ℚ) * g)) hAS
+    simp only [coeff_pow_char, HahnSeries.coeff_add] at h1
+    rwa [mul_div_cancel_left₀ g hpq] at h1
+  -- multiplying a twist point by `p` yields another twist point at the same level
+  have hstep : ∀ (m : ℤ) (e : ℕ →₀ ℕ),
+      (p : ℚ) * (((m : ℚ) + -fracVal p e) / (a : ℚ))
+        = (((p * m - e 0 : ℤ) : ℚ) + -fracVal p (unshiftDig e)) / (a : ℚ) := by
+    intro m e
+    have h := p_mul_fracVal p hp.out.pos e
+    rw [show (p : ℚ) * (((m : ℚ) + -fracVal p e) / (a : ℚ))
+        = ((p : ℚ) * (m : ℚ) + -((p : ℚ) * fracVal p e)) / (a : ℚ) by ring, h]
+    push_cast
+    ring
+  -- iteration: `v^{p^k}` is `x` at the `p^k`-multiplied point plus a subfield element
+  have hiter : ∀ (k : ℕ) (m : ℤ) (e : ℕ →₀ ℕ), (∀ i, e i < p) →
+      (e.sum fun _ v => v) ≤ C →
+      ∃ (m' : ℤ) (e' : ℕ →₀ ℕ) (B : 𝔽ᵃ_[p]), (∀ i, e' i < p) ∧
+        (e'.sum fun _ v => v) ≤ C ∧ B ^ p ^ D = B ∧
+        ((p : ℚ) ^ k * (((m : ℚ) + -fracVal p e) / (a : ℚ))
+          = ((m' : ℚ) + -fracVal p e') / (a : ℚ)) ∧
+        x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ k
+          = x.coeff (((m' : ℚ) + -fracVal p e') / (a : ℚ)) + B := by
+    intro k
+    induction k with
+    | zero =>
+      intro m e he hsum
+      exact ⟨m, e, 0, he, hsum, zero_pow (pow_ne_zero _ hp.out.ne_zero),
+        by rw [pow_zero, one_mul], by rw [pow_zero, pow_one, add_zero]⟩
+    | succ k ih =>
+      intro m e he hsum
+      have he₁lt : ∀ i, unshiftDig e i < p := fun i => he (i + 1)
+      have he₁sum : ((unshiftDig e).sum fun _ v => v) ≤ C :=
+        (unshiftDig_sum_le e).trans hsum
+      obtain ⟨m', e', B, he', hsum', hB, hpt, hval⟩ := ih (p * m - e 0) (unshiftDig e)
+        he₁lt he₁sum
+      refine ⟨m', e', B + y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+        + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ k, he', hsum', ?_, ?_, ?_⟩
+      · -- subfield closure of the accumulated term
+        rw [add_pow_char_pow, hB]
+        congr 1
+        calc (y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+              + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ k) ^ p ^ D
+            = (y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+              + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ D) ^ p ^ k := by
+              rw [← pow_mul, mul_comm (p ^ k) (p ^ D), pow_mul]
+          _ = y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+              + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ k := by
+              rw [hy (p * m - e 0) (unshiftDig e) he₁lt he₁sum]
+      · -- the point after `k + 1` steps
+        calc (p : ℚ) ^ (k + 1) * (((m : ℚ) + -fracVal p e) / (a : ℚ))
+            = (p : ℚ) ^ k * ((p : ℚ) * (((m : ℚ) + -fracVal p e) / (a : ℚ))) := by
+              ring
+          _ = (p : ℚ) ^ k * ((((p * m - e 0 : ℤ) : ℚ)
+              + -fracVal p (unshiftDig e)) / (a : ℚ)) := by rw [hstep m e]
+          _ = ((m' : ℚ) + -fracVal p e') / (a : ℚ) := hpt
+      · -- the value after `k + 1` steps
+        calc x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ (k + 1)
+            = (x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p) ^ p ^ k := by
+              rw [← pow_mul, pow_succ']
+          _ = (x.coeff ((((p * m - e 0 : ℤ) : ℚ)
+                + -fracVal p (unshiftDig e)) / (a : ℚ))
+              + y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+                + -fracVal p (unshiftDig e)) / (a : ℚ))) ^ p ^ k := by
+              rw [hkey, hstep m e]
+          _ = x.coeff ((((p * m - e 0 : ℤ) : ℚ)
+                + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ k
+              + y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+                + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ k := add_pow_char_pow ..
+          _ = x.coeff (((m' : ℚ) + -fracVal p e') / (a : ℚ))
+              + (B + y.coeff ((((p * m - e 0 : ℤ) : ℚ)
+                + -fracVal p (unshiftDig e)) / (a : ℚ)) ^ p ^ k) := by
+              rw [hval]
+              ring
+  -- conclude: escape below the support, then cancel the exponent
+  intro m e he hsum
+  rcases le_or_gt 0 (((m : ℚ) + -fracVal p e) / (a : ℚ)) with hpt0 | hpt0
+  · have hv0 : x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) = 0 := by
+      by_contra h0
+      have := hnegx ((HahnSeries.mem_support _ _).mpr h0)
+      rw [Set.mem_Iio] at this
+      linarith
+    rw [hv0, zero_pow (pow_ne_zero _ hp.out.ne_zero)]
+  · have hp1 : (1 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.one_lt
+    obtain ⟨k, hk⟩ := pow_unbounded_of_one_lt
+      ((((b' : ℚ) + 1) / (a : ℚ)) / (-(((m : ℚ) + -fracVal p e) / (a : ℚ)))) hp1
+    obtain ⟨m', e', B, _, _, hB, hptk, hval⟩ := hiter k m e he hsum
+    have hx0 : x.coeff (((m' : ℚ) + -fracVal p e') / (a : ℚ)) = 0 := by
+      by_contra h0
+      have hlow := neg_lt_of_mem_Sabc p (hsuppx ((HahnSeries.mem_support _ _).mpr h0))
+      rw [← hptk] at hlow
+      have h1 : (0 : ℚ) < -(((m : ℚ) + -fracVal p e) / (a : ℚ)) := by linarith
+      have h3 : (p : ℚ) ^ k
+          < (((b' : ℚ) + 1) / (a : ℚ)) / (-(((m : ℚ) + -fracVal p e) / (a : ℚ))) := by
+        rw [lt_div_iff₀ h1]
+        nlinarith
+      linarith
+    rw [hx0, zero_add] at hval
+    apply pow_p_pow_left_injective p k
+    change (x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ D) ^ p ^ k
+      = x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ k
+    calc (x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ D) ^ p ^ k
+        = (x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ k) ^ p ^ D := by
+          rw [← pow_mul, mul_comm (p ^ D) (p ^ k), pow_mul]
+      _ = B ^ p ^ D := by rw [hval]
+      _ = B := hB
+      _ = x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ k := hval.symm
+
 end TrustworthyKedlaya.UP
