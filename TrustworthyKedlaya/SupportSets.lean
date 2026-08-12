@@ -175,6 +175,101 @@ theorem Sabc_isPWO (a : ℕ+) (b c : ℕ) : (Sabc p a b c).IsPWO := by
 theorem Sabc_isWF (a : ℕ+) (b c : ℕ) : (Sabc p a b c).IsWF :=
   (Sabc_isPWO p a b c).isWF
 
+/-! ### Twist evaluation points as canonical expansions -/
+
+/-- The canonical digit expansion of the twist evaluation point of `twistSeq` at gap
+size `n`: the prefix digits (positions `< j - 1`) stay in place, while the tail digits
+(positions `≥ j - 1`) are shifted out by `n`. -/
+noncomputable def gapDig (j n : ℕ) (b : ℕ →₀ ℕ) : ℕ →₀ ℕ :=
+  b.filter (fun i => i < j - 1)
+    + Finsupp.embDomain ⟨fun i => i + n, add_left_injective n⟩
+        (b.filter (fun i => j - 1 ≤ i))
+
+omit [hp : Fact (Nat.Prime p)] in
+/-- Gap insertion does not create digits `≥ p`. -/
+theorem gapDig_lt {b : ℕ →₀ ℕ} (hb : ∀ i, b i < p) (hp0 : 0 < p) (j n i : ℕ) :
+    gapDig j n b i < p := by
+  rw [gapDig, Finsupp.add_apply, Finsupp.filter_apply]
+  by_cases h1 : i < j - 1
+  · rw [if_pos h1]
+    have h2 : Finsupp.embDomain ⟨fun i => i + n, add_left_injective n⟩
+        (b.filter (fun i => j - 1 ≤ i)) i = 0 := by
+      by_cases hn : n ≤ i
+      · have hi : i = (i - n) + n := by omega
+        rw [hi, show ((i - n) + n) = (⟨fun i => i + n, add_left_injective n⟩ : ℕ ↪ ℕ) (i - n)
+            from rfl, Finsupp.embDomain_apply_self]
+        exact Finsupp.filter_apply_neg _ _ (by omega)
+      · exact Finsupp.embDomain_of_notMem_range _ _ _
+          (by rintro ⟨k, hk⟩; simp only [Function.Embedding.coeFn_mk] at hk; omega)
+    rw [h2, add_zero]
+    exact hb i
+  · rw [if_neg h1, zero_add]
+    by_cases hn : n ≤ i
+    · have hi : i = (i - n) + n := by omega
+      rw [hi, show ((i - n) + n) = (⟨fun i => i + n, add_left_injective n⟩ : ℕ ↪ ℕ) (i - n)
+          from rfl, Finsupp.embDomain_apply_self, Finsupp.filter_apply]
+      split
+      · exact hb _
+      · exact hp0
+    · rw [Finsupp.embDomain_of_notMem_range _ _ _
+        (by rintro ⟨k, hk⟩; simp only [Function.Embedding.coeFn_mk] at hk; omega)]
+      exact hp0
+
+omit [hp : Fact (Nat.Prime p)] in
+/-- Gap insertion preserves the digit sum. -/
+theorem gapDig_sum (j n : ℕ) (b : ℕ →₀ ℕ) :
+    ((gapDig j n b).sum fun _ v => v) = b.sum fun _ v => v := by
+  have hfilter : ∀ (q : ℕ → Prop) [DecidablePred q],
+      ((b.filter q).sum fun _ v => v) = ∑ i ∈ b.support with q i, b i := by
+    intro q _
+    rw [Finsupp.sum, Finsupp.support_filter]
+    exact Finset.sum_congr rfl fun i hi =>
+      Finsupp.filter_apply_pos _ _ (Finset.mem_filter.mp hi).2
+  rw [gapDig, Finsupp.sum_add_index' (fun _ => rfl) (fun _ _ _ => rfl),
+    Finsupp.sum_embDomain, hfilter (fun i => i < j - 1), hfilter (fun i => j - 1 ≤ i),
+    show (b.support.filter fun i => j - 1 ≤ i) = b.support.filter fun i => ¬i < j - 1 from
+      Finset.filter_congr fun i _ => not_lt.symm,
+    Finset.sum_filter_add_sum_filter_not]
+  rfl
+
+omit [hp : Fact (Nat.Prime p)] in
+/-- The fractional value of the gap-inserted expansion is the (negated) twist
+evaluation point of `twistSeq`. -/
+theorem fracVal_gapDig (hp0 : 0 < p) (j n : ℕ) (b : ℕ →₀ ℕ) :
+    fracVal p (gapDig j n b)
+      = (∑ i ∈ Finset.range (j - 1), (b i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)))
+        + (p : ℚ) ^ (-(n : ℤ)) *
+            ∑ i ∈ b.support.filter (fun i => j - 1 ≤ i),
+              (b i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)) := by
+  rw [gapDig, fracVal_add]
+  congr 1
+  · -- The prefix part: extend the sum over the filtered support to the full window.
+    rw [fracVal, Finsupp.sum, Finsupp.support_filter]
+    rw [show ∀ s : Finset ℕ, (∑ i ∈ s, ((b.filter fun i => i < j - 1) i : ℚ)
+          * (p : ℚ) ^ (-(i + 1 : ℤ)))
+        = ∑ i ∈ s, if i < j - 1 then (b i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)) else 0 from
+        fun s => Finset.sum_congr rfl fun i _ => by
+          rw [Finsupp.filter_apply]
+          split <;> simp]
+    rw [Finset.sum_ite_of_true (fun i hi => (Finset.mem_filter.mp hi).2) _ _]
+    refine Finset.sum_subset (fun i hi => Finset.mem_range.mpr (Finset.mem_filter.mp hi).2)
+      fun i hi hni => ?_
+    have : b i = 0 := by
+      by_contra hbi
+      exact hni (Finset.mem_filter.mpr ⟨Finsupp.mem_support_iff.mpr hbi,
+        Finset.mem_range.mp hi⟩)
+    rw [this]
+    simp
+  · -- The tail part: the shift by `n` factors out as `p^{-n}`.
+    rw [fracVal, Finsupp.sum_embDomain, Finsupp.sum, Finsupp.support_filter,
+      Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i hi => ?_
+    rw [Finsupp.filter_apply_pos _ _ (Finset.mem_filter.mp hi).2,
+      Function.Embedding.coeFn_mk]
+    rw [show (-(↑(i + n) + 1) : ℤ) = (-(n : ℤ)) + (-(i + 1 : ℤ)) by push_cast; ring,
+      zpow_add₀ (by exact_mod_cast hp0.ne' : (p : ℚ) ≠ 0)]
+    ring
+
 /-! ### The additive carry estimate -/
 
 /-- **Carry estimate for sums of support sets**:
@@ -210,5 +305,89 @@ theorem Sabc_add_subset {a : ℕ+} {b b' c c' : ℕ} {s s' : ℚ}
   rw [fracVal_def p d, fracVal_def p d', fracVal_def p dd]
   push_cast
   linear_combination (-(1 / (a : ℚ))) * hfv
+
+/-! ### Twist-sequence vanishing off the support data -/
+
+/-- Twist sequences evaluate `f` at the negated value of the gap-inserted expansion. -/
+theorem twistSeq_eq_neg_fracVal_gapDig (f : ℚ → 𝔽ᵃ_[p]) (j : ℕ) (b : ℕ →₀ ℕ) (n : ℕ) :
+    twistSeq p f j b n = f (-fracVal p (gapDig j n b)) := by
+  rw [twistSeq]
+  congr 1
+  rw [fracVal_gapDig p hp.out.pos]
+  ring
+
+/-- Membership of `(1/a)(m - w)` in `S_{a,b,c}`, with `w` the value of a canonical digit
+expansion, forces the defining bounds on the integer part and the digit sum: the
+canonical representation of a member of `S_{a,b,c}` is unique. -/
+theorem Sabc_mem_canonical {a : ℕ+} {b c : ℕ} {m : ℤ} {e : ℕ →₀ ℕ}
+    (he : ∀ i, e i < p)
+    (hmem : (1 / (a : ℚ)) * ((m : ℚ) - fracVal p e) ∈ Sabc p a b c) :
+    -(b : ℤ) ≤ m ∧ (e.sum fun _ v => v) ≤ c := by
+  obtain ⟨n, d, hn, hd, hsum, heq⟩ := hmem
+  have ha : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+  rw [fracVal_def] at heq
+  have h2 : (m : ℚ) - fracVal p e = (n : ℚ) - fracVal p d :=
+    mul_left_cancel₀ (one_div_ne_zero ha) heq
+  have hde := fracVal_lt_one p hp.out.one_lt hd
+  have hee := fracVal_lt_one p hp.out.one_lt he
+  have hdnn := fracVal_nonneg p d
+  have henn := fracVal_nonneg p e
+  have hmn : m = n := by
+    have hcast : ((m - n : ℤ) : ℚ) = fracVal p e - fracVal p d := by push_cast; linarith
+    have h1 : |((m - n : ℤ) : ℚ)| < 1 := by
+      rw [hcast, abs_lt]
+      constructor <;> linarith
+    rw [← Int.cast_abs] at h1
+    have h3 : |m - n| < 1 := by exact_mod_cast h1
+    have h4 := abs_lt.mp h3
+    omega
+  subst hmn
+  have hw : fracVal p e = fracVal p d := by linarith
+  rw [eq_of_fracVal_eq p hp.out.one_lt he hd hw]
+  exact ⟨hn, hsum⟩
+
+/-- **Slices sampled outside the support data vanish on all twist points**: if `x` is
+supported in `S_{a,b,c}` and either the slice index satisfies `m < -b` or the digit sum
+of `dig` exceeds `c`, then every term of every twist sequence of the slice function
+`f_m(z) = x_{(m+z)/a}` is `0`.  This is uniqueness of the canonical representation:
+the twist evaluation points carry the digits of `dig` verbatim (with a gap), so their
+canonical expansions have the same digit sum and integer part `m`. -/
+theorem twistSeq_slice_eq_zero {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    (hsupp : x.support ⊆ Sabc p a b c) {m : ℤ} {dig : ℕ →₀ ℕ}
+    (hdig : ∀ i, dig i < p)
+    (hout : m < -(b : ℤ) ∨ c < (dig.sum fun _ v => v)) (j n : ℕ) :
+    twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) j dig n = 0 := by
+  rw [twistSeq_eq_neg_fracVal_gapDig]
+  by_contra h0
+  have hmem : ((m : ℚ) + -fracVal p (gapDig j n dig)) / (a : ℚ) ∈ Sabc p a b c :=
+    hsupp ((HahnSeries.mem_support _ _).mpr h0)
+  rw [show ((m : ℚ) + -fracVal p (gapDig j n dig)) / (a : ℚ)
+      = (1 / (a : ℚ)) * ((m : ℚ) - fracVal p (gapDig j n dig)) by ring] at hmem
+  have hbounds := Sabc_mem_canonical p (gapDig_lt p hdig hp.out.pos j n) hmem
+  rw [gapDig_sum] at hbounds
+  rcases hout with h | h
+  · omega
+  · omega
+
+/-- **Robustness of uniform periodicity**: for `x` supported in `S_{a,b,c}` whose
+slices `m ≥ -b` are `(M,N)`-periodic at level `c`, *every* slice `m : ℤ` is
+`(M,N)`-periodic at *every* level `c'`.  Indeed twist sequences outside the support
+data are identically zero by `twistSeq_slice_eq_zero`.  This makes the support/level
+parameters of `IsUP` freely enlargeable, which the closure lemmas use to pass to
+common parameters. -/
+theorem isTwistPeriodic_slice_upgrade {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (hsupp : x.support ⊆ Sabc p a b c)
+    (hper : ∀ m : ℤ, -(b : ℤ) ≤ m →
+      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) c M N)
+    (c' : ℕ) (m : ℤ) :
+    IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) c' M N := by
+  intro j dig hj hdig hsum n hn
+  by_cases hm : -(b : ℤ) ≤ m
+  · by_cases hc : (dig.sum fun _ v => v) ≤ c
+    · exact hper m hm j dig hj hdig hc n hn
+    · rw [twistSeq_slice_eq_zero p hsupp hdig (Or.inr (by omega)) j (n + N),
+        twistSeq_slice_eq_zero p hsupp hdig (Or.inr (by omega)) j n]
+  · rw [twistSeq_slice_eq_zero p hsupp hdig (Or.inl (by omega)) j (n + N),
+      twistSeq_slice_eq_zero p hsupp hdig (Or.inl (by omega)) j n]
 
 end TrustworthyKedlaya.UP

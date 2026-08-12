@@ -216,6 +216,67 @@ theorem fracVal_lt_one (hp : 1 < p) {d : ℕ →₀ ℕ} (hd : ∀ i, d i < p) :
   rw [hdiv, div_lt_one hpL]
   exact_mod_cast hV
 
+/-- Digit extraction from `ofDigits`: for a list of digits `< p`, the `j`-th digit is
+recovered from the value by `/ p^j % p`. -/
+theorem ofDigits_div_pow_mod (hp : 1 < p) (l : List ℕ) (hl : ∀ x ∈ l, x < p) :
+    ∀ j : ℕ, Nat.ofDigits p l / p ^ j % p = l.getD j 0 := by
+  induction l with
+  | nil => intro j; simp
+  | cons a t ih =>
+    intro j
+    have ha : a < p := hl a List.mem_cons_self
+    cases j with
+    | zero =>
+      rw [Nat.ofDigits_cons, pow_zero, Nat.div_one, List.getD_cons_zero,
+        Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt ha]
+    | succ j =>
+      have hdiv : (a + p * Nat.ofDigits p t : ℕ) / p ^ (j + 1)
+          = Nat.ofDigits p t / p ^ j := by
+        rw [pow_succ', ← Nat.div_div_eq_div_mul,
+          Nat.add_mul_div_left a _ (by omega : 0 < p), Nat.div_eq_of_lt ha, zero_add]
+      rw [Nat.ofDigits_cons, hdiv, List.getD_cons_succ]
+      exact ih (fun x hx => hl x (List.mem_cons_of_mem a hx)) j
+
+/-- `getD` of a list built by mapping over `List.range`. -/
+theorem getD_range_map (f : ℕ → ℕ) {L j : ℕ} (h : j < L) :
+    ((List.range L).map f).getD j 0 = f j := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range h]
+  rfl
+
+/-- **Canonical fractional expansions are unique**: a finitely supported digit function
+with all digits `< p` is determined by its fractional value. -/
+theorem eq_of_fracVal_eq (hp : 1 < p) {d e : ℕ →₀ ℕ} (hd : ∀ i, d i < p)
+    (he : ∀ i, e i < p) (h : fracVal p d = fracVal p e) : d = e := by
+  obtain ⟨L, hL⟩ := (d.support ∪ e.support).exists_nat_subset_range
+  have hdL : d.support ⊆ range L := Finset.union_subset_iff.mp hL |>.1
+  have heL : e.support ⊆ range L := Finset.union_subset_iff.mp hL |>.2
+  have hd' := fracVal_mul_pow p (by omega) d hdL
+  have he' := fracVal_mul_pow p (by omega) e heL
+  rw [h] at hd'
+  have hV : Nat.ofDigits p ((List.range L).map fun j => d (L - 1 - j))
+      = Nat.ofDigits p ((List.range L).map fun j => e (L - 1 - j)) := by
+    exact_mod_cast hd'.symm.trans he'
+  have hld : ∀ x ∈ (List.range L).map fun j => d (L - 1 - j), x < p := by
+    rintro x hx
+    obtain ⟨j, -, rfl⟩ := List.mem_map.mp hx
+    exact hd _
+  have hle : ∀ x ∈ (List.range L).map fun j => e (L - 1 - j), x < p := by
+    rintro x hx
+    obtain ⟨j, -, rfl⟩ := List.mem_map.mp hx
+    exact he _
+  ext i
+  by_cases hiL : i < L
+  · have hji : L - 1 - (L - 1 - i) = i := by omega
+    have h1 := ofDigits_div_pow_mod p hp _ hld (L - 1 - i)
+    have h2 := ofDigits_div_pow_mod p hp _ hle (L - 1 - i)
+    rw [getD_range_map _ (by omega), hji] at h1 h2
+    rw [← h1, ← h2, hV]
+  · have h1 : d i = 0 := Finsupp.notMem_support_iff.mp
+      (fun hmem => hiL (Finset.mem_range.mp (hdL hmem)))
+    have h2 : e i = 0 := Finsupp.notMem_support_iff.mp
+      (fun hmem => hiL (Finset.mem_range.mp (heL hmem)))
+    rw [h1, h2]
+
 /-- The canonical digit finsupp of `C / p^L` for `C < p^L`: position `i` (of value
 `p^{-(i+1)}`) carries the `(L-1-i)`-th base-`p` digit of `C`. -/
 noncomputable def digitFinsupp (C L : ℕ) : ℕ →₀ ℕ :=
