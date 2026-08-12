@@ -384,4 +384,84 @@ theorem exists_carrySum (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) :
   rw [hg0, hgL]
   ring
 
+
+/-! ### Gap confinement
+
+If the result digits vanish on a widening gap `[j, j+n)` and the total column sum of
+`w` is bounded by `s < (K+1)(p-1)`, carries die out within the first `K` gap columns:
+from `j+K` on, `w` is zero on the gap and no carry crosses.  This is the confinement
+half of `lem:digit-carry-gap`. -/
+
+/-- Carry bits propagate leftwards through a run of zero result digits: a carry at
+gap column `d + m` forces carries at all gap columns down to `d`. -/
+theorem carryBit_eq_one_of_gap (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {j n : ℕ}
+    (hgap : ∀ d, j ≤ d → d < j + n → carryDigit p w d = 0) :
+    ∀ m d, j ≤ d → d + m < j + n → carryBit p w (d + m) = 1 → carryBit p w d = 1 := by
+  intro m
+  induction m with
+  | zero => intro d _ _ h; simpa using h
+  | succ m ih =>
+    intro d hd hdm h1
+    have hbit : carryBit p w (d + m) = 1 := by
+      have hstep := carryBit_propagate p w hw
+        (hgap (d + m) (by omega) (by omega)) (by rwa [show d + m + 1 = d + (m + 1) by ring])
+      exact hstep.1
+    exact ih d hd (by omega) hbit
+
+/-- **Gap confinement**: suppose the result digits of the column reduction of `w`
+vanish on the gap columns `[j, j+n)`, the total column sum of `w` is at most `s`, and
+`s < (K+1)(p-1)` with `K < n`.  Then no carry crosses any column in `[j+K, j+n]`, and
+the columns of `w` in `[j+K, j+n)` vanish outright. -/
+theorem gap_confinement (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) {s K j n : ℕ}
+    (hs : (w.sum fun _ v => v) ≤ s) (hK : s < (K + 1) * (p - 1))
+    (hgap : ∀ d, j ≤ d → d < j + n → carryDigit p w d = 0) (hKn : K < n) :
+    (∀ d, j + K ≤ d → d ≤ j + n → carryBit p w d = 0) ∧
+      (∀ d, j + K ≤ d → d < j + n → w d = 0) := by
+  -- the carry bit dies at column `j + K`, else `K+1` gap columns each eat `p-1`
+  have hbitJK : carryBit p w (j + K) = 0 := by
+    rcases Nat.le_one_iff_eq_zero_or_eq_one.mp (carryBit_le_one p w (j + K)) with h0 | h1
+    · exact h0
+    exfalso
+    have hall : ∀ d, j ≤ d → d ≤ j + K → carryBit p w d = 1 := by
+      intro d hd hdK
+      exact carryBit_eq_one_of_gap p w hw hgap (j + K - d) d hd (by omega)
+        (by rw [show d + (j + K - d) = j + K by omega]; exact h1)
+    have hbig : ∀ d ∈ Finset.Ico j (j + K + 1), p - 1 ≤ w d := by
+      intro d hd
+      rw [Finset.mem_Ico] at hd
+      exact le_apply_of_carryDigit_eq_zero p w hw
+        (hgap d hd.1 (by omega)) (hall d hd.1 (by omega))
+    have hsum : ∑ d ∈ Finset.Ico j (j + K + 1), w d ≤ (w.sum fun _ v => v) := by
+      rw [Finsupp.sum, ← Finset.sum_filter_ne_zero (Finset.Ico j (j + K + 1))]
+      exact Finset.sum_le_sum_of_subset fun d hd =>
+        Finsupp.mem_support_iff.mpr (Finset.mem_filter.mp hd).2
+    have hlow : (K + 1) * (p - 1) ≤ ∑ d ∈ Finset.Ico j (j + K + 1), w d := by
+      calc (K + 1) * (p - 1)
+          = ∑ _d ∈ Finset.Ico j (j + K + 1), (p - 1) := by
+            rw [Finset.sum_const, Nat.card_Ico, smul_eq_mul]
+            congr 1
+            omega
+        _ ≤ ∑ d ∈ Finset.Ico j (j + K + 1), w d := Finset.sum_le_sum hbig
+    omega
+  -- rightward death: zero bit + zero result digit kill the column and the next bit
+  have hfwd : ∀ m, j + K + m ≤ j + n → carryBit p w (j + K + m) = 0 := by
+    intro m
+    induction m with
+    | zero => intro _; simpa using hbitJK
+    | succ m ih =>
+      intro h
+      have hprev := ih (by omega)
+      have hkill := apply_eq_zero_of_carryDigit_eq_zero p w hw
+        (hgap (j + K + m) (by omega) (by omega)) hprev
+      rw [show j + K + (m + 1) = j + K + m + 1 by ring]
+      exact hkill.2
+  refine ⟨fun d hd hdn => ?_, fun d hd hdn => ?_⟩
+  · have := hfwd (d - (j + K)) (by omega)
+    rwa [show j + K + (d - (j + K)) = d by omega] at this
+  · have hbit : carryBit p w d = 0 := by
+      have := hfwd (d - (j + K)) (by omega)
+      rwa [show j + K + (d - (j + K)) = d by omega] at this
+    exact (apply_eq_zero_of_carryDigit_eq_zero p w hw
+      (hgap d (by omega) hdn) hbit).1
+
 end TrustworthyKedlaya.UP
