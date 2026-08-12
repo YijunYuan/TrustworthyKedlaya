@@ -301,4 +301,133 @@ theorem digitRank_le (c : ℕ) : ∀ (d : ℕ →₀ ℕ), (d.sum fun _ v => v) 
         _ = omega0 ^ ((c : Ordinal) + 1) := by
             rw [Ordinal.opow_add, Ordinal.opow_one]
 
+/-- **Strict rank bound**: a nonzero expansion of digit sum at most `c` has rank
+strictly below `ω^(c+1)` (the rank of the zero expansion). -/
+theorem digitRank_lt_of_ne_zero (c : ℕ) {d : ℕ →₀ ℕ} (hd : d ≠ 0)
+    (hsum : (d.sum fun _ v => v) ≤ c) :
+    digitRank p c d < omega0 ^ ((c : Ordinal) + 1) := by
+  rw [digitRank_of_ne_zero p c hd]
+  set j := leadPos d
+  set v := d j with hv
+  have hv1 : 1 ≤ v := leadPos_pos hd
+  have hvc : v ≤ c := le_trans (apply_leadPos_le_sum d) hsum
+  set m : ℕ := 2 * (j * p + (p - 1 - v)) + 1 with hm
+  have htail : digitRank p (c - v) (d.erase j) ≤ omega0 ^ (((c - v : ℕ) : Ordinal) + 1) :=
+    digitRank_le p (c - v) _ (sum_erase_leadPos hsum)
+  have hexp : omega0 ^ (((c - v : ℕ) : Ordinal) + 1) ≤ omega0 ^ (c : Ordinal) := by
+    apply Ordinal.opow_le_opow_right omega0_pos
+    rw [← Nat.cast_add_one]
+    exact Nat.cast_le.mpr (by omega : c - v + 1 ≤ c)
+  calc omega0 ^ (c : Ordinal) * (m : Ordinal) + digitRank p (c - v) (d.erase j)
+      ≤ omega0 ^ (c : Ordinal) * (m : Ordinal) + omega0 ^ (c : Ordinal) :=
+        add_le_add le_rfl (le_trans htail hexp)
+    _ = omega0 ^ (c : Ordinal) * ((m : Ordinal) + 1) := by rw [mul_add, mul_one]
+    _ < omega0 ^ (c : Ordinal) * omega0 := by
+        apply mul_lt_mul_of_pos_left ?_ (Ordinal.opow_pos _ omega0_pos)
+        rw [← Nat.cast_add_one]
+        exact natCast_lt_omega0 (m + 1)
+    _ = omega0 ^ ((c : Ordinal) + 1) := by rw [Ordinal.opow_add, Ordinal.opow_one]
+
+/-- The digits of the tail are still canonical. -/
+theorem erase_apply_lt {d : ℕ →₀ ℕ} (hd : ∀ i, d i < p) (j i : ℕ) : (d.erase j) i < p := by
+  rw [Finsupp.erase_apply]
+  split
+  · exact (Nat.zero_le _).trans_lt (hd i)
+  · exact hd i
+
+/-- **Rank monotonicity**: among canonical expansions of digit sum at most `c`, a larger
+fractional value means a strictly smaller digit rank. -/
+theorem digitRank_lt_of_fracVal_lt (hp : 1 < p) :
+    ∀ (c : ℕ) {d e : ℕ →₀ ℕ}, (∀ i, d i < p) → (∀ i, e i < p) →
+      (d.sum fun _ v => v) ≤ c → (e.sum fun _ v => v) ≤ c →
+      fracVal p e < fracVal p d →
+      digitRank p c d < digitRank p c e := by
+  intro c
+  induction c using Nat.strong_induction_on with
+  | _ c ih =>
+    intro d e hd he hsumd hsume hlt
+    have hdne : d ≠ 0 := by
+      rintro rfl
+      rw [fracVal_zero] at hlt
+      exact absurd hlt (not_lt.mpr (fracVal_nonneg p e))
+    rcases eq_or_ne e 0 with rfl | hene
+    · rw [digitRank_zero]
+      exact digitRank_lt_of_ne_zero p c hdne hsumd
+    · set jd := leadPos d with hjd
+      set je := leadPos e with hje
+      set vd := d jd with hvd
+      set ve := e je with hve
+      have hvd1 : 1 ≤ vd := leadPos_pos hdne
+      have hve1 : 1 ≤ ve := leadPos_pos hene
+      have hvdp : vd < p := hd jd
+      have hvep : ve < p := he je
+      have hvdc : vd ≤ c := le_trans (apply_leadPos_le_sum d) hsumd
+      have hvec : ve ≤ c := le_trans (apply_leadPos_le_sum e) hsume
+      -- A strictly smaller head coefficient forces a strictly smaller total rank.
+      have hcase : 2 * (jd * p + (p - 1 - vd)) + 1 < 2 * (je * p + (p - 1 - ve)) + 1 →
+          digitRank p c d < digitRank p c e := by
+        intro hm
+        rw [digitRank_of_ne_zero p c hdne, digitRank_of_ne_zero p c hene, ← hjd, ← hje,
+          ← hvd, ← hve]
+        set md : ℕ := 2 * (jd * p + (p - 1 - vd)) + 1
+        set me : ℕ := 2 * (je * p + (p - 1 - ve)) + 1
+        have htail : digitRank p (c - vd) (d.erase jd) ≤ omega0 ^ (((c - vd : ℕ) : Ordinal) + 1) :=
+          digitRank_le p (c - vd) _ (sum_erase_leadPos hsumd)
+        have hexp : omega0 ^ (((c - vd : ℕ) : Ordinal) + 1) ≤ omega0 ^ (c : Ordinal) := by
+          apply Ordinal.opow_le_opow_right omega0_pos
+          rw [← Nat.cast_add_one]
+          exact Nat.cast_le.mpr (by omega : c - vd + 1 ≤ c)
+        calc omega0 ^ (c : Ordinal) * (md : Ordinal) + digitRank p (c - vd) (d.erase jd)
+            ≤ omega0 ^ (c : Ordinal) * (md : Ordinal) + omega0 ^ (c : Ordinal) :=
+              add_le_add le_rfl (le_trans htail hexp)
+          _ = omega0 ^ (c : Ordinal) * ((md : Ordinal) + 1) := by rw [mul_add, mul_one]
+          _ < omega0 ^ (c : Ordinal) * (me : Ordinal) := by
+              apply mul_lt_mul_of_pos_left ?_ (Ordinal.opow_pos _ omega0_pos)
+              rw [← Nat.cast_add_one]
+              exact Nat.cast_lt.mpr (by omega)
+          _ ≤ omega0 ^ (c : Ordinal) * (me : Ordinal)
+                + digitRank p (c - ve) (e.erase je) := le_add_right le_rfl
+      rcases lt_trichotomy jd je with hj | hj | hj
+      · -- `d` leads strictly earlier: strictly smaller head coefficient.
+        refine hcase ?_
+        have h1 : (jd + 1) * p ≤ je * p := Nat.mul_le_mul_right p (by omega)
+        rw [add_one_mul] at h1
+        omega
+      · -- Same leading position: compare the leading digits.
+        rcases lt_trichotomy vd ve with hv | hv | hv
+        · -- `e` has the larger leading digit: then `fracVal d < fracVal e`, absurd.
+          have := fracVal_lt_fracVal_of_lead p hp hd hene
+            (Or.inr ⟨by rw [← hje, ← hjd, hj], by rw [← hje, ← hjd, ← hve, ← hvd]; exact hv⟩)
+          exact absurd hlt (asymm this)
+        · -- Equal heads: recurse on the tails at budget `c - vd`.
+          have hveq : ve = vd := hv.symm
+          have hdj : d je = vd := by rw [← hj, ← hvd]
+          have hej : e je = vd := by rw [← hve, hveq]
+          have htails : fracVal p (e.erase je) < fracVal p (d.erase je) := by
+            have h1 := fracVal_eq_apply_add_erase p je d
+            have h2 := fracVal_eq_apply_add_erase p je e
+            rw [hdj] at h1
+            rw [hej] at h2
+            rw [h1, h2] at hlt
+            linarith
+          have hsumd' : ((d.erase je).sum fun _ v => v) ≤ c - vd := by
+            rw [← hj]
+            exact sum_erase_leadPos hsumd
+          have hsume' : ((e.erase je).sum fun _ v => v) ≤ c - vd := by
+            rw [← hveq]
+            exact sum_erase_leadPos hsume
+          have hrec := ih (c - vd) (by omega)
+            (erase_apply_lt p hd je) (erase_apply_lt p he je)
+            hsumd' hsume' htails
+          rw [digitRank_of_ne_zero p c hdne, digitRank_of_ne_zero p c hene, ← hjd, ← hje,
+            ← hvd, ← hve, hj, hveq]
+          exact (add_lt_add_iff_left _).mpr hrec
+        · -- `d` has the larger leading digit: strictly smaller head coefficient.
+          refine hcase ?_
+          rw [hj]
+          omega
+      · -- `e` leads strictly earlier: then `fracVal d < fracVal e`, absurd.
+        have := fracVal_lt_fracVal_of_lead p hp hd hene (Or.inl (by rw [← hje, ← hjd]; exact hj))
+        exact absurd hlt (asymm this)
+
 end TrustworthyKedlaya.UP
