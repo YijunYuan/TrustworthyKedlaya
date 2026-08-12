@@ -71,6 +71,24 @@ theorem dropGapDig_gapDig (i₀ L : ℕ) (w : ℕ →₀ ℕ) :
       if_pos (by omega), Nat.add_sub_cancel]
 
 omit hp in
+/-- Consecutive zero-run insertions at the same position merge. -/
+theorem gapDig_gapDig (i₀ L L' : ℕ) (w : ℕ →₀ ℕ) :
+    gapDig (i₀ + 1) L (gapDig (i₀ + 1) L' w) = gapDig (i₀ + 1) (L' + L) w := by
+  ext i
+  simp only [gapDig_apply, Nat.add_sub_cancel]
+  by_cases h1 : i < i₀
+  · rw [if_pos h1, if_pos h1, if_pos h1]
+  · rw [if_neg h1, if_neg h1]
+    by_cases h2 : i₀ + L ≤ i
+    · rw [if_pos h2, if_neg (by omega : ¬i - L < i₀)]
+      by_cases h3 : i₀ + (L' + L) ≤ i
+      · rw [if_pos (by omega : i₀ + L' ≤ i - L), if_pos h3]
+        congr 1
+        omega
+      · rw [if_neg (by omega : ¬i₀ + L' ≤ i - L), if_neg h3]
+    · rw [if_neg h2, if_neg (by omega : ¬i₀ + (L' + L) ≤ i)]
+
+omit hp in
 /-- Consecutive deletions at the same position merge. -/
 theorem dropGapDig_dropGapDig (i₀ L L' : ℕ) (e : ℕ →₀ ℕ) :
     dropGapDig i₀ L' (dropGapDig i₀ L e) = dropGapDig i₀ (L + L') e := by

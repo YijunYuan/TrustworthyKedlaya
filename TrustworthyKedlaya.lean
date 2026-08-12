@@ -14,6 +14,7 @@ import TrustworthyKedlaya.Galois
 import TrustworthyKedlaya.GapContraction
 import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.Miscellaneous
+import TrustworthyKedlaya.Multiplicative
 import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.SupportSets
