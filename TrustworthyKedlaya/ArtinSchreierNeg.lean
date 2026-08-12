@@ -244,4 +244,139 @@ theorem Sabc_mem_div_pow_of_neg {a : ℕ+} {b c : ℕ} {s : ℚ}
             rw [hkey]
         _ = (1 / (a : ℚ)) * (-(k : ℚ) - fracVal p dd) * (p : ℚ) ^ (n + 1 : ℕ) := by ring
 
+/-! ### Construction of the root -/
+
+/-- The coefficient family of the candidate Artin-Schreier root at exponent `i`:
+`n ↦ (y_{i·p^n})^{1/p^n}` (the root is `x_i = ∑_{n ≥ 1}` of these). -/
+noncomputable def asRootTerm (y : HahnSeries ℚ (𝔽ᵃ_[p])) (i : ℚ) (n : ℕ) : 𝔽ᵃ_[p] :=
+  ((frobeniusEquiv (𝔽ᵃ_[p]) p).symm)^[n] (y.coeff (i * (p : ℚ) ^ n))
+
+/-- A term vanishes exactly when the sampled coefficient of `y` does. -/
+theorem asRootTerm_eq_zero_iff {y : HahnSeries ℚ (𝔽ᵃ_[p])} {i : ℚ} {n : ℕ} :
+    asRootTerm p y i n = 0 ↔ y.coeff (i * (p : ℚ) ^ n) = 0 := by
+  constructor
+  · intro h
+    have := congrArg (fun v => v ^ p ^ n) h
+    simpa only [asRootTerm, iterate_frobeniusEquiv_symm_pow_p_pow,
+      zero_pow (pow_ne_zero n hp.out.ne_zero)] using this
+  · intro h
+    rw [asRootTerm, h, invFrobenius_iterate_zero]
+
+/-- Only finitely many terms of the root family are nonzero, at every exponent `i`. -/
+theorem asRootTerm_support_finite {y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    (hsupp : y.support ⊆ Sabc p a b c) (hneg : y.support ⊆ Set.Iio 0) (i : ℚ) :
+    (Function.support (asRootTerm p y i)).Finite := by
+  have hp1 : (1 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.one_lt
+  rcases le_or_gt 0 i with hi | hi
+  · -- nonnegative exponents sample `y` at nonnegative points: all terms vanish
+    convert Set.finite_empty
+    ext n
+    simp only [Function.mem_support, Set.mem_empty_iff_false, iff_false, not_not]
+    rw [asRootTerm_eq_zero_iff]
+    by_contra h0
+    have := hneg ((HahnSeries.mem_support _ _).mpr h0)
+    rw [Set.mem_Iio] at this
+    have hpn : (0 : ℚ) < (p : ℚ) ^ n := by positivity
+    nlinarith
+  · -- negative exponents escape the support bound for large `n`
+    obtain ⟨K, hK⟩ := pow_unbounded_of_one_lt ((((b : ℚ) + 1) / (a : ℚ)) / (-i)) hp1
+    apply Set.Finite.subset (Set.finite_Iio K)
+    intro n hn
+    rw [Function.mem_support] at hn
+    have hcoeff : y.coeff (i * (p : ℚ) ^ n) ≠ 0 := fun h0 =>
+      hn (asRootTerm_eq_zero_iff p |>.mpr h0)
+    have hlow := neg_lt_of_mem_Sabc p (hsupp ((HahnSeries.mem_support _ _).mpr hcoeff))
+    have hipos : (0 : ℚ) < -i := by linarith
+    have hQ : (0 : ℚ) < ((b : ℚ) + 1) / (a : ℚ) := by positivity
+    have h1 : (-i) * (p : ℚ) ^ n < ((b : ℚ) + 1) / (a : ℚ) := by linarith
+    have h2 : (p : ℚ) ^ n < (((b : ℚ) + 1) / (a : ℚ)) / (-i) := by
+      rw [lt_div_iff₀ hipos]
+      linarith [h1]
+    have h3 : (p : ℚ) ^ n < (p : ℚ) ^ K := h2.trans hK
+    have h4 : n < K := by
+      by_contra hcon
+      exact absurd (pow_le_pow_right₀ hp1.le (not_lt.mp hcon)) (not_le.mpr h3)
+    exact Set.mem_Iio.mpr h4
+
+/-- **Existence of the Hahn-series Artin-Schreier root**: for `y` supported in
+`S_{a,b,c} ∩ (-∞,0)` there is a Hahn series `x` supported in `S_{a,b,b+c} ∩ (-∞,0)`
+with `x^p = x + y` — the series `x = ∑_i t^i ∑_{n ≥ 1} (y_{i·p^n})^{1/p^n}`. -/
+theorem exists_hahn_asRoot_of_neg_support {y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    (hsupp : y.support ⊆ Sabc p a b c) (hneg : y.support ⊆ Set.Iio 0) :
+    ∃ x : HahnSeries ℚ (𝔽ᵃ_[p]), x ^ p = x + y ∧
+      x.support ⊆ Sabc p a b (b + c) ∧ x.support ⊆ Set.Iio 0 := by
+  have hpq : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp.out.pos.ne'
+  -- the coefficient function
+  set F : ℚ → 𝔽ᵃ_[p] := fun i => ∑ᶠ n : ℕ, asRootTerm p y i (n + 1) with hF
+  -- its support properties
+  have hFsuppSabc : ∀ i, F i ≠ 0 → i ∈ Sabc p a b (b + c) ∧ i < 0 := by
+    intro i hi
+    have hex : ∃ n : ℕ, asRootTerm p y i (n + 1) ≠ 0 := by
+      by_contra hall
+      push Not at hall
+      exact hi (finsum_eq_zero_of_forall_eq_zero hall)
+    obtain ⟨n, hn⟩ := hex
+    have hcoeff : y.coeff (i * (p : ℚ) ^ (n + 1)) ≠ 0 := fun h0 =>
+      hn (asRootTerm_eq_zero_iff p |>.mpr h0)
+    have hmem := hsupp ((HahnSeries.mem_support _ _).mpr hcoeff)
+    have hmemneg := hneg ((HahnSeries.mem_support _ _).mpr hcoeff)
+    rw [Set.mem_Iio] at hmemneg
+    have hpn : (0 : ℚ) < (p : ℚ) ^ (n + 1) := by positivity
+    have hidiv : i = (i * (p : ℚ) ^ (n + 1)) / (p : ℚ) ^ (n + 1) := by
+      field_simp
+    constructor
+    · rw [hidiv]
+      exact Sabc_mem_div_pow_of_neg p hmem hmemneg (n + 1)
+    · nlinarith
+  have hFpwo : (Function.support F).IsPWO :=
+    (Sabc_isPWO p a b (b + c)).mono fun i hi => (hFsuppSabc i hi).1
+  set x : HahnSeries ℚ (𝔽ᵃ_[p]) := ⟨F, hFpwo⟩ with hx
+  have hxcoeff : ∀ i, x.coeff i = ∑ᶠ n : ℕ, asRootTerm p y i (n + 1) := fun _ => rfl
+  -- the key coefficientwise relation
+  have hkey : ∀ g : ℚ, (x.coeff g) ^ p
+      = x.coeff ((p : ℚ) * g) + y.coeff ((p : ℚ) * g) := by
+    intro g
+    -- the family at exponent `p·g` with the plain iterate index; the term of `x_g` at
+    -- `n + 1` and the term of the family at `n` sample `y` at the same point
+    set G : ℕ → 𝔽ᵃ_[p] := asRootTerm p y ((p : ℚ) * g) with hG
+    have hpoint : ∀ n : ℕ, g * (p : ℚ) ^ (n + 1) = ((p : ℚ) * g) * (p : ℚ) ^ n :=
+      fun n => by ring
+    have hGfin : (Function.support G).Finite := asRootTerm_support_finite p hsupp hneg _
+    obtain ⟨K, hK⟩ := hGfin.bddAbove
+    have hGsub : Function.support G ⊆ ↑(Finset.range (K + 1)) := fun x hx => by
+      simp only [Finset.coe_range, Set.mem_Iio]
+      exact Nat.lt_succ_of_le (hK hx)
+    have hTsub : Function.support (fun n => asRootTerm p y g (n + 1))
+        ⊆ ↑(Finset.range (K + 1)) := by
+      intro n hn
+      rw [Function.mem_support] at hn
+      refine hGsub (Function.mem_support.mpr fun h0 => hn ?_)
+      rw [hG, asRootTerm_eq_zero_iff, ← hpoint n] at h0
+      exact asRootTerm_eq_zero_iff p |>.mpr h0
+    -- termwise `p`-th powers step the iterate index down by one
+    have hterm : ∀ n : ℕ, (asRootTerm p y g (n + 1)) ^ p = G n := by
+      intro n
+      rw [asRootTerm, Function.iterate_succ_apply', frobeniusEquiv_symm_pow_p,
+        hpoint n, hG, asRootTerm]
+    calc (x.coeff g) ^ p
+        = (∑ n ∈ Finset.range (K + 1), asRootTerm p y g (n + 1)) ^ p := by
+          rw [hxcoeff g, finsum_eq_sum_of_support_subset _ hTsub]
+      _ = ∑ n ∈ Finset.range (K + 1), (asRootTerm p y g (n + 1)) ^ p := by
+          rw [sum_pow_char]
+      _ = ∑ n ∈ Finset.range (K + 1), G n := Finset.sum_congr rfl fun n _ => hterm n
+      _ = ∑ᶠ n, G n := (finsum_eq_sum_of_support_subset _ hGsub).symm
+      _ = G 0 + ∑ᶠ n, G (n + 1) := finsum_nat_eq_zero_add hGfin
+      _ = y.coeff ((p : ℚ) * g) + x.coeff ((p : ℚ) * g) := by
+          rw [hxcoeff, hG, show asRootTerm p y ((p : ℚ) * g) 0
+              = y.coeff ((p : ℚ) * g) from by
+            rw [asRootTerm, Function.iterate_zero_apply, pow_zero, mul_one]]
+      _ = x.coeff ((p : ℚ) * g) + y.coeff ((p : ℚ) * g) := add_comm _ _
+  -- the Artin-Schreier identity
+  refine ⟨x, ?_, fun i hi => (hFsuppSabc i hi).1, fun i hi =>
+    Set.mem_Iio.mpr (hFsuppSabc i hi).2⟩
+  ext g
+  rw [coeff_pow_char, HahnSeries.coeff_add]
+  have := hkey (g / (p : ℚ))
+  rwa [mul_div_cancel₀ g hpq] at this
+
 end TrustworthyKedlaya.UP
