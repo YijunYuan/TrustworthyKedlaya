@@ -9,6 +9,7 @@ public import TrustworthyKedlaya.PAdicHahnSeries
 public import Mathlib.RingTheory.IntegralClosure.Algebra.Basic
 public import Mathlib.RingTheory.LaurentSeries
 public import Mathlib.Topology.Defs.Basic
+import TrustworthyKedlaya.SeparableUP
 
 /-!
 ## Main statements
@@ -22,8 +23,11 @@ public import Mathlib.Topology.Defs.Basic
 
 ## Implementation notes
 
-Every statement in this file is deliberately admitted; these are the only intentional `admit`s in
-the project. They are external inputs, not gaps in our own arguments.
+The statements still ending in `admit` are deliberately admitted; these are the only intentional
+`admit`s in the project. They are external inputs, not gaps in our own arguments.
+`kedlaya_2001a_theorem15_half` is fully proved: its conclusion is definitionally
+`TrustworthyKedlaya.UP.IsUP` (pinned in `DefeqGuards.lean`), established for integral elements in
+`TrustworthyKedlaya.SeparableUP`.
 
 ## References
 
@@ -119,8 +123,8 @@ theorem kedlaya_2001a_theorem15_half (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
           ∀ (j : ℕ) (dig : ℕ →₀ ℕ), 0 < j → (∀ i, dig i < p) →
             (dig.sum fun _ v => v) ≤ c →
             ∀ n : ℕ, M ≤ n →
-              twistSeq p fm j dig (n + N) = twistSeq p fm j dig n) ) := by
-  admit
+              twistSeq p fm j dig (n + N) = twistSeq p fm j dig n) ) :=
+  fun hx => UP.isUP_of_isIntegral hx
 
 open LaurentSeries in
 /-- **Kedlaya (2017), Theorem 13.4.** The completion of the integral closure of `ℚᵘⁿ_[p]` in
