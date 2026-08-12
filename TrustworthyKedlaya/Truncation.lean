@@ -11,14 +11,15 @@ public import TrustworthyKedlaya.SupportSets
 /-!
 # Truncation at an integer point preserves UP
 
-For a series with support data `(1, b, c)` — slice width `1` — truncation at the
-integer point `0` keeps or discards each slice wholesale: for the slice at `m`, every
-twist evaluation point `z` satisfies `z ∈ (-1, 0]`, so the sampled exponent `m + z`
-lies in `(m - 1, m]`, which is entirely `< 0` for `m ≤ 0` (except the single point
-`z = 0` of the slice `m = 0`, reachable only by the zero digit string, whose twist
-sequences are constant) and entirely `> 0` for `m ≥ 1`.  Hence every twist sequence of
-a slice of a truncation of `x` is a twist sequence of the corresponding slice of `x`,
-or identically zero, or constant — and `(M, N)`-periodicity is inherited unchanged.
+For a series with support data `(a, b, c)`, truncation at the point `0` keeps or
+discards each slice wholesale: for the slice at `m`, every twist evaluation point `z`
+satisfies `z ∈ (-1, 0]`, so the sampled exponent `(m + z)/a` lies in
+`((m - 1)/a, m/a]`, which is entirely `< 0` for `m ≤ 0` (except the single boundary
+point `z = 0` of the slice `m = 0`, reachable only by the zero digit string, whose
+twist sequences are constant) and entirely `> 0` for `m ≥ 1`.  Hence every twist
+sequence of a slice of a truncation of `x` is a twist sequence of the corresponding
+slice of `x`, or identically zero, or constant — and `(M, N)`-periodicity is
+inherited unchanged, uniformly in the slice width.
 
 ## Main statements
 
@@ -49,19 +50,19 @@ variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 
 variable {p} in
 /-- Twist sequences of any slice of the restriction of `x` to the negative exponents
-are `(M, N)`-periodic at level `c`, given support data `(1, b, c)` for `x` with
+are `(M, N)`-periodic at level `c`, given support data `(a, b, c)` for `x` with
 `(M, N)`-periodic slices.  For `m ≤ 0` the twist points of the slice are sampled where
 the restriction agrees with `x` (or, for the zero digit string, the sequence is
 constant); for `m ≥ 1` they are sampled where the restriction vanishes. -/
-theorem isTwistPeriodic_slice_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])} {b c : ℕ}
-    {M N : ℕ+} (hsupp : x.support ⊆ Sabc p 1 b c)
+theorem isTwistPeriodic_slice_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    {b c : ℕ} {M N : ℕ+} (hsupp : x.support ⊆ Sabc p a b c)
     (hper : ∀ m : ℤ, -(b : ℤ) ≤ m →
-      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / ((1 : ℕ+) : ℚ))) c M N)
+      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) c M N)
     (m : ℤ) :
     IsTwistPeriodic p
-      (fun z => (hahnRestrict (Set.Iio 0) x).coeff (((m : ℚ) + z) / ((1 : ℕ+) : ℚ)))
+      (fun z => (hahnRestrict (Set.Iio 0) x).coeff (((m : ℚ) + z) / (a : ℚ)))
       c M N := by
-  have hone : ((1 : ℕ+) : ℚ) = 1 := by norm_num
+  have ha : (0 : ℚ) < (a : ℚ) := by exact_mod_cast a.pos
   have hall := isTwistPeriodic_slice_upgrade p hsupp hper c
   intro j dig hj hdig hsum n hn
   rcases eq_or_ne dig 0 with rfl | hdig0
@@ -87,9 +88,9 @@ theorem isTwistPeriodic_slice_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])
   rcases le_or_gt m 0 with hm | hm
   · -- `m ≤ 0`: the sampled exponents are `< 0`, where the restriction agrees with `x`.
     have hmem : ∀ n' : ℕ,
-        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / ((1 : ℕ+) : ℚ) ∈ Set.Iio 0 := by
+        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / (a : ℚ) ∈ Set.Iio 0 := by
       intro n'
-      rw [hone, div_one, Set.mem_Iio]
+      rw [Set.mem_Iio, div_lt_iff₀ ha, zero_mul]
       have h1 := hgd n'
       have hm' : (m : ℚ) ≤ 0 := by exact_mod_cast hm
       linarith
@@ -98,9 +99,9 @@ theorem isTwistPeriodic_slice_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])
     simpa only [twistSeq_eq_neg_fracVal_gapDig] using hx
   · -- `m ≥ 1`: the sampled exponents are `> 0`, where the restriction vanishes.
     have hmem : ∀ n' : ℕ,
-        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / ((1 : ℕ+) : ℚ) ∉ Set.Iio 0 := by
+        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / (a : ℚ) ∉ Set.Iio 0 := by
       intro n'
-      rw [hone, div_one, Set.mem_Iio, not_lt]
+      rw [Set.mem_Iio, not_lt, le_div_iff₀ ha, zero_mul]
       have h1 := hlt n'
       have hm' : (1 : ℚ) ≤ (m : ℚ) := by exact_mod_cast hm
       linarith
@@ -108,17 +109,17 @@ theorem isTwistPeriodic_slice_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])
 
 variable {p} in
 /-- Twist sequences of any slice of the restriction of `x` to the positive exponents
-are `(M, N)`-periodic at level `c`, given support data `(1, b, c)` for `x` with
+are `(M, N)`-periodic at level `c`, given support data `(a, b, c)` for `x` with
 `(M, N)`-periodic slices. -/
-theorem isTwistPeriodic_slice_hahnRestrict_Ioi {x : HahnSeries ℚ (𝔽ᵃ_[p])} {b c : ℕ}
-    {M N : ℕ+} (hsupp : x.support ⊆ Sabc p 1 b c)
+theorem isTwistPeriodic_slice_hahnRestrict_Ioi {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    {b c : ℕ} {M N : ℕ+} (hsupp : x.support ⊆ Sabc p a b c)
     (hper : ∀ m : ℤ, -(b : ℤ) ≤ m →
-      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / ((1 : ℕ+) : ℚ))) c M N)
+      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) c M N)
     (m : ℤ) :
     IsTwistPeriodic p
-      (fun z => (hahnRestrict (Set.Ioi 0) x).coeff (((m : ℚ) + z) / ((1 : ℕ+) : ℚ)))
+      (fun z => (hahnRestrict (Set.Ioi 0) x).coeff (((m : ℚ) + z) / (a : ℚ)))
       c M N := by
-  have hone : ((1 : ℕ+) : ℚ) = 1 := by norm_num
+  have ha : (0 : ℚ) < (a : ℚ) := by exact_mod_cast a.pos
   have hall := isTwistPeriodic_slice_upgrade p hsupp hper c
   intro j dig hj hdig hsum n hn
   rcases eq_or_ne dig 0 with rfl | hdig0
@@ -143,18 +144,18 @@ theorem isTwistPeriodic_slice_hahnRestrict_Ioi {x : HahnSeries ℚ (𝔽ᵃ_[p])
   rcases le_or_gt m 0 with hm | hm
   · -- `m ≤ 0`: the sampled exponents are `< 0`, where the restriction vanishes.
     have hmem : ∀ n' : ℕ,
-        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / ((1 : ℕ+) : ℚ) ∉ Set.Ioi 0 := by
+        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / (a : ℚ) ∉ Set.Ioi 0 := by
       intro n'
-      rw [hone, div_one, Set.mem_Ioi, not_lt]
+      rw [Set.mem_Ioi, not_lt, div_le_iff₀ ha, zero_mul]
       have h1 := hgd n'
       have hm' : (m : ℚ) ≤ 0 := by exact_mod_cast hm
       linarith
     rw [coeff_hahnRestrict_of_notMem x (hmem _), coeff_hahnRestrict_of_notMem x (hmem _)]
   · -- `m ≥ 1`: the sampled exponents are `> 0`, where the restriction agrees with `x`.
     have hmem : ∀ n' : ℕ,
-        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / ((1 : ℕ+) : ℚ) ∈ Set.Ioi 0 := by
+        ((m : ℚ) + -fracVal p (gapDig j n' dig)) / (a : ℚ) ∈ Set.Ioi 0 := by
       intro n'
-      rw [hone, div_one, Set.mem_Ioi]
+      rw [Set.mem_Ioi, lt_div_iff₀ ha, zero_mul]
       have h1 := hlt n'
       have hm' : (1 : ℚ) ≤ (m : ℚ) := by exact_mod_cast hm
       linarith
@@ -164,26 +165,26 @@ theorem isTwistPeriodic_slice_hahnRestrict_Ioi {x : HahnSeries ℚ (𝔽ᵃ_[p])
 
 variable {p} in
 /-- **Truncation to the negative exponents preserves UP** (with the same data): if `x`
-has support in `S_{1,b,c}` and `(M, N)`-periodic slices, so does its restriction to
+has support in `S_{a,b,c}` and `(M, N)`-periodic slices, so does its restriction to
 exponents in `(-∞, 0)`; in particular that restriction is UP. -/
-theorem isUP_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])} {b c : ℕ} {M N : ℕ+}
-    (hsupp : x.support ⊆ Sabc p 1 b c)
+theorem isUP_hahnRestrict_Iio {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ} {M N : ℕ+}
+    (hsupp : x.support ⊆ Sabc p a b c)
     (hper : ∀ m : ℤ, -(b : ℤ) ≤ m →
-      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / ((1 : ℕ+) : ℚ))) c M N) :
+      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) c M N) :
     IsUP p (hahnRestrict (Set.Iio 0) x) :=
-  ⟨1, b, c, fun _ hg => hsupp (support_hahnRestrict_subset _ x hg), M, N,
+  ⟨a, b, c, fun _ hg => hsupp (support_hahnRestrict_subset _ x hg), M, N,
     fun m _ => isTwistPeriodic_slice_hahnRestrict_Iio hsupp hper m⟩
 
 variable {p} in
 /-- **Truncation to the positive exponents preserves UP** (with the same data): if `x`
-has support in `S_{1,b,c}` and `(M, N)`-periodic slices, so does its restriction to
+has support in `S_{a,b,c}` and `(M, N)`-periodic slices, so does its restriction to
 exponents in `(0, ∞)`; in particular that restriction is UP. -/
-theorem isUP_hahnRestrict_Ioi {x : HahnSeries ℚ (𝔽ᵃ_[p])} {b c : ℕ} {M N : ℕ+}
-    (hsupp : x.support ⊆ Sabc p 1 b c)
+theorem isUP_hahnRestrict_Ioi {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ} {M N : ℕ+}
+    (hsupp : x.support ⊆ Sabc p a b c)
     (hper : ∀ m : ℤ, -(b : ℤ) ≤ m →
-      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / ((1 : ℕ+) : ℚ))) c M N) :
+      IsTwistPeriodic p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) c M N) :
     IsUP p (hahnRestrict (Set.Ioi 0) x) :=
-  ⟨1, b, c, fun _ hg => hsupp (support_hahnRestrict_subset _ x hg), M, N,
+  ⟨a, b, c, fun _ hg => hsupp (support_hahnRestrict_subset _ x hg), M, N,
     fun m _ => isTwistPeriodic_slice_hahnRestrict_Ioi hsupp hper m⟩
 
 /-- The `{0}`-part of the truncation, a constant single term, is UP. -/
