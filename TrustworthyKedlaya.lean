@@ -2,5 +2,8 @@ import TrustworthyKedlaya.Basic
 import TrustworthyKedlaya.DefeqGuards
 import TrustworthyKedlaya.Digits
 import TrustworthyKedlaya.Kedlaya
+import TrustworthyKedlaya.Miscellaneous
+import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TwistPeriodicity
+import TrustworthyKedlaya.WittVector
