@@ -21,6 +21,7 @@ import TrustworthyKedlaya.Multiplicative
 import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.PGroupGalois
 import TrustworthyKedlaya.Rescale
+import TrustworthyKedlaya.SabcOrderType
 import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TameKummer
