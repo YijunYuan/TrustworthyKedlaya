@@ -564,4 +564,96 @@ theorem isTwistPeriodic_slice_width_mul_coprime {x : HahnSeries ℚ (𝔽ᵃ_[p]
     rw [twistSeq_slice_width_mul k hm j dig n, twistSeq_slice_width_mul k hm j dig (n + N),
       hvanish n hclean (by omega), hvanish (n + N) hclean (by omega)]
 
+/-- Transport a slice witness along an equality of widths. -/
+theorem SliceWitness.of_width_eq {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a a' : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (haa : a = a') (h : SliceWitness p x a b c M N) :
+    SliceWitness p x a' b c M N := haa ▸ h
+
+/-- Packaged `p`-step: a slice witness at width `a` yields one at width `p·a`, with
+unchanged periodicity data. -/
+theorem SliceWitness.width_mul_p {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (k : ℕ+) (hkp : (k : ℕ) = p) (h : SliceWitness p x a b c M N) :
+    SliceWitness p x (k * a) ((k : ℕ) * b + ((k : ℕ) - 1)) ((k : ℕ) * c) M N := by
+  obtain ⟨hsupp, hper⟩ := h
+  exact ⟨fun g hg => Sabc_mem_width_mul k (hsupp hg),
+    fun m _ => isTwistPeriodic_slice_width_mul_p k hkp hsupp hper _ m⟩
+
+/-- Packaged coprime step: a slice witness at width `a` yields one at width `k·a` for
+`k` coprime to `p`, with the same period and preperiod grown by `k(c+1)`. -/
+theorem SliceWitness.width_mul_coprime {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (k : ℕ+) (hcop : Nat.Coprime p k) (h : SliceWitness p x a b c M N) :
+    SliceWitness p x (k * a) ((k : ℕ) * b + ((k : ℕ) - 1)) ((k : ℕ) * c)
+      (M + ⟨(k : ℕ) * (c + 1), Nat.mul_pos k.pos (Nat.succ_pos c)⟩) N := by
+  obtain ⟨hsupp, hper⟩ := h
+  exact ⟨fun g hg => Sabc_mem_width_mul k (hsupp hg),
+    fun m _ => isTwistPeriodic_slice_width_mul_coprime k hcop hsupp hper _ m⟩
+
+/-- Extract the `p`-part of a positive integer: `k = p^e·k₀` with `p ∤ k₀`. -/
+theorem exists_pow_mul_coprime : ∀ k : ℕ, 0 < k →
+    ∃ (e k₀ : ℕ), 0 < k₀ ∧ Nat.Coprime p k₀ ∧ k = p ^ e * k₀ := by
+  intro k
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    intro hk
+    by_cases hdvd : p ∣ k
+    · obtain ⟨k', rfl⟩ := hdvd
+      have hp2 : 2 ≤ p := hp.out.two_le
+      have hk' : 0 < k' := by
+        rcases Nat.eq_zero_or_pos k' with h | h
+        · subst h; simp at hk
+        · exact h
+      have hlt : k' < p * k' := by
+        calc k' = 1 * k' := (one_mul k').symm
+          _ < p * k' := Nat.mul_lt_mul_of_lt_of_le (by omega) le_rfl hk'
+      obtain ⟨e, k₀, hk₀, hcop, heq⟩ := ih k' hlt hk'
+      exact ⟨e + 1, k₀, hk₀, hcop, by rw [heq]; ring⟩
+    · exact ⟨0, k, hk, (Nat.Prime.coprime_iff_not_dvd hp.out).mpr hdvd, by simp⟩
+
+/-- Iterated `p`-step: a slice witness upgrades to width `p^e·a`, with unchanged
+periodicity data. -/
+theorem SliceWitness.width_mul_p_pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (e : ℕ) (h : SliceWitness p x a b c M N) :
+    ∃ (b' c' : ℕ), SliceWitness p x (p.toPNat hp.out.pos ^ e * a) b' c' M N := by
+  induction e generalizing a b c with
+  | zero =>
+    exact ⟨b, c, SliceWitness.of_width_eq (by rw [pow_zero, one_mul]) h⟩
+  | succ e ih =>
+    have hstep := SliceWitness.width_mul_p (p := p) (p.toPNat hp.out.pos) rfl h
+    obtain ⟨b', c', hw⟩ := ih hstep
+    exact ⟨b', c', SliceWitness.of_width_eq (by rw [pow_succ, mul_assoc]) hw⟩
+
+/-- **Slice-width upgrade** (`lem:up-rescale`): a UP witness at width `a` yields one
+at width `k·a` for *every* positive integer `k`, keeping the same period `N`.  The
+factorization `k = p^e·k₀` splits the upgrade into `e` digit-shift steps and one
+coprime long-division step. -/
+theorem SliceWitness.width_mul {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
+    {M N : ℕ+} (k : ℕ+) (h : SliceWitness p x a b c M N) :
+    ∃ (b' c' : ℕ) (M' : ℕ+), SliceWitness p x (k * a) b' c' M' N := by
+  obtain ⟨e, k₀, hk₀pos, hcop, hfact⟩ := exists_pow_mul_coprime (p := p) (k : ℕ) k.pos
+  obtain ⟨b₁, c₁, h₁⟩ := SliceWitness.width_mul_p_pow e h
+  have h₂ := SliceWitness.width_mul_coprime (k₀.toPNat hk₀pos) hcop h₁
+  refine ⟨_, _, _, SliceWitness.of_width_eq ?_ h₂⟩
+  apply PNat.coe_injective
+  push_cast [PNat.mul_coe, PNat.pow_coe]
+  rw [show ((k₀.toPNat hk₀pos : ℕ+) : ℕ) = k₀ from rfl,
+    show ((p.toPNat hp.out.pos : ℕ+) : ℕ) = p from rfl, hfact]
+  ring
+
+/-- **UP is stable under addition** (`lem:up-add`): upgrade both presentations to the
+common slice width `a'·a` and add slicewise. -/
+theorem IsUP.add {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) (hy : IsUP p y) :
+    IsUP p (x + y) := by
+  obtain ⟨a, b, c, hxs, M, N, hxp⟩ := hx
+  obtain ⟨a', b', c', hys, M', N', hyp⟩ := hy
+  obtain ⟨b₁, c₁, M₁, hs₁, hp₁⟩ := SliceWitness.width_mul a' ⟨hxs, hxp⟩
+  obtain ⟨b₂, c₂, M₂, hs₂, hp₂⟩ := SliceWitness.width_mul a ⟨hys, hyp⟩
+  rw [mul_comm a a'] at hs₂ hp₂
+  exact isUP_add_of_common_width hs₁ hp₁ hs₂ hp₂
+
+/-- UP is stable under subtraction. -/
+theorem IsUP.sub {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) (hy : IsUP p y) :
+    IsUP p (x - y) := by
+  rw [sub_eq_add_neg]
+  exact hx.add hy.neg
+
 end TrustworthyKedlaya.UP

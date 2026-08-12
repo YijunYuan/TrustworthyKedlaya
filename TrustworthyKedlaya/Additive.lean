@@ -19,8 +19,9 @@ summands to the common level (`isTwistPeriodic_slice_upgrade`).  Scalar multiple
 and negation act pointwise on values, so they preserve the data verbatim.
 
 The general addition statement (arbitrary parameters `a`, `a'`) reduces to this one
-by passing to the common slice width `lcm a a'`, which is the content of the
-exponent-rescaling lemma (`lem:up-rescale`) and is *not* proved here.
+by passing to a common slice width, which is the content of the exponent-rescaling
+lemma (`lem:up-rescale`); see `TrustworthyKedlaya.Rescale` for that upgrade and the
+resulting unrestricted `IsUP.add`.
 
 ## Main statements
 
