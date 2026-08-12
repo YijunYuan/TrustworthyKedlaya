@@ -132,4 +132,106 @@ theorem decomp_point_split {m₁ m₂ m : ℤ} {u v g : ℕ →₀ ℕ}
   rw [htn, hcast]
   ring
 
+/-! ### Transport of a decomposition across gap sizes -/
+
+/-- **Transport of a decomposition pair across gap sizes**: a decomposition of the
+gapped target at gap size `ν ≥ n₀` has both components vanishing on the gap tail
+past `i₀`, contracted digit sums within the levels, and its contraction re-expands
+to a decomposition of the gapped target at any other gap size `ν' ≥ n₀`. -/
+theorem decomp_gapDig_transport {dig u v : ℕ →₀ ℕ} {κ c₁ c₂ j ν ν' K n₀ i₀ : ℕ}
+    (hκ : κ ≤ 1) (hK : K = (c₁ + c₂) / (p - 1)) (hn₀ : n₀ = c₁ + c₂ + 1)
+    (hi₀ : i₀ = j - 1 + K) (hν : n₀ ≤ ν) (hν' : n₀ ≤ ν')
+    (hdig : ∀ i, dig i < p) (hu : ∀ i, u i < p) (hv : ∀ i, v i < p)
+    (hc₁ : (u.sum fun _ v => v) ≤ c₁) (hc₂ : (v.sum fun _ v => v) ≤ c₂)
+    (hval : fracVal p u + fracVal p v = (κ : ℚ) + fracVal p (gapDig j ν dig)) :
+    (∀ i, i₀ ≤ i → i < i₀ + (ν - K) → u i = 0 ∧ v i = 0) ∧
+      ((dropGapDig i₀ (ν - K) u).sum fun _ v => v) ≤ c₁ ∧
+      ((dropGapDig i₀ (ν - K) v).sum fun _ v => v) ≤ c₂ ∧
+      fracVal p (gapDig (i₀ + 1) (ν' - K) (dropGapDig i₀ (ν - K) u))
+          + fracVal p (gapDig (i₀ + 1) (ν' - K) (dropGapDig i₀ (ν - K) v))
+        = (κ : ℚ) + fracVal p (gapDig j ν' dig) := by
+  have hKle : K ≤ c₁ + c₂ := hK ▸ Nat.div_le_self _ _
+  -- confinement at `ν`
+  obtain ⟨hzero, -⟩ :=
+    decomp_gapDig_confine p hκ hK hi₀ (by omega) hdig hu hv hc₁ hc₂ hval
+  have hz : ∀ i, i₀ ≤ i → i < i₀ + (ν - K) → u i = 0 ∧ v i = 0 :=
+    fun i h1 h2 => hzero i h1 (by omega)
+  -- digit sums of the full contractions
+  have hguv : gapDig (i₀ + 1) (ν - K) (dropGapDig i₀ (ν - K) u) = u :=
+    gapDig_dropGapDig fun i h1 h2 => (hz i h1 h2).1
+  have hgvv : gapDig (i₀ + 1) (ν - K) (dropGapDig i₀ (ν - K) v) = v :=
+    gapDig_dropGapDig fun i h1 h2 => (hz i h1 h2).2
+  have hsumu : ((dropGapDig i₀ (ν - K) u).sum fun _ v => v) ≤ c₁ := by
+    have h := gapDig_sum (i₀ + 1) (ν - K) (dropGapDig i₀ (ν - K) u)
+    rw [hguv] at h
+    omega
+  have hsumv : ((dropGapDig i₀ (ν - K) v).sum fun _ v => v) ≤ c₂ := by
+    have h := gapDig_sum (i₀ + 1) (ν - K) (dropGapDig i₀ (ν - K) v)
+    rw [hgvv] at h
+    omega
+  refine ⟨hz, hsumu, hsumv, ?_⟩
+  -- contraction to `n₀`
+  obtain ⟨hru, hrv, hsu, hsv, hval₀⟩ :=
+    decomp_gapDig_contract p hκ hK hn₀ hi₀ rfl hν hdig hu hv hc₁ hc₂ hval
+  have hu₀d : ∀ i, dropGapDig i₀ (ν - n₀) u i < p := fun i => dropGapDig_lt p hu i₀ _ i
+  have hv₀d : ∀ i, dropGapDig i₀ (ν - n₀) v i < p := fun i => dropGapDig_lt p hv i₀ _ i
+  have hu₀s : ((dropGapDig i₀ (ν - n₀) u).sum fun _ v => v) ≤ c₁ := by rw [hsu]; exact hc₁
+  have hv₀s : ((dropGapDig i₀ (ν - n₀) v).sum fun _ v => v) ≤ c₂ := by rw [hsv]; exact hc₂
+  -- the full contraction factors through the contraction at `n₀`
+  have hfactu : dropGapDig i₀ (ν - K) u = dropGapDig i₀ (n₀ - K) (dropGapDig i₀ (ν - n₀) u) := by
+    rw [dropGapDig_dropGapDig, show (ν - n₀) + (n₀ - K) = ν - K by omega]
+  have hfactv : dropGapDig i₀ (ν - K) v = dropGapDig i₀ (n₀ - K) (dropGapDig i₀ (ν - n₀) v) := by
+    rw [dropGapDig_dropGapDig, show (ν - n₀) + (n₀ - K) = ν - K by omega]
+  -- confinement at `n₀` re-expands the `n₀`-contraction from the full contraction
+  obtain ⟨hzero₀, -⟩ :=
+    decomp_gapDig_confine p hκ hK hi₀ (by omega) hdig hu₀d hv₀d hu₀s hv₀s hval₀
+  have hgu₀ : gapDig (i₀ + 1) (n₀ - K) (dropGapDig i₀ (n₀ - K) (dropGapDig i₀ (ν - n₀) u))
+      = dropGapDig i₀ (ν - n₀) u :=
+    gapDig_dropGapDig fun i h1 h2 => (hzero₀ i h1 (by omega)).1
+  have hgv₀ : gapDig (i₀ + 1) (n₀ - K) (dropGapDig i₀ (n₀ - K) (dropGapDig i₀ (ν - n₀) v))
+      = dropGapDig i₀ (ν - n₀) v :=
+    gapDig_dropGapDig fun i h1 h2 => (hzero₀ i h1 (by omega)).2
+  -- expansion to `ν'`
+  have hval' := decomp_gapDig_expand p hκ hK hn₀ hi₀ rfl hν' hdig hu₀d hv₀d hu₀s hv₀s hval₀
+  rw [hfactu, hfactv, show ν' - K = (n₀ - K) + (ν' - n₀) by omega, ← gapDig_gapDig,
+    ← gapDig_gapDig, hgu₀, hgv₀]
+  exact hval'
+
+/-! ### The transported support point -/
+
+/-- Transport of a support point across gap sizes: keep the integer slice index,
+delete the `G` zero columns of the digit string at `i₀`, and re-insert a run of `G'`
+zeros there. -/
+noncomputable def transportPoint (a : ℕ+) (i₀ G G' : ℕ) (s : ℚ) : ℚ :=
+  ((sliceInt a s : ℚ)
+    - fracVal p (gapDig (i₀ + 1) G' (dropGapDig i₀ G (sliceDig p a s)))) / (a : ℚ)
+
+/-- Specification of the transported point: its canonical decomposition keeps the
+integer part and carries the re-gapped digit string, and transporting back restores
+the original point. -/
+theorem transportPoint_spec {a : ℕ+} {s : ℚ} {i₀ G G' : ℕ}
+    (hval : (a : ℚ) * s = (sliceInt a s : ℚ) - fracVal p (sliceDig p a s))
+    (hdig : ∀ i, sliceDig p a s i < p)
+    (hzero : ∀ i, i₀ ≤ i → i < i₀ + G → sliceDig p a s i = 0) :
+    sliceInt a (transportPoint p a i₀ G G' s) = sliceInt a s ∧
+      sliceDig p a (transportPoint p a i₀ G G' s)
+        = gapDig (i₀ + 1) G' (dropGapDig i₀ G (sliceDig p a s)) ∧
+      transportPoint p a i₀ G' G (transportPoint p a i₀ G G' s) = s := by
+  have ha : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+  have hT : (a : ℚ) * transportPoint p a i₀ G G' s
+      = (sliceInt a s : ℚ)
+        - fracVal p (gapDig (i₀ + 1) G' (dropGapDig i₀ G (sliceDig p a s))) := by
+    rw [transportPoint]
+    field_simp
+  have hTd : ∀ i, gapDig (i₀ + 1) G' (dropGapDig i₀ G (sliceDig p a s)) i < p :=
+    fun i => gapDig_lt p (fun i' => dropGapDig_lt p hdig i₀ G i') hp.out.pos _ _ i
+  have hint : sliceInt a (transportPoint p a i₀ G G' s) = sliceInt a s :=
+    sliceInt_eq p hp.out.one_lt hTd hT
+  have hdig' : sliceDig p a (transportPoint p a i₀ G G' s)
+      = gapDig (i₀ + 1) G' (dropGapDig i₀ G (sliceDig p a s)) := sliceDig_eq p hTd hT
+  refine ⟨hint, hdig', ?_⟩
+  rw [transportPoint, hint, hdig', dropGapDig_gapDig, gapDig_dropGapDig hzero]
+  rw [div_eq_iff ha]
+  linear_combination -hval
+
 end TrustworthyKedlaya.UP
