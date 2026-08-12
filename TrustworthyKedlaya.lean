@@ -8,6 +8,7 @@ import TrustworthyKedlaya.FrobeniusUP
 import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.PAdicHahnSeries
+import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.Truncation
 import TrustworthyKedlaya.TwistPeriodicity
