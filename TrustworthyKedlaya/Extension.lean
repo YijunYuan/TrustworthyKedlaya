@@ -211,4 +211,163 @@ theorem exists_spectralNorm_uniformizer :
 
 end Extension
 
+section Residue
+
+variable {K}
+
+/-- Any Laurent series of norm at most `1` is congruent to its constant coefficient
+modulo the maximal ideal: subtracting it leaves norm strictly less than `1`. -/
+theorem norm_sub_C_coeff_zero_lt_one {b : K⸨X⸩} (hb : ‖b‖ ≤ 1) :
+    ‖b - HahnSeries.C (b.coeff 0)‖ < 1 := by
+  have hb' : Valued.v b ≤ WithZero.exp (-(0 : ℤ)) := by
+    rw [neg_zero, WithZero.exp_zero]
+    exact Valued.toNormedField.norm_le_one_iff.mp hb
+  have hcoeff := (LaurentSeries.valuation_le_iff_coeff_lt_eq_zero K).mp hb'
+  rw [Valued.toNormedField.norm_lt_one_iff]
+  refine lt_of_le_of_lt ((LaurentSeries.valuation_le_iff_coeff_lt_eq_zero K (D := 1)).mpr
+    fun n hn => ?_) ?_
+  · rcases lt_or_eq_of_le (show n ≤ 0 by omega) with hn0 | hn0
+    · rw [HahnSeries.coeff_sub, hcoeff n hn0, HahnSeries.C_apply,
+        HahnSeries.coeff_single_of_ne hn0.ne, sub_zero]
+    · rw [HahnSeries.coeff_sub, hn0, HahnSeries.C_apply, HahnSeries.coeff_single_same, sub_self]
+  · rw [← WithZero.exp_zero]
+    exact WithZero.exp_lt_exp.mpr (by norm_num)
+
+variable {L : Type*} [Field L] [Algebra K⸨X⸩ L] [Module.Finite K⸨X⸩ L]
+
+/-- If `x` has spectral norm at most `1`, every coefficient of its minimal polynomial
+over `K⸨X⸩` has norm at most `1`. -/
+theorem norm_minpoly_coeff_le_one {x : L} (hx : spectralNorm K⸨X⸩ L x ≤ 1) (i : ℕ) :
+    ‖(minpoly K⸨X⸩ x).coeff i‖ ≤ 1 := by
+  rcases lt_trichotomy i (minpoly K⸨X⸩ x).natDegree with hi | hi | hi
+  · -- the spectral-value term at `i` is bounded by the spectral norm
+    have hterm := le_ciSup (spectralValueTerms_bddAbove (minpoly K⸨X⸩ x)) i
+    rw [spectralValueTerms_of_lt_natDegree _ hi] at hterm
+    have h1 : ‖(minpoly K⸨X⸩ x).coeff i‖ ^
+        (1 / ((minpoly K⸨X⸩ x).natDegree - i : ℝ)) ≤ 1 := hterm.trans hx
+    by_contra hgt
+    push Not at hgt
+    have hpow : (1 : ℝ) < ‖(minpoly K⸨X⸩ x).coeff i‖ ^
+        (1 / ((minpoly K⸨X⸩ x).natDegree - i : ℝ)) := by
+      refine Real.one_lt_rpow_iff_of_pos (lt_trans one_pos hgt) |>.mpr (Or.inl ⟨hgt, ?_⟩)
+      have : (0 : ℝ) < ((minpoly K⸨X⸩ x).natDegree - i : ℝ) := by
+        rw [sub_pos]
+        exact_mod_cast hi
+      positivity
+    exact absurd h1 (not_le.mpr hpow)
+  · rw [hi, (minpoly.monic (Algebra.IsIntegral.isIntegral x)).coeff_natDegree, norm_one]
+  · rw [Polynomial.coeff_eq_zero_of_natDegree_lt hi, norm_zero]
+    exact zero_le_one
+
+/-- **The residue field of a finite extension of `K⸨X⸩` is `K`** when `K` is algebraically
+closed: any element of the closed unit ball of `L` is congruent to a constant `c : K`
+modulo the open unit ball. -/
+theorem exists_residue [IsAlgClosed K] (x : L) (hx : spectralNorm K⸨X⸩ L x ≤ 1) :
+    ∃ c : K, spectralNorm K⸨X⸩ L (x - algebraMap K⸨X⸩ L (HahnSeries.C c)) < 1 := by
+  let _ : NormedField L := spectralNorm.normedField K⸨X⸩ L
+  have hnorm : ∀ y : L, ‖y‖ = spectralNorm K⸨X⸩ L y := fun _ => rfl
+  have _ : IsUltrametricDist L :=
+    IsUltrametricDist.isUltrametricDist_of_forall_norm_add_le_max_norm
+      (isNonarchimedean_spectralNorm (K := K⸨X⸩) (L := L))
+  let _ : Algebra K L := ((algebraMap K⸨X⸩ L).comp (algebraMap K K⸨X⸩)).toAlgebra
+  have halgC : ∀ c : K, algebraMap K K⸨X⸩ c = HahnSeries.C c := fun c => by
+    rw [HahnSeries.algebraMap_apply']
+    simp [PowerSeries.algebraMap_eq]
+  have hint : IsIntegral K⸨X⸩ x := Algebra.IsIntegral.isIntegral x
+  set f : Polynomial K⸨X⸩ := minpoly K⸨X⸩ x with hfdef
+  have hmonic : f.Monic := minpoly.monic hint
+  set n := f.natDegree with hn
+  -- the reduction of `f` modulo the maximal ideal of `K⸨X⸩`
+  set pbar : Polynomial K := ∑ i ∈ Finset.range (n + 1),
+    Polynomial.C ((f.coeff i).coeff 0) * Polynomial.X ^ i with hpbar
+  have hpbar_coeff : ∀ j, pbar.coeff j =
+      if j ∈ Finset.range (n + 1) then (f.coeff j).coeff 0 else 0 := by
+    intro j
+    rw [hpbar, Polynomial.finsetSum_coeff]
+    simp only [Polynomial.coeff_C_mul_X_pow]
+    exact Finset.sum_ite_eq (Finset.range (n + 1)) j fun i => (f.coeff i).coeff 0
+  have hpbar_deg : pbar.natDegree ≤ n := by
+    rw [hpbar]
+    refine Polynomial.natDegree_sum_le_of_forall_le _ _ fun i hi => ?_
+    exact (Polynomial.natDegree_C_mul_le _ _).trans
+      ((Polynomial.natDegree_X_pow_le _).trans (by
+        have := Finset.mem_range.mp hi
+        omega))
+  have hpbar_monic : pbar.Monic := by
+    refine Polynomial.monic_of_natDegree_le_of_coeff_eq_one n hpbar_deg ?_
+    rw [hpbar_coeff, if_pos (Finset.mem_range.mpr (by omega)), hmonic.coeff_natDegree,
+      HahnSeries.coeff_one, if_pos rfl]
+  -- the lift of `pbar` back to `K⸨X⸩` differs from `f` by coefficients of norm `< 1`
+  set g : Polynomial K⸨X⸩ := pbar.map (algebraMap K K⸨X⸩) with hg
+  have hfg_coeff : ∀ j, ‖(f - g).coeff j‖ < 1 := by
+    intro j
+    rw [Polynomial.coeff_sub, hg, Polynomial.coeff_map, halgC]
+    by_cases hj : j ∈ Finset.range (n + 1)
+    · rw [hpbar_coeff, if_pos hj]
+      exact norm_sub_C_coeff_zero_lt_one (norm_minpoly_coeff_le_one hx j)
+    · rw [hpbar_coeff, if_neg hj, Polynomial.coeff_eq_zero_of_natDegree_lt
+        (lt_of_le_of_lt (le_refl n) (by
+          have := Finset.mem_range.not.mp hj
+          omega)), map_zero, sub_zero, norm_zero]
+      exact one_pos
+  -- evaluate: `‖g(x)‖ = ‖(g - f)(x)‖ < 1` since `f(x) = 0`
+  have hdeg : (f - g).natDegree < n + 1 := by
+    refine lt_of_le_of_lt (Polynomial.natDegree_sub_le f g) ?_
+    have hgdeg : g.natDegree ≤ n := (Polynomial.natDegree_map_le).trans hpbar_deg
+    omega
+  have hlt : ‖Polynomial.aeval x (f - g)‖ < 1 := by
+    rw [Polynomial.aeval_eq_sum_range' hdeg x]
+    obtain ⟨i, _, hi_le⟩ := IsUltrametricDist.exists_norm_finsetSum_le_of_nonempty
+      Finset.nonempty_range_add_one (fun i => (f - g).coeff i • x ^ i)
+    refine lt_of_le_of_lt hi_le ?_
+    rw [Algebra.smul_def, norm_mul, hnorm (algebraMap K⸨X⸩ L _), spectralNorm_extends]
+    calc ‖(f - g).coeff i‖ * ‖x ^ i‖
+        ≤ ‖(f - g).coeff i‖ * 1 := by
+          refine mul_le_mul_of_nonneg_left ?_ (norm_nonneg _)
+          rw [norm_pow]
+          exact pow_le_one₀ (norm_nonneg _) hx
+      _ < 1 := by rw [mul_one]; exact hfg_coeff i
+  have hgval : ‖Polynomial.aeval x g‖ < 1 := by
+    have hzero : Polynomial.aeval x f = 0 := minpoly.aeval K⸨X⸩ x
+    have : Polynomial.aeval x g = -(Polynomial.aeval x (f - g)) := by
+      rw [_root_.map_sub, hzero, zero_sub, neg_neg]
+    rw [this, norm_neg]
+    exact hlt
+  -- factor `pbar` into linear factors over the algebraically closed `K`
+  have hsplits : pbar.Splits := IsAlgClosed.splits pbar
+  have hprod : Polynomial.aeval x pbar =
+      (pbar.roots.map fun a => x - algebraMap K L a).prod := by
+    conv_lhs => rw [hsplits.eq_prod_roots_of_monic hpbar_monic]
+    rw [map_multiset_prod, Multiset.map_map]
+    refine congr_arg _ (Multiset.map_congr rfl fun a _ => ?_)
+    simp
+  have hnorm_prod : ((pbar.roots.map fun a => x - algebraMap K L a).map
+      fun y => ‖y‖₊).prod < 1 := by
+    have haeval_map : Polynomial.aeval x g = Polynomial.aeval (R := K) x pbar := by
+      rw [hg, Polynomial.aeval_def, Polynomial.eval₂_map, Polynomial.aeval_def]
+      rfl
+    have hval : ‖(pbar.roots.map fun a => x - algebraMap K L a).prod‖₊ < 1 := by
+      rw [← NNReal.coe_lt_coe, coe_nnnorm, NNReal.coe_one, ← hprod, ← haeval_map]
+      exact hgval
+    calc ((pbar.roots.map fun a => x - algebraMap K L a).map fun y => ‖y‖₊).prod
+        = ‖(pbar.roots.map fun a => x - algebraMap K L a).prod‖₊ :=
+          (map_multiset_prod (nnnormHom : L →*₀ NNReal) _).symm
+      _ < 1 := hval
+  -- some factor must have norm `< 1`
+  by_contra hcon
+  push Not at hcon
+  refine absurd hnorm_prod (not_lt.mpr (Multiset.one_le_prod_of_one_le fun r hr => ?_))
+  rw [Multiset.map_map] at hr
+  obtain ⟨a, _, rfl⟩ := Multiset.mem_map.mp hr
+  have hge := hcon a
+  rw [← hnorm] at hge
+  have hbridge : algebraMap K⸨X⸩ L (HahnSeries.C a) = algebraMap K L a := by
+    rw [← halgC a]
+    rfl
+  rw [hbridge, ← not_lt] at hge
+  rw [Function.comp_apply, ← NNReal.coe_le_coe, NNReal.coe_one, coe_nnnorm]
+  exact not_lt.mp hge
+
+end Residue
+
 end TrustworthyKedlaya.Ext
