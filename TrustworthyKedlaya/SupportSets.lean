@@ -390,4 +390,187 @@ theorem isTwistPeriodic_slice_upgrade {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : �
   · rw [twistSeq_slice_eq_zero p hsupp hdig (Or.inl (by omega)) j (n + N),
       twistSeq_slice_eq_zero p hsupp hdig (Or.inl (by omega)) j n]
 
+/-! ### Digit shifts and the scaling of `S_{a,b,c}` by `p^{±1}`
+
+Multiplying a support point by `p` shifts its digits up by one position, moving the
+leading fractional digit into the integer part; dividing by `p` shifts them down,
+moving the residue of the integer part into a new leading fractional digit.  The digit
+sum changes by at most `p - 1`, in the direction that only the division can increase. -/
+
+/-- Drop the leading fractional digit: `unshiftDig d` has digit `d (i+1)` at
+position `i`. -/
+noncomputable def unshiftDig (d : ℕ →₀ ℕ) : ℕ →₀ ℕ :=
+  d.comapDomain (· + 1) (add_left_injective 1).injOn
+
+omit hp in
+@[simp] theorem unshiftDig_apply (d : ℕ →₀ ℕ) (i : ℕ) : unshiftDig d i = d (i + 1) := rfl
+
+omit hp in
+/-- Dropping the leading digit only lowers the digit sum. -/
+theorem unshiftDig_sum_le (d : ℕ →₀ ℕ) :
+    ((unshiftDig d).sum fun _ v => v) ≤ d.sum fun _ v => v := by
+  rw [Finsupp.sum, Finsupp.sum,
+    show ∑ i ∈ (unshiftDig d).support, unshiftDig d i
+        = ∑ i ∈ (unshiftDig d).support, d (i + 1) from
+      Finset.sum_congr rfl fun i _ => rfl,
+    ← Finset.sum_image (g := fun i => i + 1) (f := fun j => d j)
+      (fun x _ y _ h => by simpa using h)]
+  refine Finset.sum_le_sum_of_subset fun j hj => ?_
+  obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hj
+  rw [Finsupp.mem_support_iff] at hi ⊢
+  exact hi
+
+omit hp in
+/-- Multiplication by `p` on fractional values: the leading digit becomes the integer
+part, the rest is the unshifted expansion. -/
+theorem p_mul_fracVal (hp0 : 0 < p) (d : ℕ →₀ ℕ) :
+    (p : ℚ) * fracVal p d = (d 0 : ℚ) + fracVal p (unshiftDig d) := by
+  have hpne : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp0.ne'
+  obtain ⟨L, hL⟩ := d.support.exists_nat_subset_range
+  have hL' : d.support ⊆ range (L + 1) :=
+    hL.trans fun x hx => Finset.mem_range.mpr (by have := Finset.mem_range.mp hx; omega)
+  have hd' : (unshiftDig d).support ⊆ range L := by
+    intro i hi
+    rw [Finsupp.mem_support_iff, unshiftDig_apply] at hi
+    have h1 := Finset.mem_range.mp (hL' (Finsupp.mem_support_iff.mpr hi))
+    exact Finset.mem_range.mpr (by omega)
+  rw [fracVal_eq_sum_range p d hL', fracVal_eq_sum_range p _ hd', Finset.mul_sum,
+    Finset.sum_range_succ', add_comm]
+  congr 1
+  · have hone : (p : ℚ) * ((d 0 : ℚ) * (p : ℚ) ^ (-(0 + 1 : ℤ))) = (d 0 : ℚ) := by
+      rw [show (-(0 + 1 : ℤ)) = (-1 : ℤ) by ring, zpow_neg_one]
+      field_simp
+    exact hone
+  · refine Finset.sum_congr rfl fun i _ => ?_
+    rw [unshiftDig_apply]
+    have hpow : (p : ℚ) ^ (-(↑i + 1 : ℤ)) = (p : ℚ) ^ (-(↑(i + 1) + 1 : ℤ)) * (p : ℚ) := by
+      rw [← zpow_add_one₀ hpne,
+        show ((-(↑(i + 1) + 1) + 1 : ℤ)) = (-(↑i + 1 : ℤ)) by push_cast; ring]
+    rw [hpow]
+    ring
+
+/-- Prepend a leading fractional digit: `consDig v d` has digit `v` at position `0` and
+digit `d i` at position `i + 1`. -/
+noncomputable def consDig (v : ℕ) (d : ℕ →₀ ℕ) : ℕ →₀ ℕ :=
+  Finsupp.single 0 v
+    + Finsupp.embDomain ⟨fun i => i + 1, add_left_injective 1⟩ d
+
+omit hp in
+theorem consDig_lt {v : ℕ} {d : ℕ →₀ ℕ} (hv : v < p) (hd : ∀ i, d i < p) (i : ℕ) :
+    consDig v d i < p := by
+  rw [consDig, Finsupp.add_apply]
+  cases i with
+  | zero =>
+    rw [Finsupp.single_eq_same,
+      Finsupp.embDomain_of_notMem_range _ _ _
+        (by rintro ⟨k, hk⟩; simp only [Function.Embedding.coeFn_mk] at hk; omega),
+      add_zero]
+    exact hv
+  | succ i =>
+    rw [Finsupp.single_eq_of_ne (by omega),
+      show (i + 1) = (⟨fun i => i + 1, add_left_injective 1⟩ : ℕ ↪ ℕ) i from rfl,
+      Finsupp.embDomain_apply_self, zero_add]
+    exact hd i
+
+omit hp in
+theorem consDig_sum (v : ℕ) (d : ℕ →₀ ℕ) :
+    ((consDig v d).sum fun _ v => v) = v + d.sum fun _ v => v := by
+  rw [consDig, Finsupp.sum_add_index' (fun _ => rfl) (fun _ _ _ => rfl),
+    Finsupp.sum_embDomain, Finsupp.sum_single_index rfl]
+
+omit hp in
+/-- The fractional value of `consDig v d` is `(v + fracVal d) / p`. -/
+theorem fracVal_consDig (hp0 : 0 < p) (v : ℕ) (d : ℕ →₀ ℕ) :
+    fracVal p (consDig v d) = ((v : ℚ) + fracVal p d) / p := by
+  have hpne : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp0.ne'
+  rw [consDig, fracVal_add, fracVal_single, fracVal, Finsupp.sum_embDomain, fracVal,
+    Finsupp.sum, Finsupp.sum, add_div, div_eq_mul_inv (Finset.sum _ _), Finset.sum_mul]
+  congr 1
+  · rw [show (-(↑(0 : ℕ) + 1 : ℤ)) = (-1 : ℤ) by norm_num, zpow_neg_one, div_eq_mul_inv]
+  · refine Finset.sum_congr rfl fun i hi => ?_
+    rw [Function.Embedding.coeFn_mk]
+    have hpow : (p : ℚ) ^ (-(↑(i + 1) + 1 : ℤ))
+        = (p : ℚ) ^ (-(↑i + 1 : ℤ)) * (p : ℚ)⁻¹ := by
+      rw [← zpow_neg_one (p : ℚ), ← zpow_add₀ hpne,
+        show ((-(↑i + 1) + -1 : ℤ)) = (-(↑(i + 1) + 1 : ℤ)) by push_cast; ring]
+    rw [hpow]
+    ring
+
+/-- **Scaling by `p`**: `p · S_{a,b,c} ⊆ S_{a, pb+(p-1), c}`.  Digits shift up one
+position; the leading fractional digit joins the integer part, so the digit-sum level
+is unchanged. -/
+theorem Sabc_mem_p_mul {a : ℕ+} {b c : ℕ} {s : ℚ} (hs : s ∈ Sabc p a b c) :
+    (p : ℚ) * s ∈ Sabc p a (p * b + (p - 1)) c := by
+  obtain ⟨n, d, hn, hd, hsum, rfl⟩ := hs
+  have hp2 : 2 ≤ p := hp.out.two_le
+  refine ⟨p * n - d 0, unshiftDig d, ?_, fun i => hd (i + 1), ?_, ?_⟩
+  · -- `-(pb + (p-1)) ≤ pn - d₀` from `n ≥ -b` and `d₀ ≤ p - 1`.
+    have h1 : (p : ℤ) * (-(b : ℤ)) ≤ (p : ℤ) * n :=
+      mul_le_mul_of_nonneg_left hn (by positivity)
+    have h2 : (d 0 : ℤ) < (p : ℤ) := by exact_mod_cast hd 0
+    have h3 : ((p - 1 : ℕ) : ℤ) = (p : ℤ) - 1 := by omega
+    push_cast [h3]
+    linarith
+  · exact (unshiftDig_sum_le d).trans hsum
+  · rw [fracVal_def, fracVal_def]
+    have hkey := p_mul_fracVal p hp.out.pos d
+    push_cast
+    linear_combination (-(1 / (a : ℚ))) * hkey
+
+/-- **Scaling by `p⁻¹`**: `(1/p) · S_{a,b,c} ⊆ S_{a, b, c+(p-1)}`.  Digits shift down
+one position; the residue of the integer part mod `p` becomes a new leading fractional
+digit of size at most `p - 1`. -/
+theorem Sabc_mem_div_p {a : ℕ+} {b c : ℕ} {s : ℚ} (hs : s ∈ Sabc p a b c) :
+    s / p ∈ Sabc p a b (c + (p - 1)) := by
+  obtain ⟨n, d, hn, hd, hsum, rfl⟩ := hs
+  have hp2 : 2 ≤ p := hp.out.two_le
+  have hppos : (0 : ℤ) < (p : ℤ) := by positivity
+  have hpne : ((p : ℚ)) ≠ 0 := by positivity
+  set q : ℤ := n / p with hq
+  set r : ℤ := n % p with hr
+  have hnqr : r + (p : ℤ) * q = n := by rw [hr, hq, Int.emod_def]; ring
+  have hr0 : 0 ≤ r := Int.emod_nonneg n (by omega)
+  have hrp : r < p := Int.emod_lt_of_pos n hppos
+  -- The new integer part is at least `-b` in both cases below.
+  have hqb : -(b : ℤ) ≤ q := by
+    by_contra hcon
+    have h1 : q ≤ -(b : ℤ) - 1 := by omega
+    have h2 : (p : ℤ) * q ≤ (p : ℤ) * (-(b : ℤ) - 1) :=
+      mul_le_mul_of_nonneg_left h1 (by positivity)
+    have h3 : ((b : ℤ)) ≤ (p : ℤ) * b :=
+      le_mul_of_one_le_left (by positivity) (by exact_mod_cast hp.out.one_lt.le)
+    have h4 : (p : ℤ) * (-(b : ℤ) - 1) = -((p : ℤ) * b) - p := by ring
+    linarith
+  rcases eq_or_lt_of_le hr0 with hr' | hr'
+  · -- `r = 0`: no new digit, `s/p = (1/a)(q - fracVal (consDig 0 d))`… with zero digit.
+    refine ⟨q, consDig 0 d, hqb, consDig_lt p (by omega) hd, ?_, ?_⟩
+    · rw [consDig_sum]
+      omega
+    · rw [fracVal_def, fracVal_def, fracVal_consDig p (by omega)]
+      have hane : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+      have hncast : (n : ℚ) = (r : ℚ) + (p : ℚ) * (q : ℚ) := by exact_mod_cast hnqr.symm
+      have hrq : (r : ℚ) = 0 := by exact_mod_cast hr'.symm
+      rw [hncast, hrq]
+      push_cast
+      field_simp
+      ring
+  · -- `r ≥ 1`: the residue becomes the new leading digit `p - r`.
+    refine ⟨q + 1, consDig (p - r).toNat d, by omega,
+      consDig_lt p (by omega) hd, ?_, ?_⟩
+    · rw [consDig_sum]
+      have : (p - r).toNat ≤ p - 1 := by omega
+      omega
+    · rw [fracVal_def, fracVal_def, fracVal_consDig p (by omega)]
+      have hane : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+      have htn : (((p - r).toNat : ℕ) : ℚ) = (p : ℚ) - (r : ℚ) := by
+        rw [show (((p - r).toNat : ℕ) : ℚ) = (((p - r).toNat : ℤ) : ℚ) by push_cast; ring,
+          Int.toNat_of_nonneg (by omega)]
+        push_cast
+        ring
+      have hncast : (n : ℚ) = (r : ℚ) + (p : ℚ) * (q : ℚ) := by exact_mod_cast hnqr.symm
+      rw [htn, hncast]
+      push_cast
+      field_simp
+      ring
+
 end TrustworthyKedlaya.UP
