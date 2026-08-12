@@ -151,6 +151,48 @@ lemma IsTwistPeriodic.add {f g : ℚ → 𝔽ᵃ_[p]} {c : ℕ} {Mf Mg Nf Ng : �
   intro j dig hj hd hs n hn
   rw [twistSeq_add, twistSeq_add, hf' j dig hj hd hs n hn, hg' j dig hj hd hs n hn]
 
+/-- At digit-sum level `0` every twist sequence is constant (all digits vanish, so the
+evaluation point is `0` independently of the gap), hence every function is
+`(M, N)`-periodic at level `0`. -/
+lemma isTwistPeriodic_zero_level (f : ℚ → 𝔽ᵃ_[p]) (M N : ℕ+) :
+    IsTwistPeriodic p f 0 M N := by
+  intro j dig hj hdig hsum n hn
+  have hdig0 : dig = 0 := by
+    ext i
+    simp only [Finsupp.coe_zero, Pi.zero_apply]
+    by_contra hi
+    have hle := Finset.single_le_sum (f := fun i => dig i) (fun i _ => Nat.zero_le _)
+      (Finsupp.mem_support_iff.mpr hi)
+    rw [Finsupp.sum] at hsum
+    omega
+  subst hdig0
+  simp [twistSeq]
+
+/-- **Laurent series are UP**: any Hahn series supported on `(1/n)·ℤ` — that is, any
+element of `𝔽̄_p((t^{1/n})) ⊆ 𝔽̄_p((t^ℚ))` — is uniformly periodic, with digit-sum
+level `0` and constant twist sequences. -/
+theorem isUP_of_support_int_div (n : ℕ+) {x : HahnSeries ℚ (𝔽ᵃ_[p])}
+    (hsupp : ∀ s ∈ x.support, ∃ k : ℤ, s = (k : ℚ) / (n : ℚ)) : IsUP p x := by
+  have hn0 : (0 : ℚ) < (n : ℚ) := by exact_mod_cast n.pos
+  rcases eq_or_ne x 0 with rfl | hx0
+  · refine ⟨n, 0, 0, ?_, 1, 1, fun m _ => isTwistPeriodic_zero_level _ 1 1⟩
+    simp
+  · -- Bound the support below by its minimum.
+    have hne : x.support.Nonempty := HahnSeries.support_nonempty_iff.mpr hx0
+    obtain ⟨k₀, hk₀⟩ := hsupp _ (x.isWF_support.min_mem hne)
+    refine ⟨n, (-k₀).toNat, 0, ?_, 1, 1, fun m _ => isTwistPeriodic_zero_level _ 1 1⟩
+    intro s hs
+    obtain ⟨k, hk⟩ := hsupp s hs
+    have hmin : x.isWF_support.min hne ≤ s := Set.IsWF.min_le _ hne hs
+    have hkk : k₀ ≤ k := by
+      rw [hk₀, hk] at hmin
+      have h1 := mul_le_mul_of_nonneg_right hmin hn0.le
+      rw [div_mul_cancel₀ _ hn0.ne', div_mul_cancel₀ _ hn0.ne'] at h1
+      exact_mod_cast h1
+    refine ⟨k, 0, by omega, fun i => (Fact.out : p.Prime).pos, by simp, ?_⟩
+    rw [hk, Finsupp.sum_zero_index]
+    ring
+
 /-! ### Periodicity from a Frobenius-affine recursion
 
 The engine behind Artin-Schreier stability of UP (Kedlaya (2001a), proof of Lemma 4):
