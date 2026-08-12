@@ -145,16 +145,14 @@ theorem le_val_coeff_of_lastSlope {P : Polynomial 𝕃_[p]} (h0 : P.coeff 0 ≠ 
 
 /-! ### Line-bound transport under the shift `T ↦ T + z` -/
 
-/-- **Line-bound transport** (Wang-Yuan, Lemma 2.4): if every coefficient of `P`
-satisfies the valuation line bound `v(P.coeff j) ≥ v₀ - s·j` and `v(z) ≥ s`, then the
-coefficients of `P(T + z)` satisfy the same bound. -/
-theorem le_val_taylor_coeff {P : Polynomial 𝕃_[p]} {v₀ s : ℚ}
+/-- Each term of the Hasse-derivative expansion of a shifted coefficient lies on or
+above the transported line: `v((hasseDeriv k P).coeff j · z^j) ≥ v₀ - s·k` under the
+line bound for `P` and `v(z) ≥ s`. -/
+theorem le_val_hasseDeriv_term {P : Polynomial 𝕃_[p]} {v₀ s : ℚ}
     (hline : ∀ j : ℕ, ((v₀ - s * j : ℚ) : WithTop ℚ) ≤ val p (P.coeff j))
-    {z : 𝕃_[p]} (hz : (s : WithTop ℚ) ≤ val p z) (k : ℕ) :
-    ((v₀ - s * k : ℚ) : WithTop ℚ) ≤ val p ((Polynomial.taylor z P).coeff k) := by
-  rw [Polynomial.taylor_coeff, Polynomial.eval_eq_sum_range]
-  apply (val p).map_le_sum
-  intro j _
+    {z : 𝕃_[p]} (hz : (s : WithTop ℚ) ≤ val p z) (k j : ℕ) :
+    ((v₀ - s * k : ℚ) : WithTop ℚ)
+      ≤ val p ((Polynomial.hasseDeriv k P).coeff j * z ^ j) := by
   rw [Polynomial.hasseDeriv_coeff]
   have hsplit : (v₀ - s * k : ℚ) = (v₀ - s * ((j + k : ℕ) : ℚ)) + j * s := by
     push_cast; ring
@@ -165,6 +163,16 @@ theorem le_val_taylor_coeff {P : Polynomial 𝕃_[p]} {v₀ s : ℚ}
         add_le_add (le_trans (hline (j + k)) (le_val_natCast_mul _ _)) (le_val_pow hz j)
     _ = val p (((j + k).choose k : 𝕃_[p]) * P.coeff (j + k) * z ^ j) :=
         ((val p).map_mul _ _).symm
+
+/-- **Line-bound transport** (Wang-Yuan, Lemma 2.4): if every coefficient of `P`
+satisfies the valuation line bound `v(P.coeff j) ≥ v₀ - s·j` and `v(z) ≥ s`, then the
+coefficients of `P(T + z)` satisfy the same bound. -/
+theorem le_val_taylor_coeff {P : Polynomial 𝕃_[p]} {v₀ s : ℚ}
+    (hline : ∀ j : ℕ, ((v₀ - s * j : ℚ) : WithTop ℚ) ≤ val p (P.coeff j))
+    {z : 𝕃_[p]} (hz : (s : WithTop ℚ) ≤ val p z) (k : ℕ) :
+    ((v₀ - s * k : ℚ) : WithTop ℚ) ≤ val p ((Polynomial.taylor z P).coeff k) := by
+  rw [Polynomial.taylor_coeff, Polynomial.eval_eq_sum_range]
+  exact (val p).map_le_sum fun j _ => le_val_hasseDeriv_term hline hz k j
 
 /-- `v(P(z)) ≥ v(P(0))` whenever `v(z) ≥ s_max(P)` (Wang-Yuan, Lemma 2.4). -/
 theorem le_val_eval_of_lastSlope_le {P : Polynomial 𝕃_[p]} (h0 : P.coeff 0 ≠ 0)
@@ -342,5 +350,58 @@ theorem exists_residuePoly_coeff_ne_zero {P : Polynomial 𝕃_[p]} (hP : P ≠ 0
   obtain ⟨k₀, hk₀1, hk₀n, hexact, -⟩ := exists_topAttainer hP hn h0
   exact ⟨k₀, hk₀1, hk₀n, by
     rw [residuePoly_coeff P hk₀n]; exact coeff_val_ne_zero hexact⟩
+
+/-! ### The residue identity for the Newton step -/
+
+/-- **Residue identity** (Wang-Yuan, proof of Proposition 2.7): shifting by the one-term
+series `[c]p^s` along the last slope `s`, the coefficient of `P(T + [c]p^s)` at degree
+`k`, read on the last-slope line through the coefficient maps, is the `T^k`-coefficient
+of `Res_P(T + c)`.  The binomial coefficients reduce mod `p` on both sides. -/
+theorem coeff_taylor_single_eq_taylor_residuePoly {P : Polynomial 𝕃_[p]}
+    (h0 : P.coeff 0 ≠ 0) (c : Fpbar p) (k : ℕ) :
+    ((Polynomial.taylor (single (lastSlope P) c) P).coeff k).coeff
+        (valQ (P.coeff 0) - lastSlope P * k)
+      = (Polynomial.taylor c (residuePoly P)).coeff k := by
+  have hline := le_val_coeff_of_lastSlope h0
+  have hz : ((lastSlope P : ℚ) : WithTop ℚ) ≤ val p (single (lastSlope P) c) :=
+    le_val_single _ c
+  rw [Polynomial.taylor_coeff, Polynomial.taylor_coeff,
+    Polynomial.eval_eq_sum_range' (n := P.natDegree + 1)
+      (lt_of_le_of_lt (le_trans (Polynomial.natDegree_hasseDeriv_le P k)
+        (Nat.sub_le _ _)) (Nat.lt_succ_self _)),
+    Polynomial.eval_eq_sum_range' (n := P.natDegree + 1)
+      (lt_of_le_of_lt (le_trans (Polynomial.natDegree_hasseDeriv_le (residuePoly P) k)
+        (le_trans (Nat.sub_le _ _) (natDegree_residuePoly_le P))) (Nat.lt_succ_self _)),
+    coeff_sum_of_le_val (fun j _ => le_val_hasseDeriv_term hline hz k j)]
+  apply Finset.sum_congr rfl
+  intro j _
+  rw [Polynomial.hasseDeriv_coeff, Polynomial.hasseDeriv_coeff, single_pow]
+  have hval1 : ((valQ (P.coeff 0) - lastSlope P * k : ℚ) : WithTop ℚ)
+      ≤ val p (single ((j : ℚ) * lastSlope P) (c ^ j) * P.coeff (j + k)) := by
+    rw [(val p).map_mul]
+    have hsplit : (valQ (P.coeff 0) - lastSlope P * k : ℚ)
+        = (j : ℚ) * lastSlope P + (valQ (P.coeff 0) - lastSlope P * ((j + k : ℕ) : ℚ)) := by
+      push_cast; ring
+    calc ((valQ (P.coeff 0) - lastSlope P * k : ℚ) : WithTop ℚ)
+        = (((j : ℚ) * lastSlope P : ℚ) : WithTop ℚ)
+            + ((valQ (P.coeff 0) - lastSlope P * ((j + k : ℕ) : ℚ) : ℚ) : WithTop ℚ) := by
+          rw [← WithTop.coe_add, hsplit]
+      _ ≤ val p (single ((j : ℚ) * lastSlope P) (c ^ j)) + val p (P.coeff (j + k)) :=
+          add_le_add (le_val_single _ _) (hline (j + k))
+  rw [show (((j + k).choose k : 𝕃_[p]) * P.coeff (j + k)
+        * single ((j : ℚ) * lastSlope P) (c ^ j))
+      = ((j + k).choose k : 𝕃_[p])
+        * (single ((j : ℚ) * lastSlope P) (c ^ j) * P.coeff (j + k)) by ring,
+    coeff_natCast_mul hval1, coeff_single_mul,
+    show valQ (P.coeff 0) - lastSlope P * k - (j : ℚ) * lastSlope P
+      = valQ (P.coeff 0) - lastSlope P * ((j + k : ℕ) : ℚ) by push_cast; ring]
+  rcases le_or_gt (j + k) P.natDegree with hjk | hjk
+  · rw [residuePoly_coeff P hjk]
+    ring
+  · rw [Polynomial.coeff_eq_zero_of_natDegree_lt hjk,
+      Polynomial.coeff_eq_zero_of_natDegree_lt
+        (lt_of_le_of_lt (natDegree_residuePoly_le P) hjk),
+      coeff_zero_eq]
+    simp
 
 end TrustworthyKedlaya.pAdicHahnSeries

@@ -200,6 +200,29 @@ theorem single_mul_single (q r : ℚ) (a b : Fpbar p) :
   · rw [if_pos (by rw [hu]; ring), if_pos hu]
   · rw [if_neg (fun hc : u - q = r => hu (by linarith)), if_neg hu, mul_zero]
 
+/-- The one-term series `[1]p^0` is the multiplicative unit. -/
+theorem single_zero_one : single (p := p) 0 1 = 1 := by
+  rw [single, fromCoeff, lifted_fromCoeff_single, map_one (WittVector.teichmuller p),
+    HahnSeries.single_zero_one, map_one]
+
+/-- Powers of one-term series: `([a]p^q)^n = [aⁿ]p^(nq)`. -/
+theorem single_pow (q : ℚ) (a : Fpbar p) (n : ℕ) :
+    single (p := p) q a ^ n = single (n * q) (a ^ n) := by
+  induction n with
+  | zero => rw [pow_zero, pow_zero, Nat.cast_zero, zero_mul, single_zero_one]
+  | succ n ih =>
+    rw [pow_succ, pow_succ, ih, single_mul_single]
+    congr 1
+    push_cast
+    ring
+
+/-- The one-term series with zero digit is zero. -/
+theorem single_zero (q : ℚ) : single (p := p) q 0 = 0 := by
+  apply ext_coeff
+  funext r
+  rw [coeff_single, coeff_zero_eq]
+  simp
+
 /-- The valuation of a one-term series is its position (Wang-Yuan, Lemma 2.2). -/
 theorem val_single (q : ℚ) {a : Fpbar p} (ha : a ≠ 0) :
     val p (single (p := p) q a) = (q : WithTop ℚ) := by
@@ -219,6 +242,15 @@ theorem val_single (q : ℚ) {a : Fpbar p} (ha : a ≠ 0) :
   · rw [← hm, hmq]
   · rw [if_neg hmq] at hmc
     exact absurd rfl hmc
+
+/-- The valuation of a one-term series is at least its position (no nonzero-digit
+hypothesis: the zero digit gives the zero series, of valuation `⊤`). -/
+theorem le_val_single (q : ℚ) (a : Fpbar p) :
+    (q : WithTop ℚ) ≤ val p (single (p := p) q a) := by
+  rcases eq_or_ne a 0 with rfl | ha
+  · rw [single_zero, val_zero_eq_top]
+    exact le_top
+  · rw [val_single q ha]
 
 /-! ### Additivity at dominated positions -/
 
