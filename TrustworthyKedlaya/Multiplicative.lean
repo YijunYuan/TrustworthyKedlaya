@@ -234,4 +234,305 @@ theorem transportPoint_spec {a : ℕ+} {s : ℚ} {i₀ G G' : ℕ}
   rw [div_eq_iff ha]
   linear_combination -hval
 
+/-! ### Transport of an antidiagonal term -/
+
+/-- **Transport of an antidiagonal term**: a pair of support points decomposing the
+twist evaluation point of the slice `m` at gap size `ν₁ ≥ n₀` transports to gap size
+`ν₂ ≥ n₀`, keeping the coefficients of both factors (they are twist-sequence values
+of slices at the gap-tail index, equal under the periodicity input), decomposing the
+twist point at `ν₂`, and transporting back to the original pair. -/
+theorem mul_antidiagonal_transport {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    {b₁ b₂ c₁ c₂ : ℕ}
+    (hxs : x.support ⊆ Sabc p a b₁ c₁) (hys : y.support ⊆ Sabc p a b₂ c₂)
+    {j ν₁ ν₂ K n₀ i₀ : ℕ}
+    (hK : K = (c₁ + c₂) / (p - 1)) (hn₀ : n₀ = c₁ + c₂ + 1) (hi₀ : i₀ = j - 1 + K)
+    (hν₁ : n₀ ≤ ν₁) (hν₂ : n₀ ≤ ν₂)
+    {dig : ℕ →₀ ℕ} (hdig : ∀ i, dig i < p)
+    (hTx : ∀ (mi : ℤ) (w : ℕ →₀ ℕ), (∀ i, w i < p) → (w.sum fun _ v => v) ≤ c₁ →
+      twistSeq p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w (ν₁ - K)
+        = twistSeq p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w (ν₂ - K))
+    (hTy : ∀ (mi : ℤ) (w : ℕ →₀ ℕ), (∀ i, w i < p) → (w.sum fun _ v => v) ≤ c₂ →
+      twistSeq p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w (ν₁ - K)
+        = twistSeq p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w (ν₂ - K))
+    {m : ℤ} {s₁ s₂ : ℚ} (hs₁ : s₁ ∈ x.support) (hs₂ : s₂ ∈ y.support)
+    (hsum12 : s₁ + s₂ = ((m : ℚ) + -fracVal p (gapDig j ν₁ dig)) / (a : ℚ)) :
+    x.coeff (transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₁) = x.coeff s₁ ∧
+      y.coeff (transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₂) = y.coeff s₂ ∧
+      transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₁
+          + transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₂
+        = ((m : ℚ) + -fracVal p (gapDig j ν₂ dig)) / (a : ℚ) ∧
+      transportPoint p a i₀ (ν₂ - K) (ν₁ - K)
+          (transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₁) = s₁ ∧
+      transportPoint p a i₀ (ν₂ - K) (ν₁ - K)
+          (transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₂) = s₂ := by
+  have ha : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+  have hp0 := hp.out.pos
+  obtain ⟨hud, hus, -, huval⟩ := Sabc_sliceDig p (hxs hs₁)
+  obtain ⟨hvd, hvs, -, hvval⟩ := Sabc_sliceDig p (hys hs₂)
+  -- the sum equation in canonical form, and the carry split
+  have hgd : ∀ i, gapDig j ν₁ dig i < p := fun i => gapDig_lt p hdig hp0 j ν₁ i
+  have hsum' : ((sliceInt a s₁ : ℚ) - fracVal p (sliceDig p a s₁))
+      + ((sliceInt a s₂ : ℚ) - fracVal p (sliceDig p a s₂))
+      = (m : ℚ) - fracVal p (gapDig j ν₁ dig) := by
+    rw [← huval, ← hvval]
+    have h12 : (a : ℚ) * (s₁ + s₂) = (m : ℚ) + -fracVal p (gapDig j ν₁ dig) := by
+      rw [hsum12]
+      field_simp
+    linear_combination h12
+  obtain ⟨κ, hκ, hmm12, hvalpair⟩ := decomp_point_split p hud hvd hgd hsum'
+  -- pair transport across the gap sizes
+  obtain ⟨hzero, hsumu, hsumv, hval'⟩ :=
+    decomp_gapDig_transport p hκ hK hn₀ hi₀ hν₁ hν₂ hdig hud hvd hus hvs hvalpair
+  have hzu : ∀ i, i₀ ≤ i → i < i₀ + (ν₁ - K) → sliceDig p a s₁ i = 0 :=
+    fun i h1 h2 => (hzero i h1 h2).1
+  have hzv : ∀ i, i₀ ≤ i → i < i₀ + (ν₁ - K) → sliceDig p a s₂ i = 0 :=
+    fun i h1 h2 => (hzero i h1 h2).2
+  obtain ⟨hint₁, hdig₁, hrt₁⟩ := transportPoint_spec p huval hud hzu
+  obtain ⟨hint₂, hdig₂, hrt₂⟩ := transportPoint_spec p hvval hvd hzv
+  have hgu : gapDig (i₀ + 1) (ν₁ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁))
+      = sliceDig p a s₁ := gapDig_dropGapDig hzu
+  have hgv : gapDig (i₀ + 1) (ν₁ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂))
+      = sliceDig p a s₂ := gapDig_dropGapDig hzv
+  have huD : ∀ i, dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁) i < p :=
+    fun i => dropGapDig_lt p hud i₀ _ i
+  have hvD : ∀ i, dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂) i < p :=
+    fun i => dropGapDig_lt p hvd i₀ _ i
+  -- coefficients as twist-sequence values of the slices
+  have htwx : ∀ G : ℕ,
+      twistSeq p (fun z => x.coeff (((sliceInt a s₁ : ℚ) + z) / (a : ℚ))) (i₀ + 1)
+        (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁)) G
+      = x.coeff (((sliceInt a s₁ : ℚ)
+          + -fracVal p (gapDig (i₀ + 1) G (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁))))
+          / (a : ℚ)) :=
+    fun G => twistSeq_eq_neg_fracVal_gapDig p _ _ _ _
+  have htwy : ∀ G : ℕ,
+      twistSeq p (fun z => y.coeff (((sliceInt a s₂ : ℚ) + z) / (a : ℚ))) (i₀ + 1)
+        (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂)) G
+      = y.coeff (((sliceInt a s₂ : ℚ)
+          + -fracVal p (gapDig (i₀ + 1) G (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂))))
+          / (a : ℚ)) :=
+    fun G => twistSeq_eq_neg_fracVal_gapDig p _ _ _ _
+  have hargu : ((sliceInt a s₁ : ℚ) + -fracVal p (sliceDig p a s₁)) / (a : ℚ) = s₁ := by
+    rw [div_eq_iff ha]
+    linear_combination -huval
+  have hargv : ((sliceInt a s₂ : ℚ) + -fracVal p (sliceDig p a s₂)) / (a : ℚ) = s₂ := by
+    rw [div_eq_iff ha]
+    linear_combination -hvval
+  have h1 : x.coeff (((sliceInt a s₁ : ℚ)
+      + -fracVal p (gapDig (i₀ + 1) (ν₁ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁))))
+      / (a : ℚ)) = x.coeff s₁ := by
+    rw [hgu]
+    exact congrArg x.coeff hargu
+  have h2 : y.coeff (((sliceInt a s₂ : ℚ)
+      + -fracVal p (gapDig (i₀ + 1) (ν₁ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂))))
+      / (a : ℚ)) = y.coeff s₂ := by
+    rw [hgv]
+    exact congrArg y.coeff hargv
+  have hargTx : transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₁
+      = ((sliceInt a s₁ : ℚ)
+        + -fracVal p (gapDig (i₀ + 1) (ν₂ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁))))
+        / (a : ℚ) := by
+    rw [transportPoint]
+    ring
+  have hargTy : transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₂
+      = ((sliceInt a s₂ : ℚ)
+        + -fracVal p (gapDig (i₀ + 1) (ν₂ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂))))
+        / (a : ℚ) := by
+    rw [transportPoint]
+    ring
+  have h1T := congrArg x.coeff hargTx
+  have h2T := congrArg y.coeff hargTy
+  have hcx : x.coeff (transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₁) = x.coeff s₁ :=
+    h1T.trans (((htwx (ν₂ - K)).symm.trans
+      ((hTx (sliceInt a s₁) _ huD hsumu).symm.trans (htwx (ν₁ - K)))).trans h1)
+  have hcy : y.coeff (transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₂) = y.coeff s₂ :=
+    h2T.trans (((htwy (ν₂ - K)).symm.trans
+      ((hTy (sliceInt a s₂) _ hvD hsumv).symm.trans (htwy (ν₁ - K)))).trans h2)
+  -- the transported pair decomposes the twist point at `ν₂`
+  have hmmq : ((sliceInt a s₁ : ℚ)) + ((sliceInt a s₂ : ℚ)) = (m : ℚ) + (κ : ℚ) := by
+    exact_mod_cast hmm12
+  have hsum2arg : ((sliceInt a s₁ : ℚ)
+        - fracVal p (gapDig (i₀ + 1) (ν₂ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₁))))
+      + ((sliceInt a s₂ : ℚ)
+        - fracVal p (gapDig (i₀ + 1) (ν₂ - K) (dropGapDig i₀ (ν₁ - K) (sliceDig p a s₂))))
+      = (m : ℚ) + -fracVal p (gapDig j ν₂ dig) := by
+    linarith [hval', hmmq]
+  have hsum2 : transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₁
+      + transportPoint p a i₀ (ν₁ - K) (ν₂ - K) s₂
+      = ((m : ℚ) + -fracVal p (gapDig j ν₂ dig)) / (a : ℚ) := by
+    rw [transportPoint, transportPoint, ← add_div, hsum2arg]
+  exact ⟨hcx, hcy, hsum2, hrt₁, hrt₂⟩
+
+/-! ### Periodicity of the slices of a product -/
+
+variable {p} in
+/-- **Periodicity of the slices of a product** (core of `lem:up-mul`): at a common
+slice width `a`, every slice of `x * y` is periodic at level `c₁ + c₂` with data
+`(max(M₁,M₂) + (K + n₀), lcm(N₁,N₂))`, where `K = ⌊(c₁+c₂)/(p-1)⌋` and
+`n₀ = c₁+c₂+1`. -/
+theorem isTwistPeriodic_mul_slice {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    {b₁ b₂ c₁ c₂ : ℕ} {M₁ M₂ N₁ N₂ : ℕ+}
+    (hxs : x.support ⊆ Sabc p a b₁ c₁)
+    (hxp : ∀ mi : ℤ, -(b₁ : ℤ) ≤ mi →
+      IsTwistPeriodic p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) c₁ M₁ N₁)
+    (hys : y.support ⊆ Sabc p a b₂ c₂)
+    (hyp : ∀ mi : ℤ, -(b₂ : ℤ) ≤ mi →
+      IsTwistPeriodic p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) c₂ M₂ N₂)
+    (m : ℤ) :
+    IsTwistPeriodic p (fun z => (x * y).coeff (((m : ℚ) + z) / (a : ℚ))) (c₁ + c₂)
+      (max M₁ M₂ + ⟨(c₁ + c₂) / (p - 1) + (c₁ + c₂ + 1),
+        Nat.lt_of_lt_of_le (Nat.succ_pos _) (Nat.le_add_left _ _)⟩)
+      (N₁.lcm N₂) := by
+  intro j dig _hj hdigits _hdigsum n hn
+  classical
+  set K := (c₁ + c₂) / (p - 1) with hK
+  set n₀ := c₁ + c₂ + 1 with hn₀
+  set i₀ := j - 1 + K with hi₀
+  have hKle : K ≤ c₁ + c₂ := Nat.div_le_self _ _
+  -- index bounds
+  have hnb : ((max M₁ M₂ : ℕ+) : ℕ) + (K + n₀) ≤ n := by exact_mod_cast hn
+  have hM1 : (M₁ : ℕ) + (K + n₀) ≤ n :=
+    le_trans (Nat.add_le_add_right ((PNat.coe_le_coe _ _).mpr (le_max_left M₁ M₂)) _) hnb
+  have hM2 : (M₂ : ℕ) + (K + n₀) ≤ n :=
+    le_trans (Nat.add_le_add_right ((PNat.coe_le_coe _ _).mpr (le_max_right M₁ M₂)) _) hnb
+  have hM1K : (M₁ : ℕ) ≤ n - K :=
+    Nat.le_sub_of_add_le (le_trans (Nat.add_le_add_left (Nat.le_add_right K n₀) _) hM1)
+  have hM2K : (M₂ : ℕ) ≤ n - K :=
+    Nat.le_sub_of_add_le (le_trans (Nat.add_le_add_left (Nat.le_add_right K n₀) _) hM2)
+  have hKn : K ≤ n :=
+    le_trans (le_trans (Nat.le_add_right K n₀) (Nat.le_add_left _ _)) hM1
+  have hn₀n : n₀ ≤ n :=
+    le_trans (le_trans (Nat.le_add_left n₀ K) (Nat.le_add_left _ _)) hM1
+  have hn₀n' : n₀ ≤ n + ((N₁.lcm N₂ : ℕ+) : ℕ) := le_trans hn₀n (Nat.le_add_right _ _)
+  -- slice periodicity for all slices, with the common period
+  have hxp' : ∀ mi : ℤ,
+      IsTwistPeriodic p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) c₁ M₁ (N₁.lcm N₂) :=
+    fun mi => (isTwistPeriodic_slice_upgrade p hxs hxp c₁ mi).mono le_rfl le_rfl
+      (PNat.dvd_iff.mp (PNat.dvd_lcm_left N₁ N₂))
+  have hyp' : ∀ mi : ℤ,
+      IsTwistPeriodic p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) c₂ M₂ (N₁.lcm N₂) :=
+    fun mi => (isTwistPeriodic_slice_upgrade p hys hyp c₂ mi).mono le_rfl le_rfl
+      (PNat.dvd_iff.mp (PNat.dvd_lcm_right N₁ N₂))
+  -- the twist-sequence equality between the two gap-tail indices
+  have hTx : ∀ (mi : ℤ) (w : ℕ →₀ ℕ), (∀ i, w i < p) → (w.sum fun _ v => v) ≤ c₁ →
+      twistSeq p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w
+          ((n + (N₁.lcm N₂ : ℕ)) - K)
+        = twistSeq p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w (n - K) := by
+    intro mi w hw hwsum
+    have h := hxp' mi (i₀ + 1) w (Nat.succ_pos _) hw hwsum (n - K) hM1K
+    rwa [← Nat.sub_add_comm hKn] at h
+  have hTy : ∀ (mi : ℤ) (w : ℕ →₀ ℕ), (∀ i, w i < p) → (w.sum fun _ v => v) ≤ c₂ →
+      twistSeq p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w
+          ((n + (N₁.lcm N₂ : ℕ)) - K)
+        = twistSeq p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) (i₀ + 1) w (n - K) := by
+    intro mi w hw hwsum
+    have h := hyp' mi (i₀ + 1) w (Nat.succ_pos _) hw hwsum (n - K) hM2K
+    rwa [← Nat.sub_add_comm hKn] at h
+  -- both sides as antidiagonal sums
+  have htwxy : ∀ G : ℕ,
+      twistSeq p (fun z => (x * y).coeff (((m : ℚ) + z) / (a : ℚ))) j dig G
+        = (x * y).coeff (((m : ℚ) + -fracVal p (gapDig j G dig)) / (a : ℚ)) :=
+    fun G => twistSeq_eq_neg_fracVal_gapDig p _ _ _ _
+  rw [htwxy, htwxy, HahnSeries.coeff_mul, HahnSeries.coeff_mul,
+    ← Finset.sum_filter_ne_zero (Finset.antidiagonal x.isPWO_support y.isPWO_support _),
+    ← Finset.sum_filter_ne_zero (Finset.antidiagonal x.isPWO_support y.isPWO_support _)]
+  -- reindex along the transport
+  refine Finset.sum_nbij'
+    (fun ij => (transportPoint p a i₀ ((n + (N₁.lcm N₂ : ℕ)) - K) (n - K) ij.1,
+                transportPoint p a i₀ ((n + (N₁.lcm N₂ : ℕ)) - K) (n - K) ij.2))
+    (fun ij => (transportPoint p a i₀ (n - K) ((n + (N₁.lcm N₂ : ℕ)) - K) ij.1,
+                transportPoint p a i₀ (n - K) ((n + (N₁.lcm N₂ : ℕ)) - K) ij.2))
+    ?_ ?_ ?_ ?_ ?_
+  · -- forward membership
+    intro ij hij
+    obtain ⟨hanti, hne⟩ := Finset.mem_filter.mp hij
+    obtain ⟨hm1, hm2, hs12⟩ := Finset.mem_antidiagonal.mp hanti
+    obtain ⟨hcx, hcy, hsum2, -, -⟩ := mul_antidiagonal_transport p (j := j)
+      (ν₁ := n + (N₁.lcm N₂ : ℕ)) (ν₂ := n) hxs hys hK hn₀ hi₀
+      hn₀n' hn₀n hdigits hTx hTy hm1 hm2 hs12
+    rw [Finset.mem_filter, Finset.mem_antidiagonal]
+    refine ⟨⟨?_, ?_, hsum2⟩, ?_⟩
+    · rw [HahnSeries.mem_support, hcx]
+      exact left_ne_zero_of_mul hne
+    · rw [HahnSeries.mem_support, hcy]
+      exact right_ne_zero_of_mul hne
+    · rw [hcx, hcy]
+      exact hne
+  · -- backward membership
+    intro ij hij
+    obtain ⟨hanti, hne⟩ := Finset.mem_filter.mp hij
+    obtain ⟨hm1, hm2, hs12⟩ := Finset.mem_antidiagonal.mp hanti
+    obtain ⟨hcx, hcy, hsum2, -, -⟩ := mul_antidiagonal_transport p (j := j)
+      (ν₁ := n) (ν₂ := n + (N₁.lcm N₂ : ℕ)) hxs hys hK hn₀ hi₀
+      hn₀n hn₀n' hdigits
+      (fun mi w hw hs => (hTx mi w hw hs).symm) (fun mi w hw hs => (hTy mi w hw hs).symm)
+      hm1 hm2 hs12
+    rw [Finset.mem_filter, Finset.mem_antidiagonal]
+    refine ⟨⟨?_, ?_, hsum2⟩, ?_⟩
+    · rw [HahnSeries.mem_support, hcx]
+      exact left_ne_zero_of_mul hne
+    · rw [HahnSeries.mem_support, hcy]
+      exact right_ne_zero_of_mul hne
+    · rw [hcx, hcy]
+      exact hne
+  · -- left inverse
+    intro ij hij
+    obtain ⟨hanti, -⟩ := Finset.mem_filter.mp hij
+    obtain ⟨hm1, hm2, hs12⟩ := Finset.mem_antidiagonal.mp hanti
+    obtain ⟨-, -, -, hr1, hr2⟩ := mul_antidiagonal_transport p (j := j)
+      (ν₁ := n + (N₁.lcm N₂ : ℕ)) (ν₂ := n) hxs hys hK hn₀ hi₀
+      hn₀n' hn₀n hdigits hTx hTy hm1 hm2 hs12
+    exact Prod.ext_iff.mpr ⟨hr1, hr2⟩
+  · -- right inverse
+    intro ij hij
+    obtain ⟨hanti, -⟩ := Finset.mem_filter.mp hij
+    obtain ⟨hm1, hm2, hs12⟩ := Finset.mem_antidiagonal.mp hanti
+    obtain ⟨-, -, -, hr1, hr2⟩ := mul_antidiagonal_transport p (j := j)
+      (ν₁ := n) (ν₂ := n + (N₁.lcm N₂ : ℕ)) hxs hys hK hn₀ hi₀
+      hn₀n hn₀n' hdigits
+      (fun mi w hw hs => (hTx mi w hw hs).symm) (fun mi w hw hs => (hTy mi w hw hs).symm)
+      hm1 hm2 hs12
+    exact Prod.ext_iff.mpr ⟨hr1, hr2⟩
+  · -- matched terms are equal
+    intro ij hij
+    obtain ⟨hanti, -⟩ := Finset.mem_filter.mp hij
+    obtain ⟨hm1, hm2, hs12⟩ := Finset.mem_antidiagonal.mp hanti
+    obtain ⟨hcx, hcy, -, -, -⟩ := mul_antidiagonal_transport p (j := j)
+      (ν₁ := n + (N₁.lcm N₂ : ℕ)) (ν₂ := n) hxs hys hK hn₀ hi₀
+      hn₀n' hn₀n hdigits hTx hTy hm1 hm2 hs12
+    rw [hcx, hcy]
+
+/-! ### The closure theorems -/
+
+variable {p} in
+/-- **UP is stable under multiplication at a common slice width**: the support carry
+estimate gives `S_{a, b₁+b₂+1, c₁+c₂}`, and the slices inherit the periodicity data
+`(max(M₁,M₂) + (K + n₀), lcm(N₁,N₂))`. -/
+theorem isUP_mul_of_common_width {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    {b₁ b₂ c₁ c₂ : ℕ} {M₁ M₂ N₁ N₂ : ℕ+}
+    (hxs : x.support ⊆ Sabc p a b₁ c₁)
+    (hxp : ∀ mi : ℤ, -(b₁ : ℤ) ≤ mi →
+      IsTwistPeriodic p (fun z => x.coeff (((mi : ℚ) + z) / (a : ℚ))) c₁ M₁ N₁)
+    (hys : y.support ⊆ Sabc p a b₂ c₂)
+    (hyp : ∀ mi : ℤ, -(b₂ : ℤ) ≤ mi →
+      IsTwistPeriodic p (fun z => y.coeff (((mi : ℚ) + z) / (a : ℚ))) c₂ M₂ N₂) :
+    IsUP p (x * y) := by
+  refine ⟨a, b₁ + b₂ + 1, c₁ + c₂, ?_, _, N₁.lcm N₂,
+    fun m _ => isTwistPeriodic_mul_slice hxs hxp hys hyp m⟩
+  intro g hg
+  obtain ⟨g₁, hg₁, g₂, hg₂, rfl⟩ := HahnSeries.support_mul_subset hg
+  exact Sabc_add_subset p (hxs hg₁) (hys hg₂)
+
+variable {p} in
+/-- **UP is stable under multiplication** (`lem:up-mul`): upgrade both presentations
+to the common slice width `a'·a` and transport the antidiagonal decompositions. -/
+theorem IsUP.mul {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) (hy : IsUP p y) :
+    IsUP p (x * y) := by
+  obtain ⟨a, b, c, hxs, M, N, hxp⟩ := hx
+  obtain ⟨a', b', c', hys, M', N', hyp⟩ := hy
+  obtain ⟨b₁, c₁, M₁, hs₁, hp₁⟩ := SliceWitness.width_mul a' ⟨hxs, hxp⟩
+  obtain ⟨b₂, c₂, M₂, hs₂, hp₂⟩ := SliceWitness.width_mul a ⟨hys, hyp⟩
+  rw [mul_comm a a'] at hs₂ hp₂
+  exact isUP_mul_of_common_width hs₁ hp₁ hs₂ hp₂
+
 end TrustworthyKedlaya.UP
