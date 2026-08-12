@@ -544,4 +544,75 @@ theorem pow_pow_eq_self_of_asPair {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+
       _ = B := hB
       _ = x.coeff (((m : ℚ) + -fracVal p e) / (a : ℚ)) ^ p ^ k := hval.symm
 
+/-! ### The twist-sequence coupling relations
+
+Along `x^p = x + y`, `p`-th powers of the twist sequences of `x` are twist sequences of
+`x + y`: the evaluation point is multiplied by `p`, which shifts the digit string one
+place — dropping the leading digit into the slice index when the gap sits at `j ≥ 2`,
+and shortening the gap by one when it sits at `j = 1` (`lem:as-twist-couple`). -/
+
+/-- **Coupling at gap position 1**: the `p`-th power of the gap-one twist sequence of
+the slice `m` of `x` at index `n + 1` is the gap-one twist sequence of the slice `p·m`
+of `x + y` at index `n`, with the same digits. -/
+theorem twistSeq_couple_gap_one {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    (hAS : x ^ p = x + y) (m : ℤ) (dig : ℕ →₀ ℕ) (n : ℕ) :
+    (twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) 1 dig (n + 1)) ^ p
+      = twistSeq p (fun z => (x + y).coeff ((((p * m : ℤ) : ℚ) + z) / (a : ℚ)))
+          1 dig n := by
+  have hpq : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp.out.pos.ne'
+  have haq : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+  rw [twistSeq_eq_neg_fracVal_gapDig, twistSeq_eq_neg_fracVal_gapDig]
+  change (x.coeff (((m : ℚ) + -fracVal p (gapDig 1 (n + 1) dig)) / (a : ℚ))) ^ p
+    = (x + y).coeff ((((p * m : ℤ) : ℚ) + -fracVal p (gapDig 1 n dig)) / (a : ℚ))
+  rw [← hAS, coeff_pow_char]
+  have hkey := p_mul_fracVal p hp.out.pos (gapDig 1 (n + 1) dig)
+  rw [gapDig_one_apply_zero n dig, unshiftDig_gapDig_one n dig] at hkey
+  have harg : ((((p * m : ℤ) : ℚ) + -fracVal p (gapDig 1 n dig)) / (a : ℚ)) / (p : ℚ)
+      = ((m : ℚ) + -fracVal p (gapDig 1 (n + 1) dig)) / (a : ℚ) := by
+    rw [show fracVal p (gapDig 1 n dig)
+        = (p : ℚ) * fracVal p (gapDig 1 (n + 1) dig) from by push_cast at hkey; linarith]
+    push_cast
+    field_simp
+  rw [harg]
+
+/-- **Coupling at gap positions `j ≥ 2`**: the `p`-th power of the twist sequence of
+the slice `m` of `x` at gap position `j` is the twist sequence of the slice
+`p·m - dig 0` of `x + y` at gap position `j - 1` with the leading digit dropped, at
+the same index. -/
+theorem twistSeq_couple_gap_ge_two {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
+    (hAS : x ^ p = x + y) (m : ℤ) {j : ℕ} (hj : 2 ≤ j) (dig : ℕ →₀ ℕ) (n : ℕ) :
+    (twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) j dig n) ^ p
+      = twistSeq p
+          (fun z => (x + y).coeff ((((p * m - dig 0 : ℤ) : ℚ) + z) / (a : ℚ)))
+          (j - 1) (unshiftDig dig) n := by
+  have hpq : ((p : ℚ)) ≠ 0 := by exact_mod_cast hp.out.pos.ne'
+  have haq : ((a : ℚ)) ≠ 0 := by exact_mod_cast a.pos.ne'
+  rw [twistSeq_eq_neg_fracVal_gapDig, twistSeq_eq_neg_fracVal_gapDig]
+  change (x.coeff (((m : ℚ) + -fracVal p (gapDig j n dig)) / (a : ℚ))) ^ p
+    = (x + y).coeff ((((p * m - dig 0 : ℤ) : ℚ)
+        + -fracVal p (gapDig (j - 1) n (unshiftDig dig))) / (a : ℚ))
+  rw [← hAS, coeff_pow_char]
+  have hkey := p_mul_fracVal p hp.out.pos (gapDig j n dig)
+  rw [gapDig_apply_zero hj] at hkey
+  have harg : ((((p * m - dig 0 : ℤ) : ℚ)
+        + -fracVal p (gapDig (j - 1) n (unshiftDig dig))) / (a : ℚ)) / (p : ℚ)
+      = ((m : ℚ) + -fracVal p (gapDig j n dig)) / (a : ℚ) := by
+    rw [← unshiftDig_gapDig hj n dig,
+      show fracVal p (unshiftDig (gapDig j n dig))
+          = (p : ℚ) * fracVal p (gapDig j n dig) - (dig 0 : ℚ) from by linarith]
+    push_cast
+    field_simp
+    ring
+  rw [harg]
+
+/-- Twist sequences of a sum of series split termwise. -/
+theorem twistSeq_slice_add (x y : HahnSeries ℚ (𝔽ᵃ_[p])) (a : ℕ+) (m : ℤ) (j : ℕ)
+    (dig : ℕ →₀ ℕ) (n : ℕ) :
+    twistSeq p (fun z => (x + y).coeff (((m : ℚ) + z) / (a : ℚ))) j dig n
+      = twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) j dig n
+        + twistSeq p (fun z => y.coeff (((m : ℚ) + z) / (a : ℚ))) j dig n := by
+  rw [show (fun z => (x + y).coeff (((m : ℚ) + z) / (a : ℚ)))
+      = fun z => x.coeff (((m : ℚ) + z) / (a : ℚ)) + y.coeff (((m : ℚ) + z) / (a : ℚ))
+    from funext fun z => HahnSeries.coeff_add, twistSeq_add]
+
 end TrustworthyKedlaya.UP
