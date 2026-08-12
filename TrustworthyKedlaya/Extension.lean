@@ -373,20 +373,14 @@ theorem exists_residue [IsAlgClosed K] (x : L) (hx : spectralNorm K⸨X⸩ L x �
   rw [Function.comp_apply, ← NNReal.coe_le_coe, NNReal.coe_one, coe_nnnorm]
   exact not_lt.mp hge
 
-/-- **Finite extensions of `K⸨X⸩` are totally ramified when `K` is algebraically closed**:
-the ramification index equals the degree, i.e. there is `π : L` with
-`‖π‖ ^ [L : K⸨X⸩] = ‖X‖` whose powers give the norms of all nonzero elements.
-(In particular the `e` of `exists_spectralNorm_uniformizer` is exactly `[L : K⸨X⸩]`;
-this subsumes the Galois case of the blueprint statement.) -/
-theorem exists_spectralNorm_uniformizer_pow_finrank [IsAlgClosed K] :
-    ∃ π : L, spectralNorm K⸨X⸩ L π ^ Module.finrank K⸨X⸩ L =
-        ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ ∧
-      ∀ x : L, x ≠ 0 → ∃ m : ℤ, spectralNorm K⸨X⸩ L x = spectralNorm K⸨X⸩ L π ^ m := by
-  obtain ⟨e, π, he0, hed, hπe, hall⟩ := exists_spectralNorm_uniformizer (K := K) (L := L)
-  suffices heq : e = Module.finrank K⸨X⸩ L by
-    refine ⟨π, ?_, hall⟩
-    rw [← heq]
-    exact hπe
+/-- **The powers of a uniformizer span**: if `‖π‖ ^ e = ‖X‖` and every nonzero element
+of `L` has spectral norm an integer power of `‖π‖`, then `1, π, …, π^{e-1}` span `L`
+over `K⸨X⸩` (by successive approximation against this span, which is closed by
+finite-dimensionality and dense by geometric decay). -/
+theorem span_pow_eq_top_of_spectralNorm_pow_eq [IsAlgClosed K] {π : L} {e : ℕ} (he0 : 0 < e)
+    (hπe : spectralNorm K⸨X⸩ L π ^ e = ‖(HahnSeries.single 1 1 : K⸨X⸩)‖)
+    (hall : ∀ x : L, x ≠ 0 → ∃ m : ℤ, spectralNorm K⸨X⸩ L x = spectralNorm K⸨X⸩ L π ^ m) :
+    Submodule.span K⸨X⸩ (Set.range fun i : Fin e => π ^ (i : ℕ)) = ⊤ := by
   let _ : NormedField L := spectralNorm.normedField K⸨X⸩ L
   have hnorm : ∀ y : L, ‖y‖ = spectralNorm K⸨X⸩ L y := fun _ => rfl
   let _ : NormedAlgebra K⸨X⸩ L := spectralNorm.normedAlgebra K⸨X⸩ L
@@ -502,9 +496,25 @@ theorem exists_spectralNorm_uniformizer_pow_finrank [IsAlgClosed K] :
         _ < ε / (‖x‖ + 1) * (‖x‖ + 1) := mul_lt_mul_of_pos_right hj hx1
         _ = ε := div_mul_cancel₀ ε hx1.ne'
     rwa [hM_closed.closure_eq] at hx_closure
-  -- count dimensions
+  exact hM_top
+
+/-- **Finite extensions of `K⸨X⸩` are totally ramified when `K` is algebraically closed**:
+the ramification index equals the degree, i.e. there is `π : L` with
+`‖π‖ ^ [L : K⸨X⸩] = ‖X‖` whose powers give the norms of all nonzero elements.
+(In particular the `e` of `exists_spectralNorm_uniformizer` is exactly `[L : K⸨X⸩]`;
+this subsumes the Galois case of the blueprint statement.) -/
+theorem exists_spectralNorm_uniformizer_pow_finrank [IsAlgClosed K] :
+    ∃ π : L, spectralNorm K⸨X⸩ L π ^ Module.finrank K⸨X⸩ L =
+        ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ ∧
+      ∀ x : L, x ≠ 0 → ∃ m : ℤ, spectralNorm K⸨X⸩ L x = spectralNorm K⸨X⸩ L π ^ m := by
+  obtain ⟨e, π, he0, hed, hπe, hall⟩ := exists_spectralNorm_uniformizer (K := K) (L := L)
+  suffices heq : e = Module.finrank K⸨X⸩ L by
+    refine ⟨π, ?_, hall⟩
+    rw [← heq]
+    exact hπe
+  have hspan := span_pow_eq_top_of_spectralNorm_pow_eq he0 hπe hall
   have hle : Module.finrank K⸨X⸩ L ≤ e := by
-    have := finrank_le_of_span_eq_top (hM ▸ hM_top)
+    have := finrank_le_of_span_eq_top hspan
     simpa using this
   exact le_antisymm (Nat.le_of_dvd Module.finrank_pos hed) hle
 
