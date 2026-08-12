@@ -12,6 +12,7 @@ import TrustworthyKedlaya.FiniteImage
 import TrustworthyKedlaya.Frobenius
 import TrustworthyKedlaya.FrobeniusUP
 import TrustworthyKedlaya.Galois
+import TrustworthyKedlaya.GaloisTower
 import TrustworthyKedlaya.GapContraction
 import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.LaurentRoots
