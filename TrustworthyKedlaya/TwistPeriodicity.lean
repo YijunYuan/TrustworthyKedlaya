@@ -248,4 +248,27 @@ theorem eventually_periodic_of_frobenius_affine {c y : ℕ → 𝔽ᵃ_[p]} {d M
   rw [hfix, hsum, add_zero] at key
   exact key
 
+/-- **Artin-Schreier roots of constants**: `𝔽̄_p` is algebraically closed, so every
+`l` is `m^p - m` for some `m`. -/
+theorem exists_artinSchreier_root (l : 𝔽ᵃ_[p]) : ∃ m : 𝔽ᵃ_[p], m ^ p - m = l := by
+  have hp1 : (1 : WithBot ℕ) < (p : WithBot ℕ) := by
+    exact_mod_cast (Fact.out : p.Prime).one_lt
+  have hdlt : (Polynomial.X + Polynomial.C l : Polynomial (𝔽ᵃ_[p])).degree
+      < (Polynomial.X ^ p : Polynomial (𝔽ᵃ_[p])).degree := by
+    rw [Polynomial.degree_X_pow]
+    refine lt_of_le_of_lt (Polynomial.degree_add_le _ _) (max_lt ?_ ?_)
+    · rw [Polynomial.degree_X]
+      exact hp1
+    · refine lt_of_le_of_lt Polynomial.degree_C_le ?_
+      exact_mod_cast (Fact.out : p.Prime).pos
+  have hdeg : (Polynomial.X ^ p - Polynomial.X - Polynomial.C l
+      : Polynomial (𝔽ᵃ_[p])).degree ≠ 0 := by
+    rw [sub_sub, Polynomial.degree_sub_eq_left_of_degree_lt hdlt, Polynomial.degree_X_pow]
+    exact_mod_cast (Fact.out : p.Prime).ne_zero
+  obtain ⟨x, hx⟩ := IsAlgClosed.exists_root _ hdeg
+  refine ⟨x, ?_⟩
+  simp only [Polynomial.IsRoot, Polynomial.eval_sub, Polynomial.eval_pow,
+    Polynomial.eval_X, Polynomial.eval_C] at hx
+  exact sub_eq_zero.mp (by linear_combination hx)
+
 end TrustworthyKedlaya.UP
