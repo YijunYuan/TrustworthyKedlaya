@@ -15,6 +15,7 @@ import TrustworthyKedlaya.Galois
 import TrustworthyKedlaya.GaloisTower
 import TrustworthyKedlaya.GapContraction
 import TrustworthyKedlaya.Kedlaya
+import TrustworthyKedlaya.LpAlgClosed
 import TrustworthyKedlaya.LpCoeff
 import TrustworthyKedlaya.LaurentRoots
 import TrustworthyKedlaya.Miscellaneous
