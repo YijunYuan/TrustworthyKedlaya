@@ -115,4 +115,208 @@ theorem le_val_shadow_add_sub' (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) :
     calc ((a : WithTop ℚ)) + 1 = ((a + 1 : ℚ) : WithTop ℚ) := by norm_cast
       _ ≤ _ := h
 
+/-! ### Shadowing the coefficients of a split polynomial -/
+
+/-- **Shadowing the coefficients of a split polynomial**
+(`lem:shadow-symmetric-congruence`): the coefficients of `∏_{y ∈ Y}(X - S(y))` agree
+with the shadows of the coefficients of `∏_{y ∈ Y}(X - y)` to depth `σ_{n-i}(W) + 1`,
+where `W = Y.map orderTop` and `σ` is delivered by a minimal witness `T`.
+
+Induction on `Y`, comparing `(X - S(y₀))·R` with the shadow of `(X - y₀)·P`
+coefficientwise: the difference decomposes into the inductive difference, a
+`S(y₀)`-multiple of it, and negation/multiplication/addition Teichmüller carries, each
+of valuation at least `σ_{n+1-i}(W') + 1` by the carry bounds and the coefficient
+floors. -/
+theorem exists_sum_le_val_coeff_shadow (Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p]))) (i : ℕ) :
+    ∃ T ≤ Y.map HahnSeries.orderTop, T.card = Y.card - i ∧
+      T.sum + 1 ≤ val p (((Y.map fun y => X - Polynomial.C (shadow y)).prod).coeff i
+        - shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i)) := by
+  classical
+  induction Y using Multiset.induction_on generalizing i with
+  | empty =>
+    simp only [Multiset.map_zero, Multiset.prod_zero, Multiset.card_zero]
+    refine ⟨0, le_rfl, by rw [Multiset.card_zero, Nat.zero_sub], ?_⟩
+    by_cases h0 : i = 0
+    · subst h0
+      rw [Polynomial.coeff_one_zero, Polynomial.coeff_one_zero, shadow_one, sub_self,
+        (val p).map_zero]
+      exact le_top
+    · rw [Polynomial.coeff_one, Polynomial.coeff_one, if_neg h0, if_neg h0, shadow_zero,
+        sub_zero, (val p).map_zero]
+      exact le_top
+  | cons y₀ Y ih =>
+    by_cases hbig : (y₀ ::ₘ Y).card ≤ i
+    · -- at or above the common degree the coefficients are `1` or `0` on both sides
+      refine ⟨0, Multiset.zero_le _, by rw [Multiset.card_zero, Nat.sub_eq_zero_of_le hbig], ?_⟩
+      have hPmonic : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C y).prod).Monic :=
+        monic_multiset_prod_of_monic _ _ fun y _ => monic_X_sub_C y
+      have hRmap : ((y₀ ::ₘ Y).map fun y => X - Polynomial.C (shadow y))
+          = (((y₀ ::ₘ Y).map shadow).map fun z => X - Polynomial.C z) := by
+        rw [Multiset.map_map]
+        rfl
+      have hRmonic : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C (shadow y)).prod).Monic := by
+        rw [hRmap]
+        exact monic_multiset_prod_of_monic _ _ fun z _ => monic_X_sub_C z
+      have hPdeg : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C y).prod).natDegree = (y₀ ::ₘ Y).card :=
+        natDegree_multiset_prod_X_sub_C_eq_card _
+      have hRdeg : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C (shadow y)).prod).natDegree
+          = (y₀ ::ₘ Y).card := by
+        rw [hRmap, natDegree_multiset_prod_X_sub_C_eq_card, Multiset.card_map]
+      rcases eq_or_lt_of_le hbig with heq | hlt
+      · have hPc : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C y).prod).coeff i = 1 := by
+          rw [← heq, ← hPdeg]
+          exact hPmonic.coeff_natDegree
+        have hRc : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C (shadow y)).prod).coeff i = 1 := by
+          rw [← heq, ← hRdeg]
+          exact hRmonic.coeff_natDegree
+        rw [hPc, hRc, shadow_one, sub_self, (val p).map_zero]
+        exact le_top
+      · rw [Polynomial.coeff_eq_zero_of_natDegree_lt (by rw [hRdeg]; exact hlt),
+          Polynomial.coeff_eq_zero_of_natDegree_lt (by rw [hPdeg]; exact hlt),
+          shadow_zero, sub_zero, (val p).map_zero]
+        exact le_top
+    · -- below the degree: the four-bracket carry decomposition
+      have hilt : i < Y.card + 1 := by
+        have := Nat.lt_of_not_le hbig
+        rwa [Multiset.card_cons] at this
+      simp only [Multiset.map_cons, Multiset.prod_cons, Multiset.card_cons]
+      set Pp : Polynomial (HahnSeries ℚ (𝔽ᵃ_[p])) := (Y.map fun y => X - Polynomial.C y).prod with hPp
+      set Rp : Polynomial (𝕃_[p]) := (Y.map fun y => X - Polynomial.C (shadow y)).prod with hRp
+      obtain ⟨Tm, hTmle, hTmcard, hTmmin⟩ :=
+        exists_min_sum_powersetCard (y₀.orderTop ::ₘ Y.map HahnSeries.orderTop)
+          (j := Y.card + 1 - i)
+          (by rw [Multiset.card_cons, Multiset.card_map]; exact Nat.sub_le _ _)
+      refine ⟨Tm, hTmle, hTmcard, ?_⟩
+      have hmap : Y.map ⇑(HahnSeries.addVal ℚ (𝔽ᵃ_[p])) = Y.map HahnSeries.orderTop :=
+        Multiset.map_congr rfl fun y _ => HahnSeries.addVal_apply
+      have horder_mul : ∀ a b : HahnSeries ℚ (𝔽ᵃ_[p]),
+          (a * b).orderTop = a.orderTop + b.orderTop := by
+        intro a b
+        rw [← HahnSeries.addVal_apply (x := a * b), ← HahnSeries.addVal_apply (x := a),
+          ← HahnSeries.addVal_apply (x := b)]
+        exact (HahnSeries.addVal ℚ (𝔽ᵃ_[p])).map_mul a b
+      cases i with
+      | zero =>
+        obtain ⟨T₄, hT₄le, hT₄card, _, hT₄sum⟩ :=
+          exists_sum_le_v_coeff_prod_X_sub_C (HahnSeries.addVal ℚ (𝔽ᵃ_[p])) Y
+            (i := 0) (Nat.zero_le _)
+        rw [hmap] at hT₄le
+        rw [HahnSeries.addVal_apply] at hT₄sum
+        obtain ⟨T₁, hT₁le, hT₁card, hT₁sum⟩ := ih 0
+        have hP' : ((X - Polynomial.C y₀) * Pp).coeff 0 = -(y₀ * Pp.coeff 0) := by
+          rw [Polynomial.mul_coeff_zero, Polynomial.coeff_sub, Polynomial.coeff_X_zero,
+            Polynomial.coeff_C_zero, zero_sub, neg_mul]
+        have hR' : ((X - Polynomial.C (shadow y₀)) * Rp).coeff 0 = -(shadow y₀ * Rp.coeff 0) := by
+          rw [Polynomial.mul_coeff_zero, Polynomial.coeff_sub, Polynomial.coeff_X_zero,
+            Polynomial.coeff_C_zero, zero_sub, neg_mul]
+        have h1 : Tm.sum + 1 ≤ val p (shadow y₀ * (Rp.coeff 0 - shadow (Pp.coeff 0))) := by
+          rw [(val p).map_mul, val_shadow]
+          have h := hTmmin (y₀.orderTop ::ₘ T₁) (Multiset.cons_le_cons _ hT₁le)
+            (by rw [Multiset.card_cons, hT₁card]; omega)
+          rw [Multiset.sum_cons] at h
+          calc Tm.sum + 1 ≤ (y₀.orderTop + T₁.sum) + 1 := add_le_add h le_rfl
+            _ = y₀.orderTop + (T₁.sum + 1) := by rw [add_assoc]
+            _ ≤ _ := add_le_add le_rfl hT₁sum
+        have h2 : Tm.sum + 1
+            ≤ val p (shadow y₀ * shadow (Pp.coeff 0) - shadow (y₀ * Pp.coeff 0)) := by
+          rw [(val p).map_sub_swap]
+          refine le_trans ?_ (le_val_shadow_mul_sub' y₀ (Pp.coeff 0))
+          have h := hTmmin (y₀.orderTop ::ₘ T₄) (Multiset.cons_le_cons _ hT₄le)
+            (by rw [Multiset.card_cons, hT₄card]; omega)
+          rw [Multiset.sum_cons] at h
+          exact add_le_add (le_trans h (add_le_add le_rfl hT₄sum)) le_rfl
+        have h3 : Tm.sum + 1
+            ≤ val p (shadow (-(y₀ * Pp.coeff 0)) + shadow (y₀ * Pp.coeff 0)) := by
+          refine le_trans ?_ (le_val_shadow_neg_add' (y₀ * Pp.coeff 0))
+          rw [horder_mul]
+          have h := hTmmin (y₀.orderTop ::ₘ T₄) (Multiset.cons_le_cons _ hT₄le)
+            (by rw [Multiset.card_cons, hT₄card]; omega)
+          rw [Multiset.sum_cons] at h
+          exact add_le_add (le_trans h (add_le_add le_rfl hT₄sum)) le_rfl
+        have hdiff : ((X - Polynomial.C (shadow y₀)) * Rp).coeff 0 - shadow (((X - Polynomial.C y₀) * Pp).coeff 0)
+            = -(shadow y₀ * (Rp.coeff 0 - shadow (Pp.coeff 0)))
+              - (shadow y₀ * shadow (Pp.coeff 0) - shadow (y₀ * Pp.coeff 0))
+              - (shadow (-(y₀ * Pp.coeff 0)) + shadow (y₀ * Pp.coeff 0)) := by
+          rw [hR', hP']
+          ring
+        rw [hdiff]
+        refine (val p).map_le_sub ((val p).map_le_sub ?_ h2) h3
+        rw [(val p).map_neg]
+        exact h1
+      | succ j =>
+        have hjn : j + 1 ≤ Y.card := by omega
+        obtain ⟨T₄, hT₄le, hT₄card, _, hT₄sum⟩ :=
+          exists_sum_le_v_coeff_prod_X_sub_C (HahnSeries.addVal ℚ (𝔽ᵃ_[p])) Y
+            (i := j) (le_trans (Nat.le_succ j) hjn)
+        obtain ⟨T₃, hT₃le, hT₃card, _, hT₃sum⟩ :=
+          exists_sum_le_v_coeff_prod_X_sub_C (HahnSeries.addVal ℚ (𝔽ᵃ_[p])) Y
+            (i := j + 1) hjn
+        rw [hmap] at hT₄le hT₃le
+        rw [HahnSeries.addVal_apply] at hT₄sum hT₃sum
+        obtain ⟨T₁, hT₁le, hT₁card, hT₁sum⟩ := ih j
+        obtain ⟨T₂, hT₂le, hT₂card, hT₂sum⟩ := ih (j + 1)
+        have hP' : ((X - Polynomial.C y₀) * Pp).coeff (j + 1)
+            = Pp.coeff j + -(y₀ * Pp.coeff (j + 1)) := by
+          rw [sub_mul, Polynomial.coeff_sub, Polynomial.coeff_X_mul, Polynomial.coeff_C_mul,
+            sub_eq_add_neg]
+        have hR' : ((X - Polynomial.C (shadow y₀)) * Rp).coeff (j + 1)
+            = Rp.coeff j - shadow y₀ * Rp.coeff (j + 1) := by
+          rw [sub_mul, Polynomial.coeff_sub, Polynomial.coeff_X_mul, Polynomial.coeff_C_mul]
+        have h1 : Tm.sum + 1 ≤ val p (Rp.coeff j - shadow (Pp.coeff j)) :=
+          le_trans (add_le_add (hTmmin T₁ (le_trans hT₁le (Multiset.le_cons_self _ _))
+            (by rw [hT₁card]; omega)) le_rfl) hT₁sum
+        have h2 : Tm.sum + 1
+            ≤ val p (shadow y₀ * (Rp.coeff (j + 1) - shadow (Pp.coeff (j + 1)))) := by
+          rw [(val p).map_mul, val_shadow]
+          have h := hTmmin (y₀.orderTop ::ₘ T₂) (Multiset.cons_le_cons _ hT₂le)
+            (by rw [Multiset.card_cons, hT₂card]; omega)
+          rw [Multiset.sum_cons] at h
+          calc Tm.sum + 1 ≤ (y₀.orderTop + T₂.sum) + 1 := add_le_add h le_rfl
+            _ = y₀.orderTop + (T₂.sum + 1) := by rw [add_assoc]
+            _ ≤ _ := add_le_add le_rfl hT₂sum
+        have h3 : Tm.sum + 1
+            ≤ val p (shadow y₀ * shadow (Pp.coeff (j + 1)) - shadow (y₀ * Pp.coeff (j + 1))) := by
+          rw [(val p).map_sub_swap]
+          refine le_trans ?_ (le_val_shadow_mul_sub' y₀ (Pp.coeff (j + 1)))
+          have h := hTmmin (y₀.orderTop ::ₘ T₃) (Multiset.cons_le_cons _ hT₃le)
+            (by rw [Multiset.card_cons, hT₃card]; omega)
+          rw [Multiset.sum_cons] at h
+          exact add_le_add (le_trans h (add_le_add le_rfl hT₃sum)) le_rfl
+        have h4 : Tm.sum + 1 ≤ val p
+            ((shadow (Pp.coeff j + -(y₀ * Pp.coeff (j + 1))) - shadow (Pp.coeff j)
+                - shadow (-(y₀ * Pp.coeff (j + 1))))
+              + (shadow (-(y₀ * Pp.coeff (j + 1))) + shadow (y₀ * Pp.coeff (j + 1)))) := by
+          refine (val p).map_le_add ?_ ?_
+          · refine le_trans ?_
+              (le_val_shadow_add_sub' (Pp.coeff j) (-(y₀ * Pp.coeff (j + 1))))
+            have hw : Tm.sum
+                ≤ min (Pp.coeff j).orderTop (-(y₀ * Pp.coeff (j + 1))).orderTop := by
+              refine le_min ?_ ?_
+              · exact le_trans (hTmmin T₄ (le_trans hT₄le (Multiset.le_cons_self _ _))
+                  (by rw [hT₄card]; omega)) hT₄sum
+              · rw [HahnSeries.orderTop_neg, horder_mul]
+                have h := hTmmin (y₀.orderTop ::ₘ T₃) (Multiset.cons_le_cons _ hT₃le)
+                  (by rw [Multiset.card_cons, hT₃card]; omega)
+                rw [Multiset.sum_cons] at h
+                exact le_trans h (add_le_add le_rfl hT₃sum)
+            exact add_le_add hw le_rfl
+          · refine le_trans ?_ (le_val_shadow_neg_add' (y₀ * Pp.coeff (j + 1)))
+            rw [horder_mul]
+            have h := hTmmin (y₀.orderTop ::ₘ T₃) (Multiset.cons_le_cons _ hT₃le)
+              (by rw [Multiset.card_cons, hT₃card]; omega)
+            rw [Multiset.sum_cons] at h
+            exact add_le_add (le_trans h (add_le_add le_rfl hT₃sum)) le_rfl
+        have hdiff : ((X - Polynomial.C (shadow y₀)) * Rp).coeff (j + 1)
+              - shadow (((X - Polynomial.C y₀) * Pp).coeff (j + 1))
+            = (Rp.coeff j - shadow (Pp.coeff j))
+              - shadow y₀ * (Rp.coeff (j + 1) - shadow (Pp.coeff (j + 1)))
+              - (shadow y₀ * shadow (Pp.coeff (j + 1)) - shadow (y₀ * Pp.coeff (j + 1)))
+              - ((shadow (Pp.coeff j + -(y₀ * Pp.coeff (j + 1))) - shadow (Pp.coeff j)
+                  - shadow (-(y₀ * Pp.coeff (j + 1))))
+                + (shadow (-(y₀ * Pp.coeff (j + 1))) + shadow (y₀ * Pp.coeff (j + 1)))) := by
+          rw [hR', hP']
+          ring
+        rw [hdiff]
+        exact (val p).map_le_sub ((val p).map_le_sub ((val p).map_le_sub h1 h2) h3) h4
+
 end TrustworthyKedlaya.pAdicHahnSeries
