@@ -329,4 +329,165 @@ theorem exists_root_sub_valuation_le [Nontrivial F]
       nlinarith [hkey]
     linarith [h2]
 
+/-! ### Rootwise perturbation of split polynomials (`lem:rootwise-perturbation`) -/
+
+/-- The valuation of a perturbed root dominates the original's:
+if `v δ ≥ v u + κ` with `κ ≥ 0`, then `v (u + δ) ≥ v u`. -/
+private theorem le_v_add_of_le_shift {u δ : F} {κ : ℚ} (hκ : 0 ≤ κ)
+    (hδ : v u + (κ : WithTop ℚ) ≤ v δ) : v u ≤ v (u + δ) := by
+  refine v.map_le_add le_rfl (le_trans ?_ hδ)
+  calc v u = v u + (0 : WithTop ℚ) := (add_zero _).symm
+    _ ≤ v u + (κ : WithTop ℚ) := by
+        exact add_le_add le_rfl (by exact_mod_cast hκ)
+
+/-- **Rootwise perturbation** (`lem:rootwise-perturbation`): move each root `u` of a
+split polynomial by a perturbation `δ` with `v δ ≥ v u + κ` (`κ ≥ 0`).  Then every
+coefficient of the difference of the two split polynomials carries the `σ`-floor of
+the *unperturbed* valuation multiset plus the full margin `κ`, delivered by a
+minimal-sum witness `T` of size `card − i`.
+
+This is the single transport engine of the recentering iteration: it converts a
+matched root family (per-pair shadow distance `≥ v + κ`) into the coefficientwise
+congruence consumed by `lem:polygon-congruence` and `lem:valued-root-matching`, and
+it bounds the shadow-recentering defect (perturbations `δ_r = S(y_r) - S(ŷ) -
+S(y_r - ŷ)` with `κ = 1`). -/
+theorem coeff_prod_sub_prod_eq_zero_of_card_le [Nontrivial F] (E : Multiset (F × F)) {i : ℕ}
+    (hi : E.card ≤ i) :
+    ((E.map fun e : F × F => X - C (e.1 + e.2)).prod
+      - (E.map fun e : F × F => X - C e.1).prod).coeff i = 0 := by
+  classical
+  have hm₁ : ((E.map fun e : F × F => X - C (e.1 + e.2)).prod).Monic :=
+    monic_multiset_prod_of_monic _ _ fun e _ => monic_X_sub_C _
+  have hm₂ : ((E.map fun e : F × F => X - C e.1).prod).Monic :=
+    monic_multiset_prod_of_monic _ _ fun e _ => monic_X_sub_C _
+  have hcomp₁ : E.map (fun e : F × F => X - C (e.1 + e.2))
+      = (E.map fun e : F × F => e.1 + e.2).map (fun a => X - C a) := by
+    rw [Multiset.map_map]
+    rfl
+  have hcomp₂ : E.map (fun e : F × F => X - C e.1)
+      = (E.map Prod.fst).map (fun a => X - C a) := by
+    rw [Multiset.map_map]
+    rfl
+  have hd₁ : ((E.map fun e : F × F => X - C (e.1 + e.2)).prod).natDegree = E.card := by
+    rw [hcomp₁, Polynomial.natDegree_multiset_prod_X_sub_C_eq_card, Multiset.card_map]
+  have hd₂ : ((E.map fun e : F × F => X - C e.1).prod).natDegree = E.card := by
+    rw [hcomp₂, Polynomial.natDegree_multiset_prod_X_sub_C_eq_card, Multiset.card_map]
+  rw [coeff_sub]
+  rcases eq_or_lt_of_le hi with rfl | hlt
+  · rw [← hd₁, hm₁.coeff_natDegree, hd₁, ← hd₂, hm₂.coeff_natDegree, sub_self]
+  · rw [coeff_eq_zero_of_natDegree_lt (by rw [hd₁]; exact hlt),
+      coeff_eq_zero_of_natDegree_lt (by rw [hd₂]; exact hlt), sub_self]
+
+theorem exists_sum_add_le_v_coeff_prod_sub_prod [Nontrivial F] (E : Multiset (F × F)) {κ : ℚ}
+    (hκ : 0 ≤ κ) (hδ : ∀ e ∈ E, v e.1 + (κ : WithTop ℚ) ≤ v e.2) (i : ℕ) :
+    ∃ T ≤ E.map (fun e : F × F => v e.1), T.card = E.card - i ∧
+      (∀ T' ≤ E.map (fun e : F × F => v e.1), T'.card = E.card - i → T.sum ≤ T'.sum) ∧
+      T.sum + (κ : WithTop ℚ)
+        ≤ v (((E.map fun e : F × F => X - C (e.1 + e.2)).prod
+              - (E.map fun e : F × F => X - C e.1).prod).coeff i) := by
+  classical
+  induction E using Multiset.induction_on generalizing i with
+  | empty =>
+    refine ⟨0, le_rfl, by simp, fun T' hT' hT'c => ?_, ?_⟩
+    · simp only [Multiset.card_zero, Nat.zero_sub] at hT'c
+      rw [Multiset.card_eq_zero.mp hT'c]
+    · simp only [Multiset.map_zero, Multiset.prod_zero, sub_self, coeff_zero, v.map_zero]
+      exact le_top
+  | cons e E ih =>
+    obtain ⟨u, δ⟩ := e
+    have hδ₀ : v u + (κ : WithTop ℚ) ≤ v δ := hδ (u, δ) (Multiset.mem_cons_self _ _)
+    have hδE : ∀ e ∈ E, v e.1 + (κ : WithTop ℚ) ≤ v e.2 :=
+      fun e he => hδ e (Multiset.mem_cons_of_mem he)
+    -- the minimal witness for the enlarged multiset
+    obtain ⟨T, hTle, hTcard, hTmin⟩ := exists_min_sum_powersetCard
+      ((((u, δ) ::ₘ E)).map fun e : F × F => v e.1)
+      (j := ((u, δ) ::ₘ E).card - i)
+      (by rw [Multiset.card_map]; exact Nat.sub_le _ _)
+    refine ⟨T, hTle, hTcard, hTmin, ?_⟩
+    -- degenerate range: the difference vanishes at and above the common degree
+    by_cases htop : ((u, δ) ::ₘ E).card ≤ i
+    · rw [coeff_prod_sub_prod_eq_zero_of_card_le _ htop, v.map_zero]
+      exact le_top
+    push Not at htop
+    have hiE : i ≤ E.card := by
+      rw [Multiset.card_cons] at htop
+      omega
+    -- product splitting: new difference = (X - C (u+δ)) · D - C δ · P
+    set P : Polynomial F := (E.map fun e : F × F => X - C e.1).prod with hP
+    set Pt : Polynomial F := (E.map fun e : F × F => X - C (e.1 + e.2)).prod with hPt
+    set D : Polynomial F := Pt - P with hD
+    have hsplit : (((u, δ) ::ₘ E).map fun e : F × F => X - C (e.1 + e.2)).prod
+        - (((u, δ) ::ₘ E).map fun e : F × F => X - C e.1).prod
+        = (X - C (u + δ)) * D - C δ * P := by
+      rw [Multiset.map_cons, Multiset.map_cons, Multiset.prod_cons, Multiset.prod_cons,
+        hD, C_add]
+      ring
+    rw [hsplit]
+    -- coefficient decomposition
+    have hcoeff : ((X - C (u + δ)) * D - C δ * P).coeff i
+        = (X * D).coeff i - (u + δ) * D.coeff i - δ * P.coeff i := by
+      rw [coeff_sub, sub_mul, coeff_sub, coeff_C_mul, coeff_C_mul]
+    rw [hcoeff]
+    -- the enlarged minimal witness is bounded by `v u` plus any size-correct witness
+    have hσ_head : ∀ {S : Multiset (WithTop ℚ)}, S ≤ E.map (fun e : F × F => v e.1) →
+        S.card = E.card - i → T.sum ≤ v u + S.sum := by
+      intro S hS hScard
+      have hle : (v u ::ₘ S) ≤ ((u, δ) ::ₘ E).map (fun e : F × F => v e.1) := by
+        rw [Multiset.map_cons]
+        exact Multiset.cons_le_cons _ hS
+      have hcard : (v u ::ₘ S).card = ((u, δ) ::ₘ E).card - i := by
+        rw [Multiset.card_cons, hScard, Multiset.card_cons]
+        omega
+      calc T.sum ≤ (v u ::ₘ S).sum := hTmin _ hle hcard
+        _ = v u + S.sum := Multiset.sum_cons _ _
+    -- (a) the X·D term
+    have hbound_a : T.sum + (κ : WithTop ℚ) ≤ v ((X * D).coeff i) := by
+      rcases Nat.eq_zero_or_pos i with rfl | hipos
+      · rw [Polynomial.coeff_X_mul_zero, v.map_zero]
+        exact le_top
+      · obtain ⟨i', rfl⟩ : ∃ i', i = i' + 1 := ⟨i - 1, by omega⟩
+        rw [Polynomial.coeff_X_mul]
+        obtain ⟨T₁, hT₁le, hT₁card, hT₁min, hT₁⟩ := ih hδE i'
+        have hT₁' : T.sum ≤ T₁.sum := by
+          refine hTmin T₁ (le_trans hT₁le ?_) ?_
+          · rw [Multiset.map_cons]
+            exact Multiset.le_cons_self _ _
+          · rw [hT₁card, Multiset.card_cons]
+            omega
+        exact le_trans (add_le_add hT₁' le_rfl) hT₁
+    -- (b) the (u+δ)·D term
+    have hbound_b : T.sum + (κ : WithTop ℚ) ≤ v ((u + δ) * D.coeff i) := by
+      obtain ⟨T₂, hT₂le, hT₂card, hT₂min, hT₂⟩ := ih hδE i
+      rw [v.map_mul]
+      calc T.sum + (κ : WithTop ℚ) ≤ (v u + T₂.sum) + (κ : WithTop ℚ) :=
+            add_le_add (hσ_head hT₂le hT₂card) le_rfl
+        _ = v u + (T₂.sum + (κ : WithTop ℚ)) := by rw [add_assoc]
+        _ ≤ v (u + δ) + v (D.coeff i) :=
+            add_le_add (le_v_add_of_le_shift v hκ hδ₀) hT₂
+    -- (c) the δ·P term
+    have hbound_c : T.sum + (κ : WithTop ℚ) ≤ v (δ * P.coeff i) := by
+      obtain ⟨T₃, hT₃le, hT₃card, hT₃min, hT₃⟩ :=
+        exists_sum_le_v_coeff_prod_X_sub_C v (E.map Prod.fst) (i := i)
+          (by rw [Multiset.card_map]; exact hiE)
+      rw [v.map_mul]
+      have hmapeq : (E.map Prod.fst).map v = E.map (fun e : F × F => v e.1) := by
+        rw [Multiset.map_map]
+        rfl
+      have hPeq : ((E.map Prod.fst).map fun y => X - C y).prod = P := by
+        rw [hP, Multiset.map_map]
+        rfl
+      rw [Multiset.card_map] at hT₃card
+      rw [hmapeq] at hT₃le
+      rw [hPeq] at hT₃
+      calc T.sum + (κ : WithTop ℚ) ≤ (v u + T₃.sum) + (κ : WithTop ℚ) :=
+            add_le_add (hσ_head hT₃le hT₃card) le_rfl
+        _ = (v u + (κ : WithTop ℚ)) + T₃.sum := add_right_comm _ _ _
+        _ ≤ v δ + v (P.coeff i) := add_le_add hδ₀ hT₃
+    -- combine
+    refine le_trans (le_min (le_min hbound_a hbound_b) hbound_c) ?_
+    calc min (min (v ((X * D).coeff i)) (v ((u + δ) * D.coeff i))) (v (δ * P.coeff i))
+        ≤ min (v ((X * D).coeff i - (u + δ) * D.coeff i)) (v (δ * P.coeff i)) :=
+          min_le_min (v.map_sub _ _) le_rfl
+      _ ≤ v ((X * D).coeff i - (u + δ) * D.coeff i - δ * P.coeff i) := v.map_sub _ _
+
 end TrustworthyKedlaya
