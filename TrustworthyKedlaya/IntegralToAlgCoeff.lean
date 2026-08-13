@@ -472,4 +472,200 @@ theorem exists_isTruncUP_approx_of_root
     refine one_div_le_one_div_of_le (by exact_mod_cast hm1) (by exact_mod_cast hmn)
   linarith
 
+/-! ### The iteration and the proposition -/
+
+/-- **The steered Newton iteration** (`prop:integral-to-alg-coeff`, iteration):
+under the hypotheses of the step lemma, every root `f` of `Q` admits, for every
+`j`, an approximant `g ∈ B'` of nonnegative valuation with
+`val (f - g) ≥ j/n`.  Induct: recenter `Q` by `X + C g` (the coefficients stay
+in the subring `B'`, the roots stay nonnegative) and apply one steered step. -/
+theorem exists_isTruncUP_near_of_root
+    {Q : Polynomial (𝕃_[p])} (hmonic : Q.Monic) {n : ℕ} (hdeg : Q.natDegree = n)
+    (hn : 0 < n) (hcoeffs : ∀ i, IsTruncUP (Q.coeff i))
+    (hroots : ∀ z ∈ Q.roots, (0 : WithTop ℚ) ≤ val p z)
+    {f : 𝕃_[p]} (hf : f ∈ Q.roots) (j : ℕ) :
+    ∃ g : 𝕃_[p], IsTruncUP g ∧ (0 : WithTop ℚ) ≤ val p g ∧
+      (((j : ℚ) / (n : ℚ) : ℚ) : WithTop ℚ) ≤ val p (f - g) := by
+  induction j with
+  | zero =>
+    refine ⟨0, isTruncUP_zero, by rw [val_zero_eq_top]; exact le_top, ?_⟩
+    rw [sub_zero, show (((0 : ℕ) : ℚ) / (n : ℚ) : ℚ) = 0 by norm_num, WithTop.coe_zero]
+    exact hroots f hf
+  | succ j ih =>
+    obtain ⟨g, hgB, hgval, hgnear⟩ := ih
+    have hjn0 : (0 : WithTop ℚ) ≤ (((j : ℚ) / (n : ℚ) : ℚ) : WithTop ℚ) := by
+      rw [← WithTop.coe_zero, WithTop.coe_le_coe]
+      exact div_nonneg (Nat.cast_nonneg j) (Nat.cast_nonneg n)
+    have hfg0 : (0 : WithTop ℚ) ≤ val p (f - g) := le_trans hjn0 hgnear
+    -- the recentered polynomial
+    set Qg : Polynomial (𝕃_[p]) := Q.comp (X + Polynomial.C g) with hQg
+    have hQgmonic : Qg.Monic := hmonic.comp_X_add_C g
+    have hQgdeg : Qg.natDegree = n := by
+      rw [hQg, ← Polynomial.taylor_apply, Polynomial.natDegree_taylor, hdeg]
+    have heval : ∀ z : 𝕃_[p], Qg.eval z = Q.eval (z + g) := by
+      intro z
+      rw [hQg, Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]
+    have hfgroot : f - g ∈ Qg.roots := by
+      rw [Polynomial.mem_roots hQgmonic.ne_zero]
+      rw [Polynomial.IsRoot, heval, sub_add_cancel]
+      exact Polynomial.isRoot_of_mem_roots hf
+    have hQgroots : ∀ z' ∈ Qg.roots, (0 : WithTop ℚ) ≤ val p z' := by
+      intro z' hz'
+      have hzQ : z' + g ∈ Q.roots := by
+        rw [Polynomial.mem_roots hmonic.ne_zero, Polynomial.IsRoot, ← heval]
+        exact Polynomial.isRoot_of_mem_roots hz'
+      have h1 : (0 : WithTop ℚ) ≤ val p (z' + g) := hroots _ hzQ
+      rw [show z' = (z' + g) - g by ring]
+      exact (val p).map_le_sub h1 hgval
+    -- the recentered coefficients stay in the subring `B'`
+    have hQgcoeffs : ∀ i, IsTruncUP (Qg.coeff i) := by
+      have hmem : Q ∈ Polynomial.lifts ((truncUPSubring p).subtype) := by
+        rw [Polynomial.lifts_iff_coeff_lifts]
+        exact fun i => ⟨⟨Q.coeff i, mem_truncUPSubring.mpr (hcoeffs i)⟩, rfl⟩
+      obtain ⟨QB, hQB⟩ := hmem
+      have hQB' : QB.map (truncUPSubring p).subtype = Q := hQB
+      set gB : truncUPSubring p := ⟨g, mem_truncUPSubring.mpr hgB⟩ with hgBdef
+      have hQgmap : Qg = (QB.comp (X + Polynomial.C gB)).map (truncUPSubring p).subtype := by
+        rw [Polynomial.map_comp, hQB', Polynomial.map_add, Polynomial.map_X, Polynomial.map_C]
+        rfl
+      intro i
+      rw [hQgmap, Polynomial.coeff_map]
+      exact mem_truncUPSubring.mp ((QB.comp (X + Polynomial.C gB)).coeff i).2
+    -- one steered step at the designated root `f - g`
+    obtain ⟨h, hhB, hstep⟩ :=
+      exists_isTruncUP_approx_of_root hQgmonic hQgdeg hn hQgcoeffs hQgroots hfgroot
+    have hstep0 : (0 : WithTop ℚ) ≤ val p ((f - g) - h) := by
+      refine le_trans ?_ hstep
+      calc (0 : WithTop ℚ) = 0 + 0 := by rw [add_zero]
+        _ ≤ val p (f - g) + ((1 / (n : ℚ) : ℚ) : WithTop ℚ) := by
+            refine add_le_add hfg0 ?_
+            rw [← WithTop.coe_zero, WithTop.coe_le_coe]
+            positivity
+    refine ⟨g + h, hgB.add hhB, ?_, ?_⟩
+    · have hvalh : (0 : WithTop ℚ) ≤ val p h := by
+        rw [show h = (f - g) - ((f - g) - h) by ring]
+        exact (val p).map_le_sub hfg0 hstep0
+      exact (val p).map_le_add hgval hvalh
+    · rw [show f - (g + h) = (f - g) - h by ring]
+      refine le_trans ?_ hstep
+      have hcast : (((j + 1 : ℕ) : ℚ) / (n : ℚ) : ℚ) = (j : ℚ) / (n : ℚ) + 1 / (n : ℚ) := by
+        push_cast
+        rw [add_div]
+      rw [hcast, WithTop.coe_add]
+      exact add_le_add hgnear le_rfl
+
+/-- **Integral elements over `ℚᵘⁿ_[p]` are truncationwise UP**
+(`prop:integral-to-alg-coeff`, subring form).  Scale a monic annihilator by `p^N`
+so that all roots land in the valuation ring, run the steered Newton iteration,
+and let `B'`-closedness absorb the limit and the descaling monomial. -/
+theorem isTruncUP_of_isIntegral_QpUn {f : 𝕃_[p]}
+    (hf : IsIntegral ℚᵘⁿ_[p] f) : IsTruncUP f := by
+  classical
+  obtain ⟨Q₀, hQ₀monic, hQ₀eval⟩ := hf
+  set Q₁ : Polynomial (𝕃_[p]) := Q₀.map (algebraMap ℚᵘⁿ_[p] 𝕃_[p]) with hQ₁
+  have hQ₁monic : Q₁.Monic := hQ₀monic.map _
+  set n : ℕ := Q₁.natDegree with hn
+  have hQ₁coeffs : ∀ i, IsTruncUP (Q₁.coeff i) := by
+    intro i
+    rw [hQ₁, Polynomial.coeff_map]
+    exact isTruncUP_algebraMap_QpUn _
+  have hQ₁eval : Q₁.eval f = 0 := by
+    rw [hQ₁, Polynomial.eval_map, ← Polynomial.aeval_def]
+    exact hQ₀eval
+  have hn0 : 0 < n := by
+    rcases Nat.eq_zero_or_pos n with h0 | h
+    · exfalso
+      have hone : Q₁ = 1 :=
+        (Polynomial.Monic.natDegree_eq_zero hQ₁monic).mp h0
+      rw [hone, Polynomial.eval_one] at hQ₁eval
+      exact one_ne_zero hQ₁eval
+    · exact h
+  -- the scaling exponent: push all roots into the valuation ring
+  set NR : ℚ := (Q₁.roots.map (fun z => max 0 (-(WithTop.untopD 0 (val p z))))).sum with hNR
+  set N : ℕ := ⌈NR⌉₊ with hN
+  have hNroots : ∀ z ∈ Q₁.roots, ((-(N : ℚ) : ℚ) : WithTop ℚ) ≤ val p z := by
+    intro z hz
+    rcases eq_or_ne (val p z) ⊤ with htop | hne
+    · rw [htop]; exact le_top
+    · obtain ⟨v, hv⟩ := WithTop.ne_top_iff_exists.mp hne
+      rw [← hv, WithTop.coe_le_coe]
+      have huntop : WithTop.untopD 0 (val p z) = v := by rw [← hv, WithTop.untopD_coe]
+      have hterm : max 0 (-(WithTop.untopD 0 (val p z))) ≤ NR := by
+        rw [hNR]
+        refine Multiset.single_le_sum (fun x hx => ?_) _ (Multiset.mem_map_of_mem _ hz)
+        obtain ⟨z', _, rfl⟩ := Multiset.mem_map.mp hx
+        exact le_max_left _ _
+      rw [huntop] at hterm
+      have hceil : NR ≤ (N : ℚ) := by rw [hN]; exact Nat.le_ceil NR
+      have hv' : -v ≤ NR := le_trans (le_max_right 0 (-v)) hterm
+      linarith
+  -- the scaled companion polynomial
+  set s : 𝕃_[p] := ((p : ℕ) : 𝕃_[p]) ^ N with hsdef
+  have hsval : val p s = (((N : ℚ) : ℚ) : WithTop ℚ) := by
+    rw [hsdef, p_pow_eq_single, val_single _ one_ne_zero]
+  have hsne : s ≠ 0 := by
+    intro h0
+    rw [h0, val_zero_eq_top] at hsval
+    exact WithTop.top_ne_coe hsval
+  set Q₂ : Polynomial (𝕃_[p]) := Q₁.scaleRoots s with hQ₂
+  have hQ₂monic : Q₂.Monic := (Polynomial.monic_scaleRoots_iff s).mpr hQ₁monic
+  have hQ₂deg : Q₂.natDegree = n := by rw [hQ₂, Polynomial.natDegree_scaleRoots]
+  have hQ₂coeffs : ∀ i, IsTruncUP (Q₂.coeff i) := by
+    intro i
+    rw [hQ₂, Polynomial.coeff_scaleRoots]
+    exact (hQ₁coeffs i).mul (((isTruncUP_natCast p).pow N).pow (Q₁.natDegree - i))
+  have hQ₂root : s * f ∈ Q₂.roots := by
+    rw [Polynomial.mem_roots hQ₂monic.ne_zero, Polynomial.IsRoot, hQ₂,
+      Polynomial.scaleRoots_eval_mul, hQ₁eval, mul_zero]
+  have hQ₂roots : ∀ z' ∈ Q₂.roots, (0 : WithTop ℚ) ≤ val p z' := by
+    intro z' hz'
+    have hzeval : Q₂.eval z' = 0 := Polynomial.isRoot_of_mem_roots hz'
+    have hz'eq : s * (z' / s) = z' := mul_div_cancel₀ z' hsne
+    have hQ₁z : Q₁.eval (z' / s) = 0 := by
+      rw [hQ₂, ← hz'eq, Polynomial.scaleRoots_eval_mul] at hzeval
+      rcases mul_eq_zero.mp hzeval with hs0 | h
+      · exact absurd hs0 (pow_ne_zero _ hsne)
+      · exact h
+    have hzQ₁ : z' / s ∈ Q₁.roots := by
+      rw [Polynomial.mem_roots hQ₁monic.ne_zero]
+      exact hQ₁z
+    have hge : ((-(N : ℚ) : ℚ) : WithTop ℚ) ≤ val p (z' / s) := hNroots _ hzQ₁
+    calc (0 : WithTop ℚ)
+        = (((N : ℚ) : ℚ) : WithTop ℚ) + ((-(N : ℚ) : ℚ) : WithTop ℚ) := by
+          rw [← WithTop.coe_add, show (N : ℚ) + (-(N : ℚ)) = 0 by ring, WithTop.coe_zero]
+      _ ≤ val p s + val p (z' / s) := add_le_add (le_of_eq hsval.symm) hge
+      _ = val p (s * (z' / s)) := ((val p).map_mul _ _).symm
+      _ = val p z' := by rw [hz'eq]
+  -- run the iteration on the scaled root, then pass to the limit in `B'`
+  have hfB' : IsTruncUP (s * f) := by
+    refine isTruncUP_of_forall_exists_near fun n₀ => ?_
+    obtain ⟨g, hgB, _, hgnear⟩ := exists_isTruncUP_near_of_root hQ₂monic hQ₂deg hn0
+      hQ₂coeffs hQ₂roots hQ₂root (n₀ * n)
+    refine ⟨g, hgB, ?_⟩
+    refine le_trans ?_ hgnear
+    rw [WithTop.coe_le_coe]
+    rw [show (((n₀ * n : ℕ) : ℚ) / (n : ℚ) : ℚ) = ((n₀ : ℚ) * (n : ℚ)) / (n : ℚ) by push_cast; ring]
+    rw [mul_div_cancel_right₀ _ (by exact_mod_cast hn0.ne' : (n : ℚ) ≠ 0)]
+  -- descale by the integer monomial `[1]·p^{-N}`
+  have hcancel : single (p := p) ((-(N : ℤ) : ℤ) : ℚ) 1 * s = 1 := by
+    rw [hsdef, p_pow_eq_single, single_mul_single, one_mul,
+      show ((-(N : ℤ) : ℤ) : ℚ) + (N : ℚ) = 0 by push_cast; ring]
+    exact single_zero_one
+  have hfeq : f = single (p := p) ((-(N : ℤ) : ℤ) : ℚ) 1 * (s * f) := by
+    rw [← mul_assoc, hcancel, one_mul]
+  rw [hfeq]
+  exact (isTruncUP_single_intCast _ _).mul hfB'
+
+/-- **Integral elements have coefficient functions from algebraic series: forward
+inclusion** (`prop:integral-to-alg-coeff`; Kedlaya 2001b, Theorem 7, first part;
+Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]` integral over `ℚᵘⁿ_[p]` lies in the
+closure of the set of elements whose canonical coefficient function is the
+coefficient function of a Hahn series algebraic over `𝔽̄_p((t))`. -/
+theorem mem_closure_algebraic_coeff_of_isIntegral {f : 𝕃_[p]}
+    (hf : IsIntegral ℚᵘⁿ_[p] f) :
+    f ∈ closure {g : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]),
+      IsAlgebraic ((𝔽ᵃ_[p])⸨X⸩) f' ∧ coeff g = f'.coeff} := by
+  rw [closure_algebraic_coeff_eq_setOf_isTruncUP]
+  exact isTruncUP_of_isIntegral_QpUn hf
+
 end TrustworthyKedlaya.pAdicHahnSeries
