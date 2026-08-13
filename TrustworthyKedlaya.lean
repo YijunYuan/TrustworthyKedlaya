@@ -8,6 +8,7 @@ import TrustworthyKedlaya.Coeffwise
 import TrustworthyKedlaya.ColumnAddition
 import TrustworthyKedlaya.DefeqGuards
 import TrustworthyKedlaya.Digits
+import TrustworthyKedlaya.EngineTruncUP
 import TrustworthyKedlaya.Extension
 import TrustworthyKedlaya.FiniteImage
 import TrustworthyKedlaya.FractionalLaurent
