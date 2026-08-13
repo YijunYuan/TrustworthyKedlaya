@@ -428,4 +428,189 @@ theorem le_val_shadow_add_sub (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) (q₀ : ℚ)
     _ ≤ ((1 : ℚ) : WithTop ℚ) + val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ') :=
         add_le_add le_rfl hge
 
+/-! ### Second carry bounds: negation and multiplication
+
+The shadow map is also multiplicative to first `p`-adic order (`lem:shadow-mul-carry`):
+the Teichmüller map is multiplicative on the nose, so the carries of a product come only
+from re-Teichmüllerizing the finite antidiagonal sums, each divisible by `p`.  The same
+column bookkeeping bounds `S(-y) + S(y)`. -/
+
+/-- The support of a lifted series built from a coefficient function is the support of
+that function (the Teichmüller map is injective and sends `0` to `0`). -/
+theorem support_fromCoeff (s : ℚ → 𝔽ᵃ_[p]) (hs : (Function.support s).IsPWO) :
+    (LiftedPAdicHahnSeries.fromCoeff s hs).support = Function.support s := by
+  ext q
+  simp only [HahnSeries.mem_support, Function.mem_support]
+  change teichmuller p (s q) ≠ 0 ↔ s q ≠ 0
+  refine ⟨fun h h' => h (by rw [h', WittVector.teichmuller_zero p]), fun h h' => h ?_⟩
+  exact (injective_teichmuller p) (by rw [h', WittVector.teichmuller_zero p])
+
+/-- The Teichmüller carry of a negation: `[-a] + [a]` is divisible by `p` in `W(𝔽̄_p)`. -/
+theorem teichmuller_neg_add_mem_span (a : 𝔽ᵃ_[p]) :
+    teichmuller p (-a) + teichmuller p a ∈ Ideal.span {(p : ℤᵘⁿ_[p])} := by
+  have h := teichmuller_add_sub_mem_span (p := p) (-a) a
+  rw [neg_add_cancel, WittVector.teichmuller_zero] at h
+  have h' := neg_mem h
+  rw [zero_sub, neg_sub, sub_neg_eq_add] at h'
+  rwa [add_comm] at h'
+
+/-- The Teichmüller lift of a finite sum differs from the sum of the lifts by a
+multiple of `p`: iterate the binary carry `teichmuller_add_sub_mem_span`. -/
+theorem teichmuller_sum_sub_mem_span {ι : Type*} (s : Finset ι) (f : ι → 𝔽ᵃ_[p]) :
+    teichmuller p (∑ i ∈ s, f i) - ∑ i ∈ s, teichmuller p (f i)
+      ∈ Ideal.span {(p : ℤᵘⁿ_[p])} := by
+  classical
+  induction s using Finset.cons_induction with
+  | empty =>
+    simp only [Finset.sum_empty, WittVector.teichmuller_zero, sub_zero]
+    exact Ideal.zero_mem _
+  | cons a t ha ih =>
+    rw [Finset.sum_cons, Finset.sum_cons]
+    have h1 := teichmuller_add_sub_mem_span (p := p) (f a) (∑ i ∈ t, f i)
+    have h2 := Ideal.add_mem _ h1 ih
+    have heq : teichmuller p (f a + ∑ i ∈ t, f i) - teichmuller p (f a)
+          - teichmuller p (∑ i ∈ t, f i)
+        + (teichmuller p (∑ i ∈ t, f i) - ∑ i ∈ t, teichmuller p (f i))
+        = teichmuller p (f a + ∑ i ∈ t, f i)
+          - (teichmuller p (f a) + ∑ i ∈ t, teichmuller p (f i)) := by
+      ring
+    rwa [heq] at h2
+
+/-- **Extraction principle**: a lifted series with all coefficients divisible by `p`,
+vanishing below `q₀`, has class of valuation at least `q₀ + 1` in `𝕃_[p]`. -/
+theorem le_val_mkLp_add_one_of_forall_mem_span {Δ : LiftedPAdicHahnSeries p} {q₀ : ℚ}
+    (hvanish : ∀ q, q < q₀ → Δ.coeff q = 0)
+    (hdvd : ∀ q, Δ.coeff q ∈ Ideal.span {(p : ℤᵘⁿ_[p])}) :
+    ((q₀ + 1 : ℚ) : WithTop ℚ) ≤ val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ) := by
+  classical
+  have hdvd' : ∀ q, ∃ wq : ℤᵘⁿ_[p],
+      Δ.coeff q = (p : ℤᵘⁿ_[p]) * wq ∧ (Δ.coeff q = 0 → wq = 0) := by
+    intro q
+    by_cases h0 : Δ.coeff q = 0
+    · exact ⟨0, by rw [h0, mul_zero], fun _ => rfl⟩
+    · have h := hdvd q
+      rw [Ideal.mem_span_singleton] at h
+      obtain ⟨wq, hwq⟩ := h
+      exact ⟨wq, hwq, fun h' => absurd h' h0⟩
+  choose w hw hw0 using hdvd'
+  have hwsupp : Function.support w ⊆ Δ.support := by
+    intro q hq
+    rw [Function.mem_support] at hq
+    rw [HahnSeries.mem_support]
+    intro h0
+    exact hq (hw0 q h0)
+  set Δ' : LiftedPAdicHahnSeries p := ⟨w, Δ.isPWO_support'.mono hwsupp⟩ with hΔ'
+  have hΔeq : Δ = (p : ℕ) • Δ' := by
+    apply HahnSeries.ext
+    funext q
+    rw [HahnSeries.coeff_smul']
+    change Δ.coeff q = (p : ℕ) • w q
+    rw [nsmul_eq_mul]
+    exact hw q
+  have hclass : Ideal.Quotient.mk (NullSeriesIdeal p) Δ
+      = ((p : ℕ) : 𝕃_[p]) * Ideal.Quotient.mk (NullSeriesIdeal p) Δ' := by
+    rw [hΔeq, nsmul_eq_mul]
+    rw [map_mul, map_natCast]
+  rw [hclass, AddValuation.map_mul, val_p_eq_one]
+  have hΔ'lead : ∀ q < q₀, Δ'.coeff q = 0 := by
+    intro q hq
+    change w q = 0
+    exact hw0 q (hvanish q hq)
+  have hge := le_val_mkLp_of_coeff_eq_zero (Δ := Δ') hΔ'lead
+  calc ((q₀ + 1 : ℚ) : WithTop ℚ) = ((1 : ℚ) : WithTop ℚ) + ((q₀ : ℚ) : WithTop ℚ) := by
+        rw [← WithTop.coe_add]
+        congr 1
+        ring
+    _ ≤ ((1 : ℚ) : WithTop ℚ) + val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ') :=
+        add_le_add le_rfl hge
+
+/-- **Negation carry**: `val (S(-y) + S(y)) ≥ q₀ + 1` when `y` is supported at exponents
+`≥ q₀`.  The column carries `[-y_q] + [y_q]` have vanishing zeroth Witt coordinate. -/
+theorem le_val_shadow_neg_add (y : HahnSeries ℚ (𝔽ᵃ_[p])) (q₀ : ℚ)
+    (hy : ∀ q, y.coeff q ≠ 0 → q₀ ≤ q) :
+    ((q₀ + 1 : ℚ) : WithTop ℚ) ≤ val p (shadow (-y) + shadow y) := by
+  classical
+  set Δ : LiftedPAdicHahnSeries p :=
+    LiftedPAdicHahnSeries.fromCoeff (-y).coeff (-y).isPWO_support'
+      + LiftedPAdicHahnSeries.fromCoeff y.coeff y.isPWO_support' with hΔ
+  have hΔcoeff : ∀ q, Δ.coeff q
+      = teichmuller p (-(y.coeff q)) + teichmuller p (y.coeff q) := by
+    intro q
+    rw [hΔ, HahnSeries.coeff_add', Pi.add_apply]
+    change teichmuller p ((-y).coeff q) + teichmuller p (y.coeff q) = _
+    rw [HahnSeries.coeff_neg']
+    rfl
+  have hclass : shadow (-y) + shadow y = Ideal.Quotient.mk (NullSeriesIdeal p) Δ := by
+    rw [hΔ, map_add]
+    rfl
+  rw [hclass]
+  refine le_val_mkLp_add_one_of_forall_mem_span ?_ ?_
+  · intro q hq
+    rw [hΔcoeff]
+    have h0 : y.coeff q = 0 := by
+      by_contra hne
+      exact absurd (hy q hne) (not_le.mpr hq)
+    rw [h0, neg_zero, WittVector.teichmuller_zero, add_zero]
+  · intro q
+    rw [hΔcoeff]
+    exact teichmuller_neg_add_mem_span (y.coeff q)
+
+/-- **Multiplication carry**: the shadow map is multiplicative to first `p`-adic order.
+If `y` and `y'` are supported at exponents `≥ a` and `≥ b` respectively, then
+`val (S(y·y') - S(y)·S(y')) ≥ a + b + 1`: the Teichmüller map is multiplicative, so the
+only carries come from re-Teichmüllerizing the antidiagonal sums, each divisible by `p`
+and supported at exponents `≥ a + b`. -/
+theorem le_val_shadow_mul_sub (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) (a b : ℚ)
+    (hy : ∀ q, y.coeff q ≠ 0 → a ≤ q) (hy' : ∀ q, y'.coeff q ≠ 0 → b ≤ q) :
+    ((a + b + 1 : ℚ) : WithTop ℚ) ≤ val p (shadow (y * y') - shadow y * shadow y') := by
+  classical
+  set fx := LiftedPAdicHahnSeries.fromCoeff y.coeff y.isPWO_support' with hfx
+  set fy := LiftedPAdicHahnSeries.fromCoeff y'.coeff y'.isPWO_support' with hfy
+  set Δ : LiftedPAdicHahnSeries p :=
+    LiftedPAdicHahnSeries.fromCoeff (y * y').coeff (y * y').isPWO_support' - fx * fy
+    with hΔ
+  have h_supp_fx : fx.support = y.support := support_fromCoeff _ _
+  have h_supp_fy : fy.support = y'.support := support_fromCoeff _ _
+  -- the two antidiagonals coincide
+  have h_anti : ∀ q, Finset.antidiagonal fx.isPWO_support fy.isPWO_support q
+      = Finset.antidiagonal y.isPWO_support y'.isPWO_support q := by
+    intro q
+    ext ⟨i, j⟩
+    simp only [Finset.mem_antidiagonal]
+    rw [h_supp_fx, h_supp_fy]
+  have hΔcoeff : ∀ q, Δ.coeff q
+      = teichmuller p ((y * y').coeff q)
+        - ∑ ij ∈ Finset.antidiagonal y.isPWO_support y'.isPWO_support q,
+            teichmuller p (y.coeff ij.1 * y'.coeff ij.2) := by
+    intro q
+    rw [hΔ, HahnSeries.coeff_sub', Pi.sub_apply]
+    congr 1
+    rw [HahnSeries.coeff_mul, h_anti q]
+    refine Finset.sum_congr rfl fun ij _ => ?_
+    change teichmuller p (y.coeff ij.1) * teichmuller p (y'.coeff ij.2) = _
+    rw [← map_mul]
+  have hclass : shadow (y * y') - shadow y * shadow y'
+      = Ideal.Quotient.mk (NullSeriesIdeal p) Δ := by
+    rw [hΔ, map_sub, map_mul]
+    rfl
+  rw [hclass]
+  refine le_val_mkLp_add_one_of_forall_mem_span ?_ ?_
+  · -- coefficients vanish below `a + b`: the antidiagonal is empty there
+    intro q hq
+    have hempty : Finset.antidiagonal y.isPWO_support y'.isPWO_support q = ∅ := by
+      ext ⟨i, j⟩
+      simp only [Finset.mem_antidiagonal, Finset.notMem_empty, iff_false, not_and]
+      intro hi hj hij
+      have hia : a ≤ i := hy i hi
+      have hjb : b ≤ j := hy' j hj
+      have : a + b ≤ q := by rw [← hij]; exact add_le_add hia hjb
+      exact absurd this (not_le.mpr hq)
+    have hmul0 : (y * y').coeff q = 0 := by
+      rw [HahnSeries.coeff_mul, hempty, Finset.sum_empty]
+    rw [hΔcoeff, hmul0, WittVector.teichmuller_zero, hempty, Finset.sum_empty, sub_zero]
+  · -- every coefficient is a Teichmüller carry of a finite sum, divisible by `p`
+    intro q
+    rw [hΔcoeff, HahnSeries.coeff_mul]
+    exact teichmuller_sum_sub_mem_span _ _
+
 end TrustworthyKedlaya.pAdicHahnSeries
