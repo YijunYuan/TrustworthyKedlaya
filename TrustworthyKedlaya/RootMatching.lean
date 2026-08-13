@@ -131,41 +131,35 @@ theorem exists_sum_le_v_coeff_prod_X_sub_C (Y : Multiset F) {i : ℕ} (hi : i �
   have := sum_le_v_esymm v Y (by rw [hTcard]; exact hTmin)
   rwa [hTcard] at this
 
-/-! ### Root matching (`lem:valued-root-matching`) -/
+/-! ### An approximate root is close to a root (`lem:approx-root`) -/
 
-/-- **Root matching for coefficientwise-close split polynomials**
-(`lem:valued-root-matching`; the single-field core of Kedlaya 2001b's continuity of
-roots).  Let `U, Z` be root multisets with equal valuation multisets `W`, and suppose
-the products `R = ∏_{u ∈ U}(X - u)` and `Q = ∏_{z ∈ Z}(X - z)` are coefficientwise
-close: for each `i < n` some size-`(n-i)` sub-multiset `T ≤ W` has
-`T.sum + k ≤ v((R - Q).coeff i)`.  Then every `u ∈ U` of valuation `s` is within
-`s + k/m` of some `z ∈ Z` of valuation `s`, where `m` is the multiplicity of `s`
-in `W`.
+/-- **An approximate root is close to a root** (`lem:approx-root`): let `Z` be a
+finite root multiset with `Q = ∏_{z ∈ Z}(X - z)`, and let `u` have valuation `s`,
+with `s` occurring in the valuation multiset `v(Z)` with multiplicity `m ≥ 1`.
+If `v(Q(u)) ≥ ∑_{z ∈ Z} min(s, v z) + k`, then some root `z ∈ Z` has `v z = s`
+and `v (u - z) ≥ s + k/m`.
 
-The proof evaluates `Q` at `u`: `v(Q(u)) = v((R-Q)(u)) ≥ ∑_w min(s, w) + k`, while
-`Q(u) = ∏_z (u - z)` with each factor of valuation exactly `min(s, v z)` unless
-`v z = s`; the excess `k` therefore concentrates on the `m` factors of valuation `s`,
-and a maximal one exceeds `s + k/m`. -/
-theorem exists_root_sub_valuation_le [Nontrivial F]
-    (U Z : Multiset F) (hUZ : U.map v = Z.map v) {k : ℚ}
-    (hcong : ∀ i < U.card, ∃ T ≤ U.map v, T.card = U.card - i ∧
-      T.sum + (k : WithTop ℚ) ≤
-        v ((((U.map fun y => X - C y).prod) - ((Z.map fun y => X - C y).prod)).coeff i))
-    {u : F} (hu : u ∈ U) {s : ℚ} (hs : v u = (s : WithTop ℚ)) :
+Each factor of `Q(u) = ∏_z (u - z)` obeys `v(u - z) ≥ min(s, v z)`, with equality
+whenever `v z ≠ s`; subtracting `∑_z min(s, v z)` from the hypothesis concentrates
+the excess `k` on the `m` factors of valuation `s`, and a maximal one exceeds
+`s + k/m`. -/
+theorem exists_root_sub_valuation_le_of_le_v_eval [Nontrivial F]
+    (Z : Multiset F) {u : F} {s : ℚ} (hs : v u = (s : WithTop ℚ))
+    (hsZ : ((s : WithTop ℚ)) ∈ Z.map v) {k : ℚ}
+    (hVs : (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum + (k : WithTop ℚ)
+      ≤ v (((Z.map fun y => X - C y).prod).eval u)) :
     ∃ z ∈ Z, v z = (s : WithTop ℚ) ∧
-      ((s + k / ((U.map v).count ((s : WithTop ℚ)) : ℚ) : ℚ) : WithTop ℚ) ≤ v (u - z) := by
+      ((s + k / ((Z.map v).count ((s : WithTop ℚ)) : ℚ) : ℚ) : WithTop ℚ) ≤ v (u - z) := by
   classical
-  set W : Multiset (WithTop ℚ) := U.map v with hW
-  set n : ℕ := U.card with hn
-  set m : ℕ := W.count ((s : WithTop ℚ)) with hm
-  have hsW : ((s : WithTop ℚ)) ∈ W := hs ▸ Multiset.mem_map_of_mem v hu
-  have hmpos : 0 < m := Multiset.count_pos.mpr hsW
+  set Q : F[X] := (Z.map fun y => X - C y).prod with hQ
+  set m : ℕ := (Z.map v).count ((s : WithTop ℚ)) with hm
+  have hmpos : 0 < m := Multiset.count_pos.mpr hsZ
   -- the roots of `Q` of valuation `s`, and the rest
   set Zs : Multiset F := Z.filter (fun z => (s : WithTop ℚ) = v z) with hZs
   set Zr : Multiset F := Z.filter (fun z => ¬ ((s : WithTop ℚ) = v z)) with hZr
   have hZsplit : Zs + Zr = Z := Multiset.filter_add_not _ Z
   have hZscard : Zs.card = m := by
-    rw [hZs, hm, hUZ, Multiset.count_map]
+    rw [hZs, hm, Multiset.count_map]
   have hZs_ne : Zs ≠ 0 := by
     intro h0
     rw [h0, Multiset.card_zero] at hZscard
@@ -184,64 +178,6 @@ theorem exists_root_sub_valuation_le [Nontrivial F]
     have hz₀Z : z₀ ∈ Z := (Multiset.mem_filter.mp hz₀mem).1
     have hz₀val : v z₀ = (s : WithTop ℚ) := ((Multiset.mem_filter.mp hz₀mem).2).symm
     refine ⟨z₀, hz₀Z, hz₀val, ?_⟩
-    -- notation for the two polynomials
-    set R : F[X] := (U.map fun y => X - C y).prod with hR
-    set Q : F[X] := (Z.map fun y => X - C y).prod with hQ
-    have hcardZ : Z.card = n := by
-      have h := congrArg Multiset.card hUZ
-      rw [Multiset.card_map, Multiset.card_map, ← hn] at h
-      exact h.symm
-    -- `R` and `Q` are monic of degree `n`
-    have hRmonic : R.Monic :=
-      monic_multiset_prod_of_monic U (fun y => X - C y) fun y _ => monic_X_sub_C y
-    have hQmonic : Q.Monic :=
-      monic_multiset_prod_of_monic Z (fun y => X - C y) fun y _ => monic_X_sub_C y
-    have hRdeg : R.natDegree = n := by
-      rw [hR, natDegree_multiset_prod_X_sub_C_eq_card, hn]
-    have hQdeg : Q.natDegree = n := by
-      rw [hQ, natDegree_multiset_prod_X_sub_C_eq_card, hcardZ]
-    -- evaluate: `R(u) = 0`, so `v (Q(u)) = v ((R - Q)(u))`
-    have hReval : R.eval u = 0 := by
-      rw [hR, eval_multiset_prod, Multiset.map_map]
-      refine Multiset.prod_eq_zero ?_
-      refine Multiset.mem_map.mpr ⟨u, hu, ?_⟩
-      simp
-    have hQReval : v (Q.eval u) = v ((R - Q).eval u) := by
-      rw [eval_sub, hReval, zero_sub, v.map_neg]
-    -- the truncated-sum lower bound `V_s + k ≤ v (Q(u))`
-    have hVs : (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum + (k : WithTop ℚ)
-        ≤ v (Q.eval u) := by
-      rw [hQReval]
-      by_cases hD : R - Q = 0
-      · rw [hD, eval_zero, v.map_zero]; exact le_top
-      · -- degree control: `R - Q` has `natDegree < n`
-        have hdeglt : (R - Q).natDegree < n := by
-          have hdeg : R.degree = Q.degree := by
-            rw [Polynomial.degree_eq_natDegree hRmonic.ne_zero,
-              Polynomial.degree_eq_natDegree hQmonic.ne_zero, hRdeg, hQdeg]
-          have hlt : (R - Q).degree < R.degree :=
-            degree_sub_lt_left hdeg hRmonic.ne_zero
-              (by rw [hRmonic.leadingCoeff, hQmonic.leadingCoeff])
-          refine (Polynomial.natDegree_lt_iff_degree_lt hD).mpr ?_
-          rwa [Polynomial.degree_eq_natDegree hRmonic.ne_zero, hRdeg] at hlt
-        rw [Polynomial.eval_eq_sum_range' hdeglt u]
-        refine v.map_le_sum fun i hi => ?_
-        rw [Finset.mem_range] at hi
-        obtain ⟨T, hT, hTcard, hTbound⟩ := hcong i hi
-        have hWTcard : W.card = n := by rw [hW, Multiset.card_map, hn]
-        have hVsle : (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum
-            ≤ T.sum + i • ((s : WithTop ℚ)) := by
-          have h := sum_map_min_le_add (W := W) (T := T) hT s
-          rw [hWTcard, hTcard, Nat.sub_sub_self hi.le] at h
-          rw [hUZ, Multiset.map_map] at h
-          simpa [Function.comp] using h
-        calc (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum + (k : WithTop ℚ)
-            ≤ (T.sum + i • ((s : WithTop ℚ))) + (k : WithTop ℚ) := add_le_add hVsle le_rfl
-          _ = (T.sum + (k : WithTop ℚ)) + i • ((s : WithTop ℚ)) := by
-              rw [add_right_comm]
-          _ ≤ v ((R - Q).coeff i) + i • ((s : WithTop ℚ)) := add_le_add hTbound le_rfl
-          _ = v ((R - Q).coeff i) + v (u ^ i) := by rw [v.map_pow, hs]
-          _ = v ((R - Q).coeff i * u ^ i) := (v.map_mul _ _).symm
     -- the product expansion `v (Q(u)) = ∑_z v (u - z)`
     have hQprod : v (Q.eval u) = (Z.map fun z => v (u - z)).sum := by
       rw [hQ, eval_multiset_prod, Multiset.map_map, AddValuation.map_multiset_prod,
@@ -328,6 +264,101 @@ theorem exists_root_sub_valuation_le [Nontrivial F]
       rw [div_le_iff₀ hmQ]
       nlinarith [hkey]
     linarith [h2]
+
+/-! ### Root matching (`lem:valued-root-matching`) -/
+
+/-- **Root matching for coefficientwise-close split polynomials**
+(`lem:valued-root-matching`; the single-field core of Kedlaya 2001b's continuity of
+roots).  Let `U, Z` be root multisets with equal valuation multisets `W`, and suppose
+the products `R = ∏_{u ∈ U}(X - u)` and `Q = ∏_{z ∈ Z}(X - z)` are coefficientwise
+close: for each `i < n` some size-`(n-i)` sub-multiset `T ≤ W` has
+`T.sum + k ≤ v((R - Q).coeff i)`.  Then every `u ∈ U` of valuation `s` is within
+`s + k/m` of some `z ∈ Z` of valuation `s`, where `m` is the multiplicity of `s`
+in `W`.
+
+The proof evaluates `Q` at `u`: `v(Q(u)) = v((R-Q)(u)) ≥ ∑_w min(s, w) + k`, while
+`Q(u) = ∏_z (u - z)` with each factor of valuation exactly `min(s, v z)` unless
+`v z = s`; the excess `k` therefore concentrates on the `m` factors of valuation `s`,
+and a maximal one exceeds `s + k/m`. -/
+theorem exists_root_sub_valuation_le [Nontrivial F]
+    (U Z : Multiset F) (hUZ : U.map v = Z.map v) {k : ℚ}
+    (hcong : ∀ i < U.card, ∃ T ≤ U.map v, T.card = U.card - i ∧
+      T.sum + (k : WithTop ℚ) ≤
+        v ((((U.map fun y => X - C y).prod) - ((Z.map fun y => X - C y).prod)).coeff i))
+    {u : F} (hu : u ∈ U) {s : ℚ} (hs : v u = (s : WithTop ℚ)) :
+    ∃ z ∈ Z, v z = (s : WithTop ℚ) ∧
+      ((s + k / ((U.map v).count ((s : WithTop ℚ)) : ℚ) : ℚ) : WithTop ℚ) ≤ v (u - z) := by
+  classical
+  set W : Multiset (WithTop ℚ) := U.map v with hW
+  set n : ℕ := U.card with hn
+  have hsW : ((s : WithTop ℚ)) ∈ W := hs ▸ Multiset.mem_map_of_mem v hu
+  -- notation for the two polynomials
+  set R : F[X] := (U.map fun y => X - C y).prod with hR
+  set Q : F[X] := (Z.map fun y => X - C y).prod with hQ
+  have hcardZ : Z.card = n := by
+    have h := congrArg Multiset.card hUZ
+    rw [Multiset.card_map, Multiset.card_map, ← hn] at h
+    exact h.symm
+  -- `R` and `Q` are monic of degree `n`
+  have hRmonic : R.Monic :=
+    monic_multiset_prod_of_monic U (fun y => X - C y) fun y _ => monic_X_sub_C y
+  have hQmonic : Q.Monic :=
+    monic_multiset_prod_of_monic Z (fun y => X - C y) fun y _ => monic_X_sub_C y
+  have hRdeg : R.natDegree = n := by
+    rw [hR, natDegree_multiset_prod_X_sub_C_eq_card, hn]
+  have hQdeg : Q.natDegree = n := by
+    rw [hQ, natDegree_multiset_prod_X_sub_C_eq_card, hcardZ]
+  -- evaluate: `R(u) = 0`, so `v (Q(u)) = v ((R - Q)(u))`
+  have hReval : R.eval u = 0 := by
+    rw [hR, eval_multiset_prod, Multiset.map_map]
+    refine Multiset.prod_eq_zero ?_
+    refine Multiset.mem_map.mpr ⟨u, hu, ?_⟩
+    simp
+  have hQReval : v (Q.eval u) = v ((R - Q).eval u) := by
+    rw [eval_sub, hReval, zero_sub, v.map_neg]
+  -- the truncated-sum lower bound `V_s + k ≤ v (Q(u))`
+  have hVs : (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum + (k : WithTop ℚ)
+      ≤ v (Q.eval u) := by
+    rw [hQReval]
+    by_cases hD : R - Q = 0
+    · rw [hD, eval_zero, v.map_zero]; exact le_top
+    · -- degree control: `R - Q` has `natDegree < n`
+      have hdeglt : (R - Q).natDegree < n := by
+        have hdeg : R.degree = Q.degree := by
+          rw [Polynomial.degree_eq_natDegree hRmonic.ne_zero,
+            Polynomial.degree_eq_natDegree hQmonic.ne_zero, hRdeg, hQdeg]
+        have hlt : (R - Q).degree < R.degree :=
+          degree_sub_lt_left hdeg hRmonic.ne_zero
+            (by rw [hRmonic.leadingCoeff, hQmonic.leadingCoeff])
+        refine (Polynomial.natDegree_lt_iff_degree_lt hD).mpr ?_
+        rwa [Polynomial.degree_eq_natDegree hRmonic.ne_zero, hRdeg] at hlt
+      rw [Polynomial.eval_eq_sum_range' hdeglt u]
+      refine v.map_le_sum fun i hi => ?_
+      rw [Finset.mem_range] at hi
+      obtain ⟨T, hT, hTcard, hTbound⟩ := hcong i hi
+      have hWTcard : W.card = n := by rw [hW, Multiset.card_map, hn]
+      have hVsle : (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum
+          ≤ T.sum + i • ((s : WithTop ℚ)) := by
+        have h := sum_map_min_le_add (W := W) (T := T) hT s
+        rw [hWTcard, hTcard, Nat.sub_sub_self hi.le] at h
+        rw [hUZ, Multiset.map_map] at h
+        simpa [Function.comp] using h
+      calc (Z.map fun z => min ((s : WithTop ℚ)) (v z)).sum + (k : WithTop ℚ)
+          ≤ (T.sum + i • ((s : WithTop ℚ))) + (k : WithTop ℚ) := add_le_add hVsle le_rfl
+        _ = (T.sum + (k : WithTop ℚ)) + i • ((s : WithTop ℚ)) := by
+            rw [add_right_comm]
+        _ ≤ v ((R - Q).coeff i) + i • ((s : WithTop ℚ)) := add_le_add hTbound le_rfl
+        _ = v ((R - Q).coeff i) + v (u ^ i) := by rw [v.map_pow, hs]
+        _ = v ((R - Q).coeff i * u ^ i) := (v.map_mul _ _).symm
+  -- delegate to `lem:approx-root`
+  have hsZ : ((s : WithTop ℚ)) ∈ Z.map v := by rw [← hUZ]; exact hsW
+  have hcount : W.count ((s : WithTop ℚ)) = (Z.map v).count ((s : WithTop ℚ)) := by
+    rw [hUZ]
+  obtain ⟨z, hzZ, hzval, hzle⟩ :=
+    exists_root_sub_valuation_le_of_le_v_eval v Z hs hsZ hVs
+  refine ⟨z, hzZ, hzval, ?_⟩
+  rw [hcount]
+  exact hzle
 
 /-! ### Rootwise perturbation of split polynomials (`lem:rootwise-perturbation`) -/
 
