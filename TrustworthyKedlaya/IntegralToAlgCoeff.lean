@@ -41,7 +41,7 @@ The proof is a Newton iteration steered towards `f`, restarted at every step:
   (`lem:newton-polygon-roots`), and the continuity of roots
   (`lem:roots-continuity`, reverse direction) matches `r` with the shadow of an
   algebraic root to depth `val r + 1/n`.
-* Iteration (`exists_isTruncUP_near_root`): recenter `Q` by `X + C g` and repeat;
+* Iteration (`exists_isTruncUP_near_of_root`): recenter `Q` by `X + C g` and repeat;
   the recentered coefficients stay in `B'` because `B'` is a subring
   (`lem:witt-carry-up`, `lem:witt-carry-up-mul`), and the recentered roots stay
   nonnegative.  The gain `1/n` per step makes the partial sums converge to `f`.
@@ -226,7 +226,7 @@ theorem orderTop_trunc_of_val_lt {x : 𝕃_[p]} {θ : ℚ}
 /-! ### Sub-multiset sum bounds -/
 
 /-- A multiset of `WithTop ℚ` values with a finite sum consists of finite values,
-and its sum is read off after `untop'`. -/
+and its sum is read off after `WithTop.untopD 0`. -/
 theorem multiset_untop'_sum_of_sum_coe {T : Multiset (WithTop ℚ)} {c : ℚ}
     (hc : T.sum = (c : WithTop ℚ)) :
     (T.map (fun w => WithTop.untopD 0 w)).sum = c := by
