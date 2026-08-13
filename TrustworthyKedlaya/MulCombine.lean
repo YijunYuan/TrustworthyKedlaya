@@ -79,6 +79,19 @@ theorem exists_support_add_of_mulPairs_ne_zero {x y : HahnSeries ℚ (𝔽ᵃ_[p
   obtain ⟨hm1, hm2, hs⟩ := Finset.mem_antidiagonal.mp hij
   exact ⟨ij.1, hm1, ij.2, hm2, hs⟩
 
+/-- Below the sum of two support floors the coefficient-pair column is empty. -/
+theorem mulPairs_eq_zero_of_lt {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {v v' : ℚ}
+    (hx : ∀ q < v, x.coeff q = 0) (hy : ∀ q < v', y.coeff q = 0)
+    {q : ℚ} (hq : q < v + v') : mulPairs p x y q = 0 := by
+  refine mulPairs_eq_zero fun s₁ h₁ s₂ h₂ hsum => ?_
+  have hs₁ : v ≤ s₁ := by
+    by_contra hlt
+    exact (HahnSeries.mem_support _ _).mp h₁ (hx s₁ (not_le.mp hlt))
+  have hs₂ : v' ≤ s₂ := by
+    by_contra hlt
+    exact (HahnSeries.mem_support _ _).mp h₂ (hy s₂ (not_le.mp hlt))
+  linarith
+
 variable (p) in
 /-- The **convolution combination** of two Hahn series under a multiset function `Φ`
 with `Φ 0 = 0`: the series with coefficient `Φ (mulPairs x y q)` at each exponent

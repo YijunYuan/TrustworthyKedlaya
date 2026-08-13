@@ -92,6 +92,14 @@ theorem isUP_mulDigitSeries {y y' : HahnSeries ℚ (𝔽ᵃ_[p])}
   unfold mulDigitSeries
   exact hy.mulCombine hy' (mulDigit i) (mulDigit_empty i)
 
+/-- Product-digit series vanish below the sum of the support floors
+(`lem:shadow-mul-collapse`, support clause). -/
+theorem coeff_mulDigitSeries_eq_zero {y y' : HahnSeries ℚ (𝔽ᵃ_[p])} {v v' : ℚ}
+    (hy : ∀ q < v, y.coeff q = 0) (hy' : ∀ q < v', y'.coeff q = 0) (i : ℕ)
+    {q : ℚ} (hq : q < v + v') : (mulDigitSeries i y y').coeff q = 0 := by
+  rw [mulDigitSeries, UP.coeff_mulCombine, UP.mulPairs_eq_zero_of_lt hy hy' hq,
+    mulDigit_empty]
+
 /-! ### The digit expansion of a product of shadows -/
 
 /-- **Digit expansion of a product of shadows** (`lem:shadow-mul-collapse`): with
@@ -179,18 +187,9 @@ theorem le_val_shadow_mul_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v v' :
   -- the defect vanishes below `v + v'`
   have hbelow : ∀ q < v + v', Δ.coeff q = 0 := by
     intro q hq
-    have hP : UP.mulPairs p y y' q = 0 := by
-      refine UP.mulPairs_eq_zero fun s₁ h₁ s₂ h₂ hsum => ?_
-      have hs₁ : v ≤ s₁ := by
-        by_contra hlt
-        exact (HahnSeries.mem_support _ _).mp h₁ (hy s₁ (not_le.mp hlt))
-      have hs₂ : v' ≤ s₂ := by
-        by_contra hlt
-        exact (HahnSeries.mem_support _ _).mp h₂ (hy' s₂ (not_le.mp hlt))
-      linarith
     have hcol0 : colsum q = 0 := by
       rw [hcolsum]
-      simp [hP]
+      simp [UP.mulPairs_eq_zero_of_lt hy hy' hq]
     rw [hΔcoeff q, hcol0]
     simp [teichDigit]
   -- the scalar `p`-power singles represent the `p`-powers of `𝕃_[p]`
