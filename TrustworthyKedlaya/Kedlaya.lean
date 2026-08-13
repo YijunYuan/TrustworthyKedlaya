@@ -10,6 +10,7 @@ public import Mathlib.RingTheory.IntegralClosure.Algebra.Basic
 public import Mathlib.RingTheory.LaurentSeries
 public import Mathlib.Topology.Defs.Basic
 import TrustworthyKedlaya.SeparableUP
+import TrustworthyKedlaya.UPAlgebraic
 
 /-!
 ## Main statements
@@ -25,9 +26,10 @@ import TrustworthyKedlaya.SeparableUP
 
 The statements still ending in `admit` are deliberately admitted; these are the only intentional
 `admit`s in the project. They are external inputs, not gaps in our own arguments.
-`kedlaya_2001a_theorem15_half` is fully proved: its conclusion is definitionally
-`TrustworthyKedlaya.UP.IsUP` (pinned in `DefeqGuards.lean`), established for integral elements in
-`TrustworthyKedlaya.SeparableUP`.
+`kedlaya_2001a_theorem15_half` is fully proved, in both directions: its right-hand side is
+definitionally `TrustworthyKedlaya.UP.IsUP` (pinned in `DefeqGuards.lean`), established for
+integral elements in `TrustworthyKedlaya.SeparableUP` and, conversely, integral whenever it
+holds by `TrustworthyKedlaya.UPAlgebraic`.
 
 ## References
 
@@ -97,9 +99,11 @@ noncomputable instance : Algebra (𝔽ᵃ_[p])⸨X⸩ (HahnSeries ℚ (𝔽ᵃ_[
   (intHahnEmbedding p).toAlgebra
 
 open LaurentSeries in
-/-- ** Half of Kedlaya (2017), Theorem 11.11 = Kedlaya (2001a), Theorem 15.**
+/-- **Kedlaya (2017), Theorem 11.11 = Kedlaya (2001a), Theorem 15** (named `_half` for
+historical reasons; upgraded to the full equivalence per the owner's ruling in inbox
+I-0024).
 
-A series `x = ∑ᵢ xᵢ tⁱ ∈ 𝔽̄_p((t^ℚ))` is integral over `𝔽̄_p((t))` implies that:
+A series `x = ∑ᵢ xᵢ tⁱ ∈ 𝔽̄_p((t^ℚ))` is integral over `𝔽̄_p((t))` if and only if:
 
 * (a) there exist `a, b, c` (with `a` a positive integer) such that the support of `x` is
   contained in `S_{a,b,c}`; and
@@ -109,13 +113,13 @@ A series `x = ∑ᵢ xᵢ tⁱ ∈ 𝔽̄_p((t^ℚ))` is integral over `𝔽̄_p
   `twistSeq` (built from `f_m`, with digit sum `≤ c`) becomes periodic of period `N` after
   at most `M` terms.
 
-The converse also holds (the other half of Kedlaya (2001a), Theorem 15) and is needed for
-`kedlaya_2017_theorem13_4` (blueprint node `lem:up-algebraic`).  Per the owner's ruling
-(inbox I-0024) this statement is to be upgraded to an `↔` once the converse is formalized.
+The forward direction is `TrustworthyKedlaya.UP.isUP_of_isIntegral`; the converse
+(blueprint node `lem:up-algebraic`, needed for `kedlaya_2017_theorem13_4`) is
+`TrustworthyKedlaya.UP.IsUP.isIntegral`.
 -/
 theorem kedlaya_2001a_theorem15_half (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
     IsIntegral (𝔽ᵃ_[p])⸨X⸩ x
-    → ∃ a : ℕ+, ∃ b c : ℕ,
+    ↔ ∃ a : ℕ+, ∃ b c : ℕ,
     ( -- (a) `x` is supported on some `S_{a,b,c}`.
       (x.support ⊆ Sabc p a b c) ∧
       -- (b) for any such `a,b,c`, the twist functions `f_m` are eventually periodic.
@@ -125,7 +129,7 @@ theorem kedlaya_2001a_theorem15_half (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
             (dig.sum fun _ v => v) ≤ c →
             ∀ n : ℕ, M ≤ n →
               twistSeq p fm j dig (n + N) = twistSeq p fm j dig n) ) :=
-  fun hx => UP.isUP_of_isIntegral hx
+  ⟨fun hx => UP.isUP_of_isIntegral hx, fun hx => UP.IsUP.isIntegral hx⟩
 
 open LaurentSeries in
 /-- **Kedlaya (2017), Theorem 13.4.** The completion of the integral closure of `ℚᵘⁿ_[p]` in
