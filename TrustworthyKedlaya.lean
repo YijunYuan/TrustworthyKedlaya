@@ -38,6 +38,7 @@ import TrustworthyKedlaya.ShadowCongruence
 import TrustworthyKedlaya.SliceSpan
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TameKummer
+import TrustworthyKedlaya.TeichCarry
 import TrustworthyKedlaya.TowerEmbedding
 import TrustworthyKedlaya.Truncation
 import TrustworthyKedlaya.TwistPeriodicity
