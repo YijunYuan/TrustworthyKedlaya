@@ -473,4 +473,103 @@ theorem sliceWitness_of_slice_form {x : HahnSeries ℚ (𝔽ᵃ_[p])}
 
 end LevelDrop
 
+/-! ### First-digit decomposition (blueprint `lem:up-first-digit`, part 1)
+
+A point of `T_c` has a unique canonical digit string, whose shallowest digit —
+index `k`, value `β` — partitions the support.  A series slice-supported on `T_c`
+all of whose coefficients vanish at strings with no digit before index `R` is the
+sum of its first-digit restrictions over `k < R`, `0 < β < p`. -/
+
+/-- The points whose canonical digit string has its first (shallowest) digit at
+index `k` (position `k + 1` in the blueprint's 1-indexed convention) with value
+`β`. -/
+def firstDigitSet (p : ℕ) (k β : ℕ) : Set ℚ :=
+  {q : ℚ | ∃ e : ℕ →₀ ℕ, (∀ i, e i < p) ∧ q = -fracVal p e ∧
+    (∀ i < k, e i = 0) ∧ e k = β}
+
+/-- **First-digit partition**: a series slice-supported on `T_c` whose coefficients
+vanish at every string with all digits at indices `≥ R` decomposes as the sum of its
+first-digit restrictions over indices `k < R` and digit values `0 < β < p`. -/
+theorem firstDigit_decomp {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {c : ℕ}
+    (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c) (R : ℕ)
+    (hdeep : ∀ e : ℕ →₀ ℕ, (∀ i, e i < p) → (∀ i < R, e i = 0) →
+      x.coeff (-fracVal p e / (a : ℚ)) = 0) :
+    x = ∑ k ∈ Finset.range R, ∑ β ∈ Finset.Ioo 0 p,
+      hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x := by
+  have ha : ((a : ℕ) : ℚ) ≠ 0 := by exact_mod_cast a.pos.ne'
+  refine HahnSeries.ext (funext fun s => ?_)
+  simp only [HahnSeries.coeff_sum]
+  by_cases h0 : x.coeff s = 0
+  · rw [h0]
+    refine (Finset.sum_eq_zero fun k _ => Finset.sum_eq_zero fun β _ => ?_).symm
+    by_cases hks : s ∈ (· / (a : ℚ)) '' firstDigitSet p k β
+    · rw [coeff_hahnRestrict_of_mem x hks, h0]
+    · rw [coeff_hahnRestrict_of_notMem x hks]
+  · -- the canonical string of `a·s` and its least digit index
+    have hq : x.coeff (((a : ℚ) * s) / (a : ℚ)) ≠ 0 := by
+      rw [mul_div_cancel_left₀ s ha]
+      exact h0
+    have hTc := hsupp _ hq
+    obtain ⟨e, he, hesum, heq⟩ := Tc_subset_neg_fracVal p c hTc
+    have hs_eq : s = -fracVal p e / (a : ℚ) := by
+      rw [← heq, mul_comm, mul_div_assoc, div_self ha, mul_one]
+    have he0 : e ≠ 0 := by
+      rintro rfl
+      rw [fracVal_zero, neg_zero] at heq
+      exact absurd (heq ▸ hTc.2.2) (lt_irrefl 0)
+    have hne : e.support.Nonempty := Finsupp.support_nonempty_iff.mpr he0
+    set k₀ : ℕ := e.support.min' hne with hk₀
+    have hk₀mem : e k₀ ≠ 0 := Finsupp.mem_support_iff.mp (e.support.min'_mem hne)
+    have hk₀min : ∀ i < k₀, e i = 0 := fun i hi => by
+      by_contra hi0
+      exact absurd (e.support.min'_le i (Finsupp.mem_support_iff.mpr hi0)) (by omega)
+    have hk₀R : k₀ < R := by
+      by_contra hout
+      refine h0 ?_
+      rw [hs_eq]
+      exact hdeep e he fun i hi => hk₀min i (by omega)
+    -- a witness in any first-digit class must be the canonical string of `a·s`
+    have hcanon : ∀ {q' : ℚ},
+        q' / (a : ℚ) = s → ∀ {e' : ℕ →₀ ℕ}, (∀ i, e' i < p) → q' = -fracVal p e' →
+        e' = e := by
+      intro q' hq's e' he' hq'eq
+      refine eq_of_fracVal_eq p hp.out.one_lt he' he ?_
+      have h1 : q' / (a : ℚ) = -fracVal p e / (a : ℚ) := by rw [hq's, hs_eq]
+      rw [hq'eq] at h1
+      field_simp at h1
+      linarith [h1]
+    -- collapse the double sum to the `(k₀, e k₀)` term
+    have houter : ∀ k ∈ Finset.range R, k ≠ k₀ →
+        (∑ β ∈ Finset.Ioo 0 p,
+          (hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x).coeff s) = 0 := by
+      intro k _ hkne
+      refine Finset.sum_eq_zero fun β hβ => ?_
+      refine coeff_hahnRestrict_of_notMem x fun hmem => ?_
+      obtain ⟨q', ⟨e', he', hq'eq, hfirst', hval'⟩, hq's⟩ := hmem
+      obtain rfl := hcanon hq's he' hq'eq
+      rcases lt_trichotomy k k₀ with hlt | heq' | hgt
+      · rw [hk₀min k hlt] at hval'
+        have := Finset.mem_Ioo.mp hβ
+        omega
+      · exact hkne heq'
+      · rw [hfirst' k₀ hgt] at hk₀mem
+        exact hk₀mem rfl
+    have hinner : (∑ β ∈ Finset.Ioo 0 p,
+        (hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k₀ β) x).coeff s)
+        = x.coeff s := by
+      have hβ₀mem : e k₀ ∈ Finset.Ioo 0 p :=
+        Finset.mem_Ioo.mpr ⟨Nat.pos_of_ne_zero hk₀mem, he k₀⟩
+      rw [Finset.sum_eq_single (e k₀)]
+      · exact coeff_hahnRestrict_of_mem x
+          ⟨-fracVal p e, ⟨e, he, rfl, hk₀min, rfl⟩, hs_eq.symm⟩
+      · intro β _ hβne
+        refine coeff_hahnRestrict_of_notMem x fun hmem => ?_
+        obtain ⟨q', ⟨e', he', hq'eq, hfirst', hval'⟩, hq's⟩ := hmem
+        obtain rfl := hcanon hq's he' hq'eq
+        exact hβne hval'.symm
+      · intro hout
+        exact absurd hβ₀mem hout
+    rw [Finset.sum_eq_single k₀ houter
+      (fun hout => absurd (Finset.mem_range.mpr hk₀R) hout), hinner]
+
 end TrustworthyKedlaya.UP
