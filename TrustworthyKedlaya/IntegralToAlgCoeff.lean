@@ -183,4 +183,293 @@ theorem isTruncUP_algebraMap_QpUn (c : ℚᵘⁿ_[p]) :
   rw [hfinal]
   exact (isTruncUP_single_intCast _ _).mul (isTruncUP_ZpUn_embd a)
 
+/-! ### Truncation order bookkeeping -/
+
+/-- The truncation of `0` is `0`. -/
+theorem trunc_zero (θ : ℚ) : trunc θ (0 : 𝕃_[p]) = 0 := by
+  apply HahnSeries.ext
+  funext q
+  by_cases hq : q < θ
+  · rw [coeff_trunc_of_lt hq, coeff_zero_eq]
+    rfl
+  · rw [coeff_trunc_of_le (not_lt.mp hq)]
+    rfl
+
+/-- The order of the canonical coefficient series is the valuation. -/
+theorem orderTop_coeffSeries (x : 𝕃_[p]) : (coeffSeries x).orderTop = val p x := by
+  rw [← val_shadow, shadow_coeffSeries]
+
+/-- A truncation below a cutoff strictly above the valuation retains the leading
+term, hence has order equal to the valuation. -/
+theorem orderTop_trunc_of_val_lt {x : 𝕃_[p]} {θ : ℚ}
+    (h : val p x < (θ : WithTop ℚ)) : (trunc θ x).orderTop = val p x := by
+  have hne : val p x ≠ ⊤ := h.ne_top
+  obtain ⟨m, hm⟩ := WithTop.ne_top_iff_exists.mp hne
+  have hmθ : m < θ := by
+    rw [← WithTop.coe_lt_coe]
+    rw [← hm] at h
+    exact_mod_cast h
+  refine le_antisymm ?_ ?_
+  · rw [← hm]
+    refine HahnSeries.orderTop_le_of_coeff_ne_zero ?_
+    rw [coeff_trunc_of_lt hmθ]
+    exact coeff_val_ne_zero hm.symm
+  · rw [← hm]
+    refine HahnSeries.le_orderTop_iff_forall.mpr fun j hj => ?_
+    by_cases hjθ : j < θ
+    · rw [coeff_trunc_of_lt hjθ]
+      refine coeff_eq_zero_of_lt_val ?_
+      rw [← hm]
+      exact_mod_cast hj
+    · exact coeff_trunc_of_le (not_lt.mp hjθ) x
+
+/-! ### Sub-multiset sum bounds -/
+
+/-- A multiset of `WithTop ℚ` values with a finite sum consists of finite values,
+and its sum is read off after `untop'`. -/
+theorem multiset_untop'_sum_of_sum_coe {T : Multiset (WithTop ℚ)} {c : ℚ}
+    (hc : T.sum = (c : WithTop ℚ)) :
+    (T.map (fun w => WithTop.untopD 0 w)).sum = c := by
+  classical
+  induction T using Multiset.induction_on generalizing c with
+  | empty =>
+    rw [Multiset.sum_zero] at hc
+    rw [Multiset.map_zero, Multiset.sum_zero]
+    exact_mod_cast hc
+  | cons a T ih =>
+    rw [Multiset.sum_cons] at hc
+    have ha : a ≠ ⊤ := by
+      intro htop
+      rw [htop, WithTop.top_add] at hc
+      exact WithTop.top_ne_coe hc
+    obtain ⟨a', ha'⟩ := WithTop.ne_top_iff_exists.mp ha
+    have hT : T.sum ≠ ⊤ := by
+      intro htop
+      rw [htop, WithTop.add_top] at hc
+      exact WithTop.top_ne_coe hc
+    obtain ⟨c', hc'⟩ := WithTop.ne_top_iff_exists.mp hT
+    have hsum : a' + c' = c := by
+      rw [← WithTop.coe_inj, WithTop.coe_add, ha', hc']
+      exact hc
+    rw [Multiset.map_cons, Multiset.sum_cons, ih hc'.symm, ← ha']
+    rw [WithTop.untopD_coe]
+    exact hsum
+
+/-- **Sub-multiset sums are bounded by the total finite mass**: if `T ≤ W`, all
+elements of `W` are nonnegative, and `T.sum` is finite, then `T.sum` is at most the
+sum of the finite parts of `W`. -/
+theorem multiset_sum_le_untop'_sum {W T : Multiset (WithTop ℚ)}
+    (hW : ∀ w ∈ W, (0 : WithTop ℚ) ≤ w) (hT : T ≤ W) {c : ℚ}
+    (hc : T.sum = (c : WithTop ℚ)) :
+    c ≤ (W.map (fun w => WithTop.untopD 0 w)).sum := by
+  obtain ⟨U, rfl⟩ := Multiset.le_iff_exists_add.mp hT
+  rw [Multiset.map_add, Multiset.sum_add, ← multiset_untop'_sum_of_sum_coe hc]
+  refine le_add_of_nonneg_right ?_
+  refine Multiset.sum_nonneg fun x hx => ?_
+  obtain ⟨u, hu, rfl⟩ := Multiset.mem_map.mp hx
+  have h0 : (0 : WithTop ℚ) ≤ u := hW u (Multiset.mem_add.mpr (Or.inr hu))
+  induction u using WithTop.recTopCoe with
+  | top => exact le_refl 0
+  | coe a => exact_mod_cast h0
+
+/-! ### One steered Newton step -/
+
+/-- **One steered Newton step** (`prop:integral-to-alg-coeff`, iteration body): let
+`Q` be a monic polynomial of degree `n ≥ 1` over `𝕃_[p]` with all coefficients in
+`B'` and all roots of valuation `≥ 0`, and let `r` be a root.  Then some `h ∈ B'`
+(the shadow of a root of the truncated hat polynomial, algebraic over `𝔽̄_p((t))`)
+approximates `r` with a gain: `val (r - h) ≥ val r + 1/n`. -/
+theorem exists_isTruncUP_approx_of_root
+    {Q : Polynomial (𝕃_[p])} (hmonic : Q.Monic) {n : ℕ} (hdeg : Q.natDegree = n)
+    (hn : 0 < n) (hcoeffs : ∀ i, IsTruncUP (Q.coeff i))
+    (hroots : ∀ z ∈ Q.roots, (0 : WithTop ℚ) ≤ val p z)
+    {r : 𝕃_[p]} (hr : r ∈ Q.roots) :
+    ∃ h : 𝕃_[p], IsTruncUP h ∧
+      val p r + ((1 / (n : ℚ) : ℚ) : WithTop ℚ) ≤ val p (r - h) := by
+  classical
+  by_cases hr0 : r = 0
+  · exact ⟨0, isTruncUP_zero, by rw [hr0, sub_zero, val_zero_eq_top]; exact le_top⟩
+  obtain ⟨s, hs⟩ := WithTop.ne_top_iff_exists.mp
+    ((not_iff_not.mpr (val_eq_top_iff (p := p))).mpr hr0)
+  set Z : Multiset (𝕃_[p]) := Q.roots with hZ
+  have hsplits : Q.Splits := IsAlgClosed.splits Q
+  have hQprod : Q = (Z.map fun z => X - Polynomial.C z).prod :=
+    hsplits.eq_prod_roots_of_monic hmonic
+  have hZcard : Z.card = n := by
+    have h := congrArg Polynomial.natDegree hQprod
+    rw [hdeg, natDegree_multiset_prod_X_sub_C_eq_card] at h
+    exact h.symm
+  set W : Multiset (WithTop ℚ) := Z.map (val p) with hW0def
+  have hW0 : ∀ w ∈ W, (0 : WithTop ℚ) ≤ w := by
+    intro w hw
+    obtain ⟨z, hz, rfl⟩ := Multiset.mem_map.mp hw
+    exact hroots z hz
+  -- every coefficient of `Q` has nonnegative valuation
+  have hvalcoeff : ∀ i, i ≤ n → (0 : WithTop ℚ) ≤ val p (Q.coeff i) := by
+    intro i hi
+    obtain ⟨T, hTle, _, _, hTsum⟩ :=
+      exists_sum_le_v_coeff_prod_X_sub_C (val p) Z (i := i) (by rw [hZcard]; exact hi)
+    rw [← hQprod] at hTsum
+    refine le_trans (Multiset.sum_nonneg fun w hw => hW0 w (Multiset.mem_of_le hTle hw)) hTsum
+  -- the single natural cutoff
+  have huntopD_nonneg : ∀ w : WithTop ℚ, (0 : WithTop ℚ) ≤ w → 0 ≤ WithTop.untopD 0 w := by
+    intro w hw
+    induction w using WithTop.recTopCoe with
+    | top => exact le_refl 0
+    | coe a => exact_mod_cast hw
+  set R₀ : ℚ := (W.map (fun w => WithTop.untopD 0 w)).sum with hR₀
+  set Nb : ℕ := ⌈R₀⌉₊ + 1 with hNb
+  set Vb : ℚ := ∑ i ∈ Finset.range n, WithTop.untopD 0 (val p (Q.coeff i)) with hVb
+  set θ : ℕ := Nb + (⌈Vb⌉₊ + 1) with hθ
+  have hNθ : Nb ≤ θ := Nat.le_add_right _ _
+  have hθgt : ∀ i < n, Q.coeff i ≠ 0 → val p (Q.coeff i) < (((θ : ℕ) : ℚ) : WithTop ℚ) := by
+    intro i hi hne
+    obtain ⟨v, hv⟩ := WithTop.ne_top_iff_exists.mp
+      ((not_iff_not.mpr (val_eq_top_iff (p := p))).mpr hne)
+    rw [← hv, WithTop.coe_lt_coe]
+    have hvV : v ≤ Vb := by
+      have hveq : WithTop.untopD 0 (val p (Q.coeff i)) = v := by
+        rw [← hv, WithTop.untopD_coe]
+      rw [← hveq, hVb]
+      refine Finset.single_le_sum (f := fun j => WithTop.untopD 0 (val p (Q.coeff j)))
+        (fun j hj => huntopD_nonneg _ (hvalcoeff j (le_of_lt (Finset.mem_range.mp hj))))
+        (Finset.mem_range.mpr hi)
+    have hceil : Vb ≤ (⌈Vb⌉₊ : ℚ) := Nat.le_ceil Vb
+    have hlt : (⌈Vb⌉₊ : ℚ) < ((θ : ℕ) : ℚ) := by
+      rw [hθ]
+      push_cast
+      have : (1 : ℚ) ≤ (Nb : ℚ) := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr (by omega)
+      linarith
+    linarith
+  -- the truncated coefficients are UP, hence algebraic over the Laurent field
+  have hUPtrunc : ∀ i, UP.IsUP p (trunc ((θ : ℕ) : ℚ) (Q.coeff i)) := fun i => hcoeffs i θ
+  have halg : ∀ i, trunc ((θ : ℕ) : ℚ) (Q.coeff i)
+      ∈ algebraicClosure ((𝔽ᵃ_[p])⸨X⸩) (HahnSeries ℚ (𝔽ᵃ_[p])) := fun i =>
+    mem_algebraicClosure_iff'.mpr (hUPtrunc i).isIntegral
+  -- the hat polynomial over the relative algebraic closure
+  set K : IntermediateField ((𝔽ᵃ_[p])⸨X⸩) (HahnSeries ℚ (𝔽ᵃ_[p])) :=
+    algebraicClosure ((𝔽ᵃ_[p])⸨X⸩) (HahnSeries ℚ (𝔽ᵃ_[p])) with hK
+  set QhatK : Polynomial K := X ^ n + ∑ i ∈ Finset.range n,
+    Polynomial.C (⟨trunc ((θ : ℕ) : ℚ) (Q.coeff i), halg i⟩ : K) * X ^ i with hQhatK
+  have hsumdeg : (∑ i ∈ Finset.range n,
+      Polynomial.C (⟨trunc ((θ : ℕ) : ℚ) (Q.coeff i), halg i⟩ : K) * X ^ i).degree
+      < ((n : ℕ) : WithBot ℕ) := by
+    refine lt_of_le_of_lt (Polynomial.degree_sum_le _ _) ?_
+    rw [Finset.sup_lt_iff (by exact_mod_cast WithBot.bot_lt_coe n)]
+    intro i hi
+    refine lt_of_le_of_lt (Polynomial.degree_C_mul_X_pow_le _ _) ?_
+    exact_mod_cast Finset.mem_range.mp hi
+  have hQhatKmonic : QhatK.Monic := Polynomial.monic_X_pow_add hsumdeg
+  have hQhatKcoeff : ∀ i < n, QhatK.coeff i
+      = (⟨trunc ((θ : ℕ) : ℚ) (Q.coeff i), halg i⟩ : K) := by
+    intro i hi
+    rw [hQhatK, Polynomial.coeff_add, Polynomial.coeff_X_pow, if_neg (Nat.ne_of_lt hi),
+      zero_add, Polynomial.finsetSum_coeff]
+    rw [Finset.sum_congr rfl fun j _ => Polynomial.coeff_C_mul_X_pow _ _ _]
+    rw [Finset.sum_ite_eq (Finset.range n) i]
+    rw [if_pos (Finset.mem_range.mpr hi)]
+  have hQhatKdeg : QhatK.natDegree = n := by
+    have hdegQ : QhatK.degree = ((n : ℕ) : WithBot ℕ) := by
+      rw [hQhatK, Polynomial.degree_add_eq_left_of_degree_lt
+        (by rw [Polynomial.degree_X_pow]; exact hsumdeg), Polynomial.degree_X_pow]
+    exact Polynomial.natDegree_eq_of_degree_eq_some hdegQ
+  -- split the hat polynomial over the relative algebraic closure
+  set Ytil : Multiset K := QhatK.roots with hYtil
+  have hKsplits : QhatK.Splits := IsAlgClosed.splits QhatK
+  have hQhatKprod : QhatK = (Ytil.map fun y => X - Polynomial.C y).prod :=
+    hKsplits.eq_prod_roots_of_monic hQhatKmonic
+  have hYtilcard : Ytil.card = n := by
+    have h := congrArg Polynomial.natDegree hQhatKprod
+    rw [hQhatKdeg, natDegree_multiset_prod_X_sub_C_eq_card] at h
+    exact h.symm
+  -- push down to the Hahn field
+  set φ : K →+* HahnSeries ℚ (𝔽ᵃ_[p]) := algebraMap K (HahnSeries ℚ (𝔽ᵃ_[p])) with hφ
+  set Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p])) := Ytil.map (fun y => φ y) with hY
+  have hYcard : Y.card = n := by rw [hY, Multiset.card_map, hYtilcard]
+  have hQhatprod : QhatK.map φ = (Y.map fun y => X - Polynomial.C y).prod := by
+    conv_lhs => rw [hQhatKprod]
+    rw [Polynomial.map_multiset_prod, hY, Multiset.map_map, Multiset.map_map]
+    refine congrArg Multiset.prod (Multiset.map_congr rfl fun y _ => ?_)
+    simp only [Function.comp_apply, Polynomial.map_sub, Polynomial.map_X, Polynomial.map_C]
+  have hQhatcoeff : ∀ i < n, (QhatK.map φ).coeff i = trunc ((θ : ℕ) : ℚ) (Q.coeff i) := by
+    intro i hi
+    rw [Polynomial.coeff_map, hQhatKcoeff i hi]
+    rfl
+  have hQhatcoeff_top : (QhatK.map φ).coeff n = 1 := by
+    rw [Polynomial.coeff_map, ← hQhatKdeg, hQhatKmonic.coeff_natDegree, map_one]
+  -- equal coefficient valuations, hence equal root-valuation multisets
+  have haddval : ∀ u : HahnSeries ℚ (𝔽ᵃ_[p]), HahnSeries.addVal ℚ (𝔽ᵃ_[p]) u = u.orderTop :=
+    fun u => HahnSeries.addVal_apply
+  have hWeq : Y.map HahnSeries.orderTop = Z.map (val p) := by
+    have h := map_v_eq_of_v_coeff_eq (HahnSeries.addVal ℚ (𝔽ᵃ_[p])) (val p)
+      (fun u hu => by rwa [haddval, HahnSeries.orderTop_eq_top] at hu)
+      (fun x hx => val_eq_top_iff.mp hx)
+      Y Z (by rw [hYcard, hZcard])
+      (fun i hi => ?_)
+    · rw [← h]
+      exact Multiset.map_congr rfl fun u _ => (haddval u).symm
+    · rw [hYcard] at hi
+      rw [← hQhatprod, ← hQprod, haddval]
+      rcases lt_or_eq_of_le hi with hilt | hieq
+      · rw [hQhatcoeff i hilt]
+        by_cases hzero : Q.coeff i = 0
+        · rw [hzero, trunc_zero, val_zero_eq_top]
+          exact HahnSeries.orderTop_eq_top.mpr rfl
+        · exact orderTop_trunc_of_val_lt (hθgt i hilt hzero)
+      · subst hieq
+        rw [hQhatcoeff_top, ← hdeg, hmonic.coeff_natDegree, HahnSeries.orderTop_one,
+          (val p).map_one]
+  -- the shadow congruence at gain `k = 1`
+  have hcong : ∀ i < Y.card, ∃ T ≤ Y.map HahnSeries.orderTop, T.card = Y.card - i ∧
+      T.sum + ((1 : ℚ) : WithTop ℚ) ≤ val p
+        (shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i)
+          - ((Z.map fun z => X - Polynomial.C z).prod).coeff i) := by
+    intro i hi
+    rw [hYcard] at hi
+    obtain ⟨T, hTle, hTcard, _, hTsum⟩ :=
+      exists_sum_le_v_coeff_prod_X_sub_C (val p) Z (i := i) (by rw [hZcard]; exact hi.le)
+    rw [← hQprod] at hTsum
+    refine ⟨T, by rwa [hWeq], by rw [hTcard, hZcard, hYcard], ?_⟩
+    rw [← hQhatprod, ← hQprod, hQhatcoeff i hi]
+    induction hTs : T.sum using WithTop.recTopCoe with
+    | top =>
+      rw [hTs] at hTsum
+      have hzero : Q.coeff i = 0 := val_eq_top_iff.mp (top_le_iff.mp hTsum)
+      rw [WithTop.top_add, hzero, trunc_zero, shadow_zero, sub_zero, val_zero_eq_top]
+    | coe c =>
+      have hcR : c ≤ R₀ := multiset_sum_le_untop'_sum hW0 hTle hTs
+      have hcN : c + 1 ≤ (θ : ℚ) := by
+        have h1 : c + 1 ≤ (⌈R₀⌉₊ : ℚ) + 1 := by
+          have := Nat.le_ceil R₀
+          linarith
+        have h2 : ((⌈R₀⌉₊ : ℚ) + 1) ≤ (θ : ℚ) := by
+          rw [hθ, hNb]
+          push_cast
+          linarith
+        linarith
+      rw [(val p).map_sub_swap]
+      refine le_trans ?_ (le_val_sub_shadow_trunc ((θ : ℕ) : ℚ) (Q.coeff i))
+      rw [← WithTop.coe_add, WithTop.coe_le_coe]
+      exact hcN
+  -- match the designated root with a shadow of an algebraic root
+  obtain ⟨y, hyY, hyOrd, hbound⟩ := roots_continuity_reverse Y Z hWeq
+    (k := 1) le_rfl hcong (z := r) hr (s := s) hs.symm
+  -- the matched shadow lies in `B'`
+  have hyB : IsTruncUP (shadow y) := by
+    obtain ⟨ytil, _, rfl⟩ := Multiset.mem_map.mp hyY
+    exact isTruncUP_shadow (UP.isUP_of_isIntegral (mem_algebraicClosure_iff'.mp ytil.2))
+  refine ⟨shadow y, hyB, ?_⟩
+  rw [← hs, (val p).map_sub_swap]
+  refine le_trans ?_ hbound
+  rw [← WithTop.coe_add, WithTop.coe_le_coe]
+  have hm1 : 0 < (Y.map HahnSeries.orderTop).count ((s : ℚ) : WithTop ℚ) :=
+    Multiset.count_pos.mpr (by rw [← hyOrd]; exact Multiset.mem_map_of_mem _ hyY)
+  have hmn : (Y.map HahnSeries.orderTop).count ((s : ℚ) : WithTop ℚ) ≤ n := by
+    refine le_trans (Multiset.count_le_card _ _) ?_
+    rw [Multiset.card_map, hYcard]
+  have hdiv : (1 : ℚ) / (n : ℚ)
+      ≤ 1 / ((Y.map HahnSeries.orderTop).count ((s : ℚ) : WithTop ℚ) : ℚ) := by
+    refine one_div_le_one_div_of_le (by exact_mod_cast hm1) (by exact_mod_cast hmn)
+  linarith
+
 end TrustworthyKedlaya.pAdicHahnSeries
