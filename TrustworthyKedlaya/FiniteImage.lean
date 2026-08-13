@@ -32,8 +32,10 @@ below its top; contracting it repeatedly confines the digits to
 
 ## Main statements
 
-- `TrustworthyKedlaya.UP.IsTwistPeriodic.exists_confined_rep`: gap contraction into the
-  finite digit box.
+- `TrustworthyKedlaya.UP.exists_confined_rep_forall`: gap contraction into the finite
+  digit box, with a representative depending only on the digit string (uniform over
+  all `(M, N)`-periodic functions at level `c`).
+- `TrustworthyKedlaya.UP.IsTwistPeriodic.exists_confined_rep`: the per-function form.
 - `TrustworthyKedlaya.UP.IsTwistPeriodic.finite_image_levelSet`: the image of the level
   set under `f` is finite.
 - `TrustworthyKedlaya.UP.IsTwistPeriodic.finite_image_Tc`: `f '' T_c` is finite.
@@ -79,20 +81,23 @@ theorem exists_pow_pow_eq_self (x : 𝔽ᵃ_[p]) : ∃ d : ℕ, 0 < d ∧ x ^ p 
 
 variable {p}
 
-/-- **Gap contraction**: modulo the values of an `(M, N)`-periodic function at level
-`c`, every canonical expansion of digit sum `≤ c` may be replaced by one with digits
-confined to `Finset.range ((c+1)(M+N))`. -/
-theorem IsTwistPeriodic.exists_confined_rep {f : ℚ → 𝔽ᵃ_[p]} {c : ℕ} {M N : ℕ+}
-    (h : IsTwistPeriodic p f c M N) {e : ℕ →₀ ℕ} (he : ∀ i, e i < p)
+/-- **Gap contraction, function-independent form**: every canonical expansion of digit
+sum `≤ c` has a *confined representative* — an expansion with digits confined to
+`Finset.range ((c+1)(M+N))` — at which **every** `(M, N)`-periodic function at level
+`c` takes the same value as at the original expansion.  The contraction (which block
+to collapse, and by how much) depends only on the digit string, never on the
+function; this uniformity is what makes the slice-span dimension bound work. -/
+theorem exists_confined_rep_forall (c : ℕ) (M N : ℕ+) {e : ℕ →₀ ℕ} (he : ∀ i, e i < p)
     (hsum : (e.sum fun _ v => v) ≤ c) :
     ∃ e' : ℕ →₀ ℕ, (∀ i, e' i < p) ∧ (e'.sum fun _ v => v) ≤ c ∧
       e'.support ⊆ Finset.range ((c + 1) * ((M : ℕ) + N)) ∧
-      f (-fracVal p e') = f (-fracVal p e) := by
+      ∀ f : ℚ → 𝔽ᵃ_[p], IsTwistPeriodic p f c M N →
+        f (-fracVal p e') = f (-fracVal p e) := by
   obtain ⟨n, hn⟩ := e.support.exists_nat_subset_range
   induction n using Nat.strong_induction_on generalizing e with
   | _ n ih =>
   by_cases hsmall : n ≤ (c + 1) * ((M : ℕ) + N)
-  · refine ⟨e, he, hsum, hn.trans fun x hx => ?_, rfl⟩
+  · refine ⟨e, he, hsum, hn.trans fun x hx => ?_, fun _ _ => rfl⟩
     rw [Finset.mem_range] at hx ⊢
     omega
   -- Pigeonhole: one of the `c + 1` blocks `[k(M+N), (k+1)(M+N))` misses the support.
@@ -130,10 +135,12 @@ theorem IsTwistPeriodic.exists_confined_rep {f : ℚ → 𝔽ᵃ_[p]} {c : ℕ} 
     have hgs := gapDig_sum (k₀ * ((M : ℕ) + N) + 1) ((M : ℕ) + N) b
     rw [hbe] at hgs
     exact hgs ▸ hsum
-  -- Periodicity contracts the gap from `M + N` to `M`.
-  have hstep : f (-fracVal p (gapDig (k₀ * ((M : ℕ) + N) + 1) (M : ℕ) b))
-      = f (-fracVal p e) := by
-    have hper := h (k₀ * ((M : ℕ) + N) + 1) b (Nat.succ_pos _) hblt hbsum (M : ℕ) le_rfl
+  -- Periodicity contracts the gap from `M + N` to `M` — for every periodic `f` at once.
+  have hstep : ∀ f : ℚ → 𝔽ᵃ_[p], IsTwistPeriodic p f c M N →
+      f (-fracVal p (gapDig (k₀ * ((M : ℕ) + N) + 1) (M : ℕ) b))
+        = f (-fracVal p e) := by
+    intro f hf
+    have hper := hf (k₀ * ((M : ℕ) + N) + 1) b (Nat.succ_pos _) hblt hbsum (M : ℕ) le_rfl
     rw [twistSeq_eq_neg_fracVal_gapDig, twistSeq_eq_neg_fracVal_gapDig, hbe] at hper
     exact hper.symm
   -- The contracted string fits below `n - N`; recurse.
@@ -163,7 +170,20 @@ theorem IsTwistPeriodic.exists_confined_rep {f : ℚ → 𝔽ᵃ_[p]} {c : ℕ} 
   obtain ⟨e', he', hsum', hbox, hval⟩ := ih (n - N) (by have := N.pos; omega)
     (fun i => gapDig_lt p hblt hp.out.pos _ _ i)
     (by rw [gapDig_sum]; exact hbsum) hsupp'
-  exact ⟨e', he', hsum', hbox, hval.trans hstep⟩
+  exact ⟨e', he', hsum', hbox, fun f hf => (hval f hf).trans (hstep f hf)⟩
+
+/-- **Gap contraction** (per-function corollary of `exists_confined_rep_forall`): modulo
+the values of an `(M, N)`-periodic function at level `c`, every canonical expansion of
+digit sum `≤ c` may be replaced by one with digits confined to
+`Finset.range ((c+1)(M+N))`. -/
+theorem IsTwistPeriodic.exists_confined_rep {f : ℚ → 𝔽ᵃ_[p]} {c : ℕ} {M N : ℕ+}
+    (h : IsTwistPeriodic p f c M N) {e : ℕ →₀ ℕ} (he : ∀ i, e i < p)
+    (hsum : (e.sum fun _ v => v) ≤ c) :
+    ∃ e' : ℕ →₀ ℕ, (∀ i, e' i < p) ∧ (e'.sum fun _ v => v) ≤ c ∧
+      e'.support ⊆ Finset.range ((c + 1) * ((M : ℕ) + N)) ∧
+      f (-fracVal p e') = f (-fracVal p e) := by
+  obtain ⟨e', he', hsum', hbox, hval⟩ := exists_confined_rep_forall c M N he hsum
+  exact ⟨e', he', hsum', hbox, hval f h⟩
 
 variable (p)
 
