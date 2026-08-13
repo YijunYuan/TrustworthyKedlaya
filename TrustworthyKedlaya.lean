@@ -21,6 +21,7 @@ import TrustworthyKedlaya.LpCoeff
 import TrustworthyKedlaya.LaurentRoots
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.Multiplicative
+import TrustworthyKedlaya.NewtonPolygonRoots
 import TrustworthyKedlaya.NewtonSlope
 import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.PGroupGalois
