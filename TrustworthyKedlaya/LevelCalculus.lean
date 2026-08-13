@@ -572,4 +572,391 @@ theorem firstDigit_decomp {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {c : ℕ
     rw [Finset.sum_eq_single k₀ houter
       (fun hout => absurd (Finset.mem_range.mpr hk₀R) hout), hinner]
 
+/-! ### First-digit shift (blueprint `lem:up-first-digit`, part 2)
+
+Multiplying the first-digit restriction `x^{(k,β)}` by the monomial
+`t^{β p^{-(k+1)}/a}` erases the first digit from every exponent: the result is
+slice-supported on `T_{c-β} ∪ {0}` and its width-`a` slice is `(M + k + 1, N)`-periodic
+at level `c - β`.  This is the step that lowers the digit-sum level in the induction
+proving `lem:up-algebraic`. -/
+
+section FirstDigitShift
+
+variable {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {c : ℕ} {M N : ℕ+}
+
+omit hp in
+/-- Each digit term bounds the fractional value from below. -/
+theorem term_le_fracVal (e : ℕ →₀ ℕ) (i : ℕ) :
+    (e i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)) ≤ fracVal p e := by
+  by_cases hei : e i = 0
+  · rw [hei, Nat.cast_zero, zero_mul]
+    exact fracVal_nonneg p e
+  · rw [← fracVal_def]
+    exact Finset.single_le_sum
+      (f := fun j => ((e j : ℚ) * (p : ℚ) ^ (-(j + 1 : ℤ))))
+      (fun j _ => by positivity) (Finsupp.mem_support_iff.mpr hei)
+
+/-- A canonical expansion with all digits at positions `> R` has fractional value
+less than `p^{-R}`. -/
+theorem fracVal_lt_of_deep {e : ℕ →₀ ℕ} (he : ∀ i, e i < p) {R : ℕ}
+    (hdeep : ∀ i < R, e i = 0) : fracVal p e < (p : ℚ) ^ (-(R : ℤ)) := by
+  have hpq : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  have hpow : (0 : ℚ) < (p : ℚ) ^ R := by positivity
+  have h1 : (p : ℚ) ^ R * fracVal p e < 1 := by
+    rw [← fracVal_dropGapDig_zero hdeep]
+    exact fracVal_lt_one p hp.out.one_lt fun i => dropGapDig_lt p he _ _ i
+  rw [zpow_neg, zpow_natCast, ← one_div, lt_div_iff₀ hpow, mul_comm]
+  exact h1
+
+/-- A canonical expansion whose digits vanish below index `k` has fractional value
+less than `(e k + 1) · p^{-(k+1)}`: the first digit determines the value up to
+`p^{-(k+1)}`. -/
+theorem fracVal_lt_of_first_digit {e : ℕ →₀ ℕ} (he : ∀ i, e i < p) {k : ℕ}
+    (hfirst : ∀ i < k, e i = 0) :
+    fracVal p e < ((e k : ℚ) + 1) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+  have herase : fracVal p (e.erase k) < (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+    have hcast : (-(k + 1 : ℤ)) = -(((k + 1 : ℕ) : ℤ)) := by omega
+    rw [hcast]
+    refine fracVal_lt_of_deep (fun i => ?_) (fun i hi => ?_)
+    · rcases eq_or_ne i k with rfl | hne
+      · rw [Finsupp.erase_same]
+        exact hp.out.pos
+      · rw [Finsupp.erase_ne hne]
+        exact he i
+    · rcases eq_or_ne i k with rfl | hne
+      · exact Finsupp.erase_same
+      · rw [Finsupp.erase_ne hne]
+        exact hfirst i (by omega)
+  have hsplit : fracVal p e
+      = fracVal p (e.erase k) + (e k : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+    conv_lhs => rw [← Finsupp.erase_add_single k e]
+    rw [fracVal_add, fracVal_single]
+  have hring : ((e k : ℚ) + 1) * (p : ℚ) ^ (-(k + 1 : ℤ))
+      = (e k : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) + (p : ℚ) ^ (-(k + 1 : ℤ)) := by ring
+  rw [hsplit, hring]
+  linarith
+
+/-- Composing two full digit shifts adds the shift amounts. -/
+theorem gapDig_one_gapDig_one (m n : ℕ) (dig : ℕ →₀ ℕ) :
+    gapDig 1 m (gapDig 1 n dig) = gapDig 1 (m + n) dig := by
+  ext i
+  simp only [gapDig_apply]
+  split_ifs <;> first | rfl | omega | (congr 1; omega)
+
+/-- When every head digit vanishes, gap insertion is the full shift. -/
+theorem gapDig_eq_gapDig_one_of_head_zero {j : ℕ} {dig : ℕ →₀ ℕ}
+    (hhead : ∀ i < j - 1, dig i = 0) (n : ℕ) : gapDig j n dig = gapDig 1 n dig := by
+  ext i
+  rw [gapDig_apply, gapDig_apply]
+  by_cases h1 : i < j - 1
+  · rw [if_pos h1, if_neg (by omega : ¬ i < 1 - 1), hhead i h1]
+    by_cases h2 : 1 - 1 + n ≤ i
+    · rw [if_pos h2, hhead (i - n) (by omega)]
+    · rw [if_neg h2]
+  · rw [if_neg h1, if_neg (by omega : ¬ i < 1 - 1)]
+    by_cases h2 : j - 1 + n ≤ i
+    · rw [if_pos h2, if_pos (by omega : 1 - 1 + n ≤ i)]
+    · rw [if_neg h2]
+      by_cases h3 : 1 - 1 + n ≤ i
+      · rw [if_pos h3, hhead (i - n) (by omega)]
+      · rw [if_neg h3]
+
+/-- Adding a digit inside the head window commutes with gap insertion. -/
+theorem gapDig_add_single {j k : ℕ} (hk : k < j - 1) (n β : ℕ) (dig : ℕ →₀ ℕ) :
+    gapDig j n (dig + Finsupp.single k β) = gapDig j n dig + Finsupp.single k β := by
+  ext i
+  simp only [gapDig_apply, Finsupp.add_apply, Finsupp.single_apply]
+  split_ifs <;> first | rfl | omega
+
+/-- Prepending a digit at index `k` to a string with all digits at positions `> k`
+commutes with gap insertion at gap position `k + 2`. -/
+theorem gapDig_single_add {k β : ℕ} {D : ℕ →₀ ℕ} (hD : ∀ i ≤ k, D i = 0) (m : ℕ) :
+    gapDig (k + 2) m (Finsupp.single k β + D) = Finsupp.single k β + gapDig 1 m D := by
+  ext i
+  rcases lt_or_ge k i with hik | hik
+  · have hs : Finsupp.single k β i = 0 := Finsupp.single_eq_of_ne (by omega)
+    rw [Finsupp.add_apply, hs, zero_add, gapDig_apply, gapDig_apply,
+      if_neg (by omega : ¬ i < k + 2 - 1), if_neg (by omega : ¬ i < 1 - 1)]
+    by_cases hm : k + 2 - 1 + m ≤ i
+    · rw [if_pos hm, if_pos (by omega : 1 - 1 + m ≤ i), Finsupp.add_apply,
+        Finsupp.single_eq_of_ne (by omega : i - m ≠ k), zero_add]
+    · rw [if_neg hm]
+      by_cases hm2 : 1 - 1 + m ≤ i
+      · rw [if_pos hm2, hD (i - m) (by omega)]
+      · rw [if_neg hm2]
+  · have hL : gapDig (k + 2) m (Finsupp.single k β + D) i
+        = Finsupp.single k β i + D i := by
+      rw [gapDig_apply, if_pos (by omega : i < k + 2 - 1), Finsupp.add_apply]
+    have hR1 : gapDig 1 m D i = 0 := by
+      rw [gapDig_apply, if_neg (by omega : ¬ i < 1 - 1)]
+      by_cases hm : 1 - 1 + m ≤ i
+      · rw [if_pos hm]
+        exact hD (i - m) (by omega)
+      · rw [if_neg hm]
+    rw [hL, hD i hik, add_zero, Finsupp.add_apply, hR1, add_zero]
+
+/-- Membership in the width-`a` rescaling of a set of exponents. -/
+theorem div_mem_image_div_iff {a : ℕ+} {S : Set ℚ} {w : ℚ} :
+    w / (a : ℚ) ∈ (· / (a : ℚ)) '' S ↔ w ∈ S := by
+  have ha : ((a : ℕ) : ℚ) ≠ 0 := by exact_mod_cast a.pos.ne'
+  constructor
+  · rintro ⟨q', hq', heq⟩
+    have hq'w : q' = w := by
+      have h1 := congrArg (· * (a : ℚ)) heq
+      simpa [div_mul_cancel₀ _ ha] using h1
+    exact hq'w ▸ hq'
+  · exact fun h => ⟨w, h, rfl⟩
+
+/-- Membership in a first-digit class through a canonical expansion: the class is
+detected on the digits themselves. -/
+theorem neg_fracVal_mem_firstDigitSet_iff {e : ℕ →₀ ℕ} (he : ∀ i, e i < p) (k β : ℕ) :
+    -fracVal p e ∈ firstDigitSet p k β ↔ (∀ i < k, e i = 0) ∧ e k = β := by
+  constructor
+  · rintro ⟨e', he', heq, hfirst, hval⟩
+    obtain rfl : e' = e := eq_of_fracVal_eq p hp.out.one_lt he' he (neg_inj.mp heq).symm
+    exact ⟨hfirst, hval⟩
+  · rintro ⟨hfirst, hval⟩
+    exact ⟨e, he, rfl, hfirst, hval⟩
+
+/-- **First-digit shift** (blueprint `lem:up-first-digit`, part 2): the restriction of
+`x` to the exponents whose first digit is `β` at index `k` (position `k + 1`),
+multiplied by the monomial `t^{β p^{-(k+1)}/a}` that erases that digit. -/
+noncomputable def firstDigitShift (a : ℕ+) (k β : ℕ) (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
+    HahnSeries ℚ (𝔽ᵃ_[p]) :=
+  HahnSeries.single ((β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) / (a : ℚ)) 1
+    * hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x
+
+/-- Coefficients of the first-digit shift: read off the restricted series at the
+exponent shifted back by `β p^{-(k+1)}/a`. -/
+theorem coeff_firstDigitShift (a : ℕ+) (k β : ℕ) (x : HahnSeries ℚ (𝔽ᵃ_[p])) (g : ℚ) :
+    (firstDigitShift a k β x).coeff g
+      = (hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x).coeff
+          (g - (β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) / (a : ℚ)) := by
+  rw [firstDigitShift, HahnSeries.coeff_single_mul, one_mul]
+
+/-- The first-digit restriction is recovered from its shift by the inverse monomial. -/
+theorem single_neg_mul_firstDigitShift (a : ℕ+) (k β : ℕ) (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
+    HahnSeries.single (-((β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) / (a : ℚ))) 1
+        * firstDigitShift a k β x
+      = hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x := by
+  rw [firstDigitShift, ← mul_assoc, HahnSeries.single_mul_single, neg_add_cancel,
+    mul_one, HahnSeries.single_zero_one, one_mul]
+
+/-- **First-digit shift, support**: erasing a first digit `β` lowers the digit-sum
+level by `β`; the exponent `0` appears when the erased digit was the whole string. -/
+theorem firstDigitShift_support
+    (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c) (k β : ℕ) (q : ℚ)
+    (hq : (firstDigitShift a k β x).coeff (q / (a : ℚ)) ≠ 0) :
+    q ∈ Tc p (c - β) ∪ {0} := by
+  rw [coeff_firstDigitShift, show q / (a : ℚ) - (β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) / (a : ℚ)
+      = (q - (β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ))) / (a : ℚ) by ring] at hq
+  by_cases hmem : (q - (β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ))) / (a : ℚ)
+      ∈ (· / (a : ℚ)) '' firstDigitSet p k β
+  · rw [coeff_hahnRestrict_of_mem x hmem] at hq
+    rw [div_mem_image_div_iff] at hmem
+    obtain ⟨e, he, heq, hfirst, hval⟩ := hmem
+    have hTc := hsupp _ hq
+    obtain ⟨e₂, he₂, hsum₂, heq₂⟩ := Tc_subset_neg_fracVal p c hTc
+    have hee : e₂ = e :=
+      eq_of_fracVal_eq p hp.out.one_lt he₂ he (neg_inj.mp (heq₂.symm.trans heq))
+    rw [hee] at hsum₂
+    have hsplit : fracVal p e
+        = fracVal p (e.erase k) + (β : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+      conv_lhs => rw [← Finsupp.erase_add_single k e]
+      rw [fracVal_add, fracVal_single, hval]
+    have hq_eq : q = -fracVal p (e.erase k) := by linarith [heq, hsplit]
+    by_cases he0 : e.erase k = 0
+    · right
+      rw [Set.mem_singleton_iff, hq_eq, he0, fracVal_zero, neg_zero]
+    · left
+      rw [hq_eq]
+      refine neg_fracVal_mem_Tc (fun i => ?_) ?_ he0
+      · rcases eq_or_ne i k with rfl | hne
+        · rw [Finsupp.erase_same]
+          exact hp.out.pos
+        · rw [Finsupp.erase_ne hne]
+          exact he i
+      · have hsum_split : (e.sum fun _ v => v)
+            = ((e.erase k).sum fun _ v => v) + e k := by
+          conv_lhs => rw [← Finsupp.erase_add_single k e]
+          rw [Finsupp.sum_add_index' (fun _ => rfl) (fun _ _ _ => rfl),
+            Finsupp.sum_single_index rfl]
+        omega
+  · rw [coeff_hahnRestrict_of_notMem x hmem] at hq
+    exact absurd rfl hq
+
+/-- **First-digit shift, slice periodicity**: the width-`a` slice of the first-digit
+shift is `(M + k + 1, N)`-periodic at level `c - β`.  Twist strings with a digit at an
+index `≤ k` give identically vanishing sequences (their evaluation points escape the
+first-digit class); a gap beyond `k` absorbs the digit `β` into the head; a shallow gap
+rebases the string at gap position `k + 2`, shifting the depth by `k + 2 - j`. -/
+theorem firstDigitShift_slice_periodic
+    (hper : IsTwistPeriodic p (fun z => x.coeff (z / (a : ℚ))) c M N)
+    {k β : ℕ} (hβp : β < p) (hβc : β ≤ c) {P : ℕ+}
+    (hP : (M : ℕ) + k + 1 ≤ (P : ℕ)) :
+    IsTwistPeriodic p (fun z => (firstDigitShift a k β x).coeff (z / (a : ℚ)))
+      (c - β) P N := by
+  have hpq : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  intro j dig hj hdig hsum n hn
+  have hMP := M.pos
+  -- Every term is the restricted coefficient at the `β`-augmented digit string.
+  have hterm : ∀ n' : ℕ,
+      twistSeq p (fun z => (firstDigitShift a k β x).coeff (z / (a : ℚ))) j dig n'
+        = (hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x).coeff
+            (-fracVal p (gapDig j n' dig + Finsupp.single k β) / (a : ℚ)) := by
+    intro n'
+    rw [twistSeq_eq_neg_fracVal_gapDig]
+    simp only [coeff_firstDigitShift]
+    congr 1
+    rw [fracVal_add, fracVal_single]
+    ring
+  by_cases hA : ∃ i, i < j - 1 ∧ i ≤ k ∧ dig i ≠ 0
+  · -- A head digit at index `≤ k`: every evaluation point escapes the class.
+    obtain ⟨i, hij, hik, hi0⟩ := hA
+    have hzero : ∀ n' : ℕ,
+        (hahnRestrict ((· / (a : ℚ)) '' firstDigitSet p k β) x).coeff
+          (-fracVal p (gapDig j n' dig + Finsupp.single k β) / (a : ℚ)) = 0 := by
+      intro n'
+      refine coeff_hahnRestrict_of_notMem x fun hmem => ?_
+      rw [div_mem_image_div_iff] at hmem
+      obtain ⟨e', he', heq, hfirst, hval⟩ := hmem
+      have heqv : fracVal p (gapDig j n' dig + Finsupp.single k β) = fracVal p e' :=
+        neg_inj.mp heq
+      have hupper : fracVal p e' < ((β : ℚ) + 1) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+        have h := fracVal_lt_of_first_digit he' hfirst
+        rwa [hval] at h
+      have hlower : ((β : ℚ) + 1) * (p : ℚ) ^ (-(k + 1 : ℤ))
+          ≤ fracVal p (gapDig j n' dig + Finsupp.single k β) := by
+        rcases eq_or_lt_of_le hik with heqik | hik'
+        · -- the head digit sits at index `k`: the digit there is `dig k + β ≥ β + 1`
+          have hijk : k < j - 1 := heqik ▸ hij
+          have hi0k : dig k ≠ 0 := heqik ▸ hi0
+          have hEk : (gapDig j n' dig + Finsupp.single k β) k = dig k + β := by
+            rw [Finsupp.add_apply, gapDig_apply, if_pos hijk, Finsupp.single_eq_same]
+          calc ((β : ℚ) + 1) * (p : ℚ) ^ (-(k + 1 : ℤ))
+              ≤ ((dig k + β : ℕ) : ℚ) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+                have h0 : 1 ≤ dig k := Nat.one_le_iff_ne_zero.mpr hi0k
+                have h1 : ((β : ℚ) + 1) ≤ ((dig k + β : ℕ) : ℚ) := by
+                  push_cast
+                  have h0' : (1 : ℚ) ≤ (dig k : ℚ) := by exact_mod_cast h0
+                  linarith
+                have h2 : (0 : ℚ) < (p : ℚ) ^ (-(k + 1 : ℤ)) := zpow_pos hpq _
+                nlinarith
+            _ ≤ fracVal p (gapDig j n' dig + Finsupp.single k β) := by
+                rw [← hEk]
+                exact term_le_fracVal _ k
+        · -- the head digit sits strictly below `k`
+          have hEi : (gapDig j n' dig + Finsupp.single k β) i = dig i := by
+            rw [Finsupp.add_apply, gapDig_apply, if_pos hij,
+              Finsupp.single_eq_of_ne (by omega), add_zero]
+          have hzk : (p : ℚ) ^ (-(i + 1 : ℤ))
+              = (p : ℚ) ^ (k - i : ℕ) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by
+            rw [← zpow_natCast (p : ℚ) (k - i), ← zpow_add₀ hpq.ne']
+            congr 1
+            omega
+          have hpk : ((β : ℚ) + 1) ≤ (p : ℚ) ^ (k - i : ℕ) := by
+            calc ((β : ℚ) + 1) ≤ (p : ℚ) := by exact_mod_cast hβp
+              _ ≤ (p : ℚ) ^ (k - i : ℕ) :=
+                  le_self_pow₀ (by exact_mod_cast hp.out.one_le) (by omega)
+          have hdig1 : (1 : ℚ) ≤ (dig i : ℚ) :=
+            by exact_mod_cast Nat.one_le_iff_ne_zero.mpr hi0
+          have h2 : (0 : ℚ) < (p : ℚ) ^ (-(k + 1 : ℤ)) := zpow_pos hpq _
+          calc ((β : ℚ) + 1) * (p : ℚ) ^ (-(k + 1 : ℤ))
+              ≤ (p : ℚ) ^ (k - i : ℕ) * (p : ℚ) ^ (-(k + 1 : ℤ)) := by nlinarith
+            _ = (p : ℚ) ^ (-(i + 1 : ℤ)) := hzk.symm
+            _ ≤ (dig i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)) := by
+                have h3 : (0 : ℚ) < (p : ℚ) ^ (-(i + 1 : ℤ)) := zpow_pos hpq _
+                nlinarith
+            _ ≤ fracVal p (gapDig j n' dig + Finsupp.single k β) := by
+                rw [show (dig i : ℚ)
+                    = (((gapDig j n' dig + Finsupp.single k β) i : ℕ) : ℚ) by rw [hEi]]
+                exact term_le_fracVal _ i
+      linarith
+    rw [hterm, hterm, hzero, hzero]
+  · push Not at hA
+    -- No head digit at index `≤ k`: for a deep enough gap the evaluation point lies in
+    -- the class, with canonical string the `β`-augmented one.
+    have hgap0 : ∀ n', k + 1 ≤ n' → ∀ i, i ≤ k → gapDig j n' dig i = 0 := by
+      intro n' hn' i hik
+      rw [gapDig_apply]
+      by_cases h1 : i < j - 1
+      · rw [if_pos h1]
+        exact hA i h1 hik
+      · rw [if_neg h1, if_neg (by omega)]
+    have hxterm : ∀ n', k + 1 ≤ n' →
+        twistSeq p (fun z => (firstDigitShift a k β x).coeff (z / (a : ℚ))) j dig n'
+          = x.coeff (-fracVal p (gapDig j n' dig + Finsupp.single k β) / (a : ℚ)) := by
+      intro n' hn'
+      rw [hterm n']
+      refine coeff_hahnRestrict_of_mem x ⟨_, ⟨_, fun i => ?_, rfl, fun i hik => ?_, ?_⟩, rfl⟩
+      · rcases eq_or_ne i k with rfl | hne
+        · rw [Finsupp.add_apply, hgap0 n' hn' i le_rfl, Finsupp.single_eq_same, zero_add]
+          exact hβp
+        · rw [Finsupp.add_apply, Finsupp.single_eq_of_ne hne, add_zero]
+          exact gapDig_lt p hdig hp.out.pos _ _ _
+      · rw [Finsupp.add_apply, hgap0 n' hn' i (by omega),
+          Finsupp.single_eq_of_ne (by omega), add_zero]
+      · rw [Finsupp.add_apply, hgap0 n' hn' k le_rfl, Finsupp.single_eq_same, zero_add]
+    by_cases hjk : k < j - 1
+    · -- Gap beyond `k`: the digit `β` joins the head window.
+      have hd'' : ∀ i, (dig + Finsupp.single k β) i < p := by
+        intro i
+        rcases eq_or_ne i k with rfl | hne
+        · rw [Finsupp.add_apply, hA i hjk le_rfl, Finsupp.single_eq_same, zero_add]
+          exact hβp
+        · rw [Finsupp.add_apply, Finsupp.single_eq_of_ne hne, add_zero]
+          exact hdig i
+      have hsum'' : ((dig + Finsupp.single k β).sum fun _ v => v) ≤ c := by
+        rw [Finsupp.sum_add_index' (fun _ => rfl) (fun _ _ _ => rfl),
+          Finsupp.sum_single_index rfl]
+        omega
+      have hxx : ∀ n', k + 1 ≤ n' →
+          twistSeq p (fun z => (firstDigitShift a k β x).coeff (z / (a : ℚ))) j dig n'
+            = twistSeq p (fun z => x.coeff (z / (a : ℚ))) j (dig + Finsupp.single k β)
+                n' := by
+        intro n' hn'
+        rw [hxterm n' hn', twistSeq_eq_neg_fracVal_gapDig, gapDig_add_single hjk]
+      rw [hxx (n + ↑N) (by omega), hxx n (by omega)]
+      exact hper j _ hj hd'' hsum'' n (by omega)
+    · -- Shallow gap: rebase the string at gap position `k + 2`, shifting the depth.
+      have hhead : ∀ i < j - 1, dig i = 0 := fun i hi => hA i hi (by omega)
+      have hD0 : ∀ i ≤ k, gapDig 1 (k + 2 - j) dig i = 0 := by
+        intro i hik
+        rw [gapDig_apply, if_neg (by omega)]
+        by_cases hm : 1 - 1 + (k + 2 - j) ≤ i
+        · rw [if_pos hm]
+          exact hhead (i - (k + 2 - j)) (by omega)
+        · rw [if_neg hm]
+      have hkey : ∀ n', k + 1 ≤ n' →
+          gapDig j n' dig + Finsupp.single k β
+            = gapDig (k + 2) (n' - (k + 2 - j))
+                (Finsupp.single k β + gapDig 1 (k + 2 - j) dig) := by
+        intro n' hn'
+        rw [gapDig_single_add hD0, gapDig_one_gapDig_one,
+          show n' - (k + 2 - j) + (k + 2 - j) = n' by omega,
+          gapDig_eq_gapDig_one_of_head_zero hhead, add_comm]
+      have hd' : ∀ i, (Finsupp.single k β + gapDig 1 (k + 2 - j) dig) i < p := by
+        intro i
+        rcases eq_or_ne i k with rfl | hne
+        · rw [Finsupp.add_apply, hD0 i le_rfl, Finsupp.single_eq_same, add_zero]
+          exact hβp
+        · rw [Finsupp.add_apply, Finsupp.single_eq_of_ne hne, zero_add]
+          exact gapDig_lt p hdig hp.out.pos _ _ _
+      have hsum' : ((Finsupp.single k β + gapDig 1 (k + 2 - j) dig).sum
+          fun _ v => v) ≤ c := by
+        rw [Finsupp.sum_add_index' (fun _ => rfl) (fun _ _ _ => rfl),
+          Finsupp.sum_single_index rfl, gapDig_sum]
+        omega
+      have hxx : ∀ n', k + 1 ≤ n' →
+          twistSeq p (fun z => (firstDigitShift a k β x).coeff (z / (a : ℚ))) j dig n'
+            = twistSeq p (fun z => x.coeff (z / (a : ℚ))) (k + 2)
+                (Finsupp.single k β + gapDig 1 (k + 2 - j) dig) (n' - (k + 2 - j)) := by
+        intro n' hn'
+        rw [hxterm n' hn', hkey n' hn', twistSeq_eq_neg_fracVal_gapDig]
+      rw [hxx (n + ↑N) (by omega), hxx n (by omega),
+        show n + ↑N - (k + 2 - j) = n - (k + 2 - j) + ↑N by omega]
+      exact hper (k + 2) _ (by omega) hd' hsum' (n - (k + 2 - j)) (by omega)
+
+end FirstDigitShift
+
 end TrustworthyKedlaya.UP
