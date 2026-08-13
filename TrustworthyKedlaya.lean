@@ -9,6 +9,7 @@ import TrustworthyKedlaya.DefeqGuards
 import TrustworthyKedlaya.Digits
 import TrustworthyKedlaya.Extension
 import TrustworthyKedlaya.FiniteImage
+import TrustworthyKedlaya.FractionalLaurent
 import TrustworthyKedlaya.Frobenius
 import TrustworthyKedlaya.FrobeniusUP
 import TrustworthyKedlaya.Galois
