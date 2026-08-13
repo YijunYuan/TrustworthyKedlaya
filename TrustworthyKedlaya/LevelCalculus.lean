@@ -436,6 +436,41 @@ theorem levelDrop_pow_eq (x : HahnSeries ℚ (𝔽ᵃ_[p])) (L : ℕ) :
     ((invFrobeniusHahn p)^[L] x - x) ^ p ^ L = x - x ^ p ^ L := by
   rw [sub_pow_char_pow, invFrobeniusHahn_iterate_pow]
 
+/-- **Slice form to `SliceWitness`**: a series slice-supported on `T_c` whose
+width-`a` slice is `(M, N)`-periodic at level `c` is UP, presented on `S_{a,0,c}` —
+the slices of index `m ≥ 1` vanish at every twist evaluation point. -/
+theorem sliceWitness_of_slice_form {x : HahnSeries ℚ (𝔽ᵃ_[p])}
+    (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c)
+    (hper : IsTwistPeriodic p (fun z => x.coeff (z / (a : ℚ))) c M N) :
+    SliceWitness p x a 0 c M N := by
+  have ha : ((a : ℕ) : ℚ) ≠ 0 := by exact_mod_cast a.pos.ne'
+  constructor
+  · intro s hs
+    have hq : x.coeff (((a : ℚ) * s) / (a : ℚ)) ≠ 0 := by
+      rw [mul_div_cancel_left₀ s ha]
+      exact hs
+    obtain ⟨⟨n, e, hn, he, hsum, heq⟩, hIoo⟩ := hsupp _ hq
+    refine ⟨n, e, hn, he, hsum, ?_⟩
+    have h1 : ((1 : ℕ+) : ℚ) = 1 := by norm_num
+    rw [h1] at heq
+    field_simp at heq ⊢
+    linarith [heq]
+  · intro m hm
+    rcases (by omega : m = 0 ∨ 1 ≤ m) with rfl | hm1
+    · simpa using hper
+    · intro j dig hj hdig hsum' n hn
+      have hzero : ∀ n',
+          twistSeq p (fun z => x.coeff (((m : ℚ) + z) / (a : ℚ))) j dig n' = 0 := by
+        intro n'
+        rw [twistSeq_eq_neg_fracVal_gapDig]
+        by_contra h0
+        have hneg := (hsupp _ h0).2.2
+        have hlt := fracVal_lt_one p hp.out.one_lt (d := gapDig j n' dig)
+          fun i => gapDig_lt p hdig hp.out.pos j n' i
+        have hm' : (1 : ℚ) ≤ (m : ℚ) := by exact_mod_cast hm1
+        linarith
+      rw [hzero, hzero]
+
 end LevelDrop
 
 end TrustworthyKedlaya.UP
