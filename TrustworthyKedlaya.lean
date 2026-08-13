@@ -16,6 +16,7 @@ import TrustworthyKedlaya.FrobeniusUP
 import TrustworthyKedlaya.Galois
 import TrustworthyKedlaya.GaloisTower
 import TrustworthyKedlaya.GapContraction
+import TrustworthyKedlaya.IntTruncation
 import TrustworthyKedlaya.Kedlaya
 import TrustworthyKedlaya.LaurentClosure
 import TrustworthyKedlaya.LevelCalculus
