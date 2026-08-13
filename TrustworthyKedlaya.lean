@@ -25,6 +25,7 @@ import TrustworthyKedlaya.NewtonSlope
 import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.PGroupGalois
 import TrustworthyKedlaya.Rescale
+import TrustworthyKedlaya.RootMatching
 import TrustworthyKedlaya.SabcOrderType
 import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.ShadowCalculus
