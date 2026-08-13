@@ -255,4 +255,250 @@ theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP 
       (Polynomial.isRoot_of_mem_roots hzroots)
   exact ⟨z, hzint, hznear⟩
 
+/-! ### The Artin-Schreier depth transfer -/
+
+private theorem coe_nsmul_withTop (m : ℕ) (r : ℚ) :
+    (m • ((r : ℚ) : WithTop ℚ) : WithTop ℚ) = ((m • r : ℚ) : WithTop ℚ) := by
+  induction m with
+  | zero => simp
+  | succ k ih =>
+    rw [succ_nsmul, succ_nsmul, ih, ← WithTop.coe_add]
+
+/-- **Artin-Schreier depth transfer** (`lem:as-depth-transfer`): let `u ∈ 𝕃_[p]`
+have valuation `γ > 0` and let `q ≥ 2`, so that `u` is an exact root of
+`X^q - X + c*` with `c* := u - u^q` of valuation `γ`.  If `c' ∈ C` (the closed
+integral closure of `ℚᵘⁿ_[p]`) approximates `c*` to valuation `γ + e` with
+`e > 0`, then some root `z` of `X^q - X + c'` satisfies `v(u - z) ≥ γ + e`, and
+`z ∈ C`.
+
+The Newton polygon of `X^q - X + c'` has vertices `(0, γ), (1, 0), (q, 0)`: its
+valuation-`γ` root is *simple* and isolated from the `q - 1` unit roots, so the
+approximation depth transfers to the root distance in full — there is no division
+by the degree.
+
+The hypothesis `0 < γ` is essential: for `γ < 0` the point `(1, 0)` lies above
+the polygon and all `q` roots share the valuation `γ` (see hgraph node
+`prop:alg-coeff-to-integral`, comments 10-11: the fractional-window pieces of the
+UP decomposition have `γ ∈ (-1/a, 0)`, so this lemma does *not* apply to them
+as-is; the candidate repair works with the recentered root-difference polygon in
+the width-refined benign regime `(q-1)|γ| < 1`).  This proof is the template for
+that variant. -/
+theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
+    (hγ : 0 < γ) (he : 0 < e) {q : ℕ} (hq : 2 ≤ q)
+    (hu : val p u = ((γ : ℚ) : WithTop ℚ))
+    (hc' : c' ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hnear : ((γ + e : ℚ) : WithTop ℚ) ≤ val p ((u - u ^ q) - c')) :
+    ∃ z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier,
+      ((γ + e : ℚ) : WithTop ℚ) ≤ val p (u - z) := by
+  classical
+  -- `c* = u - u^q` has valuation exactly `γ`, hence so does `c'`
+  have huq : val p (u ^ q) = ((q • γ : ℚ) : WithTop ℚ) := by
+    rw [(val p).map_pow, hu, coe_nsmul_withTop]
+  have hγlt : ((γ : ℚ) : WithTop ℚ) < val p (u ^ q) := by
+    rw [huq, WithTop.coe_lt_coe]
+    have hq2 : (2 : ℚ) ≤ (q : ℚ) := by exact_mod_cast hq
+    rw [nsmul_eq_mul]
+    nlinarith
+  have hcstar : val p (u - u ^ q) = ((γ : ℚ) : WithTop ℚ) := by
+    rw [(val p).map_sub_eq_of_lt_left (hu ▸ hγlt : val p u < val p (u ^ q)), hu]
+  have hvc' : val p c' = ((γ : ℚ) : WithTop ℚ) := by
+    have hlt : val p (u - u ^ q) < val p ((u - u ^ q) - c') := by
+      rw [hcstar]
+      refine lt_of_lt_of_le ?_ hnear
+      rw [WithTop.coe_lt_coe]
+      linarith
+    have := (val p).map_sub_eq_of_lt_left hlt
+    rw [show (u - u ^ q) - ((u - u ^ q) - c') = c' by ring, hcstar] at this
+    exact this
+  -- the perturbed Artin-Schreier polynomial
+  set A : Polynomial 𝕃_[p] := X ^ q + (-X + C c') with hA
+  have hlindeg : (-X + C c' : Polynomial 𝕃_[p]).degree < ((q : ℕ) : WithBot ℕ) := by
+    refine lt_of_le_of_lt (Polynomial.degree_add_le _ _) (max_lt ?_ ?_)
+    · rw [Polynomial.degree_neg, Polynomial.degree_X]
+      exact_mod_cast lt_of_lt_of_le Nat.one_lt_two hq
+    · refine lt_of_le_of_lt Polynomial.degree_C_le ?_
+      exact_mod_cast lt_of_lt_of_le Nat.zero_lt_two hq
+  have hAmonic : A.Monic := by
+    refine (Polynomial.monic_X_pow q).add_of_left ?_
+    rw [Polynomial.degree_X_pow]
+    exact hlindeg
+  have hAdeg : A.natDegree = q := by
+    have hdeg : A.degree = ((q : ℕ) : WithBot ℕ) := by
+      rw [hA, Polynomial.degree_add_eq_left_of_degree_lt
+        (by rw [Polynomial.degree_X_pow]; exact hlindeg), Polynomial.degree_X_pow]
+    exact Polynomial.natDegree_eq_of_degree_eq_some hdeg
+  have hAeval : A.eval u = -((u - u ^ q) - c') := by
+    rw [hA]
+    simp only [Polynomial.eval_add, Polynomial.eval_neg, Polynomial.eval_pow,
+      Polynomial.eval_X, Polynomial.eval_C]
+    ring
+  have hAvaleval : ((γ + e : ℚ) : WithTop ℚ) ≤ val p (A.eval u) := by
+    rw [hAeval, (val p).map_neg]
+    exact hnear
+  -- split over the algebraically closed `𝕃_[p]`
+  have hsplits : A.Splits := IsAlgClosed.splits A
+  have hprod : A = (A.roots.map fun z => X - C z).prod :=
+    hsplits.eq_prod_roots_of_monic hAmonic
+  set Z : Multiset 𝕃_[p] := A.roots with hZ
+  have hZcard : Z.card = q := by
+    have h := congrArg Polynomial.natDegree hprod
+    rw [hAdeg, natDegree_multiset_prod_X_sub_C_eq_card] at h
+    exact h.symm
+  -- every root has nonnegative valuation
+  have hroot_eq : ∀ z ∈ Z, z ^ q = z - c' := by
+    intro z hz
+    have h0 : A.eval z = 0 := Polynomial.isRoot_of_mem_roots hz
+    rw [hA] at h0
+    simp only [Polynomial.eval_add, Polynomial.eval_neg, Polynomial.eval_pow,
+      Polynomial.eval_X, Polynomial.eval_C] at h0
+    linear_combination h0
+  have hZnonneg : ∀ z ∈ Z, (0 : WithTop ℚ) ≤ val p z := by
+    intro z hz
+    by_contra hneg
+    rw [not_le] at hneg
+    obtain ⟨r, hr⟩ := WithTop.ne_top_iff_exists.mp (ne_top_of_lt hneg)
+    have hrneg : r < 0 := by
+      rw [← WithTop.coe_lt_coe, hr]
+      exact hneg.trans_eq (WithTop.coe_zero).symm
+    have hrltγ : val p z < val p c' := by
+      rw [hvc', ← hr, WithTop.coe_lt_coe]
+      linarith
+    have hzsub : val p (z - c') = val p z := (val p).map_sub_eq_of_lt_left hrltγ
+    have hzpow : val p (z ^ q) = ((q • r : ℚ) : WithTop ℚ) := by
+      rw [(val p).map_pow, ← hr, coe_nsmul_withTop]
+    have heq : ((q • r : ℚ) : WithTop ℚ) = ((r : ℚ) : WithTop ℚ) := by
+      rw [← hzpow, hroot_eq z hz, hzsub, hr]
+    have heqq : (q • r : ℚ) = r := WithTop.coe_injective heq
+    rw [nsmul_eq_mul] at heqq
+    have hq2 : (2 : ℚ) ≤ (q : ℚ) := by exact_mod_cast hq
+    nlinarith
+  -- the root valuations sum to `γ` (the constant coefficient)
+  have hcoeff0 : A.coeff 0 = c' := by
+    rw [hA]
+    simp only [Polynomial.coeff_add, Polynomial.coeff_X_pow, Polynomial.coeff_neg,
+      Polynomial.coeff_X_zero, Polynomial.coeff_C_zero]
+    rw [if_neg (by omega : ¬ (0 : ℕ) = q)]
+    ring
+  have hWsum : ((Z.map (val p)).sum : WithTop ℚ) = ((γ : ℚ) : WithTop ℚ) := by
+    have h0 : A.coeff 0 = (Z.map fun z => -z).prod := by
+      conv_lhs => rw [hprod]
+      rw [Polynomial.coeff_zero_eq_eval_zero, Polynomial.eval_multiset_prod,
+        Multiset.map_map]
+      refine congrArg Multiset.prod (Multiset.map_congr rfl fun z _ => ?_)
+      simp only [Function.comp_apply, Polynomial.eval_sub, Polynomial.eval_X,
+        Polynomial.eval_C]
+      ring
+    have hv : val p (A.coeff 0) = (Z.map (val p)).sum := by
+      rw [h0, AddValuation.map_multiset_prod, Multiset.map_map]
+      refine congrArg Multiset.sum (Multiset.map_congr rfl fun z _ => ?_)
+      simp only [Function.comp_apply]
+      exact (val p).map_neg z
+    rw [← hv, hcoeff0, hvc']
+  -- the `X`-coefficient is a unit, so `q - 1` of the roots have valuation zero
+  have hcoeff1 : A.coeff 1 = -1 := by
+    rw [hA]
+    simp only [Polynomial.coeff_add, Polynomial.coeff_X_pow, Polynomial.coeff_neg,
+      Polynomial.coeff_X_one]
+    rw [Polynomial.coeff_C, if_neg (by omega : ¬ (1 : ℕ) = 0),
+      if_neg (by omega : ¬ (1 : ℕ) = q)]
+    ring
+  obtain ⟨T, hTle, hTcard, hTmin, hTsum⟩ :=
+    exists_sum_le_v_coeff_prod_X_sub_C (val p) Z (i := 1) (by rw [hZcard]; omega)
+  have hTsum0 : T.sum ≤ (0 : WithTop ℚ) := by
+    refine le_trans hTsum ?_
+    rw [← hprod, hcoeff1, (val p).map_neg, (val p).map_one]
+  have hTnonneg : ∀ t ∈ T, (0 : WithTop ℚ) ≤ t := by
+    intro t ht
+    have htW := Multiset.mem_of_le hTle ht
+    obtain ⟨z, hz, rfl⟩ := Multiset.mem_map.mp htW
+    exact hZnonneg z hz
+  have hTzero : ∀ t ∈ T, t = (0 : WithTop ℚ) := by
+    intro t ht
+    have h1 : t ≤ T.sum := Multiset.single_le_sum hTnonneg t ht
+    exact le_antisymm (h1.trans hTsum0) (hTnonneg t ht)
+  have hTsumzero : T.sum = (0 : WithTop ℚ) := by
+    rw [Multiset.sum_eq_zero hTzero]
+  -- the remaining root valuation is `γ`
+  set W : Multiset (WithTop ℚ) := Z.map (val p) with hW
+  have hWcard : W.card = q := by rw [hW, Multiset.card_map, hZcard]
+  have hrestcard : (W - T).card = 1 := by
+    rw [Multiset.card_sub hTle, hWcard, hTcard, hZcard]
+    omega
+  obtain ⟨w, hw⟩ := Multiset.card_eq_one.mp hrestcard
+  have hWsplit : W = w ::ₘ T := by
+    have h1 : W - T + T = W := Multiset.sub_add_cancel hTle
+    rw [hw] at h1
+    rw [← h1, Multiset.singleton_add]
+  have hwγ : w = ((γ : ℚ) : WithTop ℚ) := by
+    have h1 : W.sum = w + T.sum := by
+      rw [hWsplit, Multiset.sum_cons]
+    rw [hWsum, hTsumzero, add_zero] at h1
+    exact h1.symm
+  -- a designated root `z₀` of valuation `γ`; all other roots have valuation zero
+  have hwmem : w ∈ W := hWsplit ▸ Multiset.mem_cons_self w T
+  obtain ⟨z₀, hz₀Z, hvz₀⟩ := Multiset.mem_map.mp hwmem
+  have hvz₀γ : val p z₀ = ((γ : ℚ) : WithTop ℚ) := hvz₀.trans hwγ
+  have hZcons : Z = z₀ ::ₘ Z.erase z₀ := (Multiset.cons_erase hz₀Z).symm
+  have herasemap : (Z.erase z₀).map (val p) = T := by
+    have h1 : W = val p z₀ ::ₘ (Z.erase z₀).map (val p) := by
+      rw [hW]
+      conv_lhs => rw [hZcons]
+      rw [Multiset.map_cons]
+    rw [hvz₀γ, ← hwγ] at h1
+    have h2 : w ::ₘ (Z.erase z₀).map (val p) = w ::ₘ T := h1.symm.trans hWsplit
+    exact Multiset.cons_inj_right w |>.mp h2
+  have herasezero : ∀ z ∈ Z.erase z₀, val p z = (0 : WithTop ℚ) := by
+    intro z hz
+    refine hTzero _ ?_
+    rw [← herasemap]
+    exact Multiset.mem_map_of_mem _ hz
+  -- the distance to every unit root is exactly zero
+  have hdistzero : ∀ z ∈ Z.erase z₀, val p (u - z) = (0 : WithTop ℚ) := by
+    intro z hz
+    have hlt : val p z < val p u := by
+      rw [herasezero z hz, hu, ← WithTop.coe_zero, WithTop.coe_lt_coe]
+      exact hγ
+    rw [(val p).map_sub_eq_of_lt_right hlt]
+    exact herasezero z hz
+  -- the whole evaluation valuation concentrates on `z₀`
+  have hevalsum : val p (A.eval u) = (Z.map fun z => val p (u - z)).sum := by
+    conv_lhs => rw [hprod]
+    rw [Polynomial.eval_multiset_prod, Multiset.map_map, AddValuation.map_multiset_prod,
+      Multiset.map_map]
+    refine congrArg Multiset.sum (Multiset.map_congr rfl fun z _ => ?_)
+    simp only [Function.comp_apply, Polynomial.eval_sub, Polynomial.eval_X,
+      Polynomial.eval_C]
+  have hz₀near : ((γ + e : ℚ) : WithTop ℚ) ≤ val p (u - z₀) := by
+    have h1 : (Z.map fun z => val p (u - z)).sum = val p (u - z₀) := by
+      conv_lhs => rw [hZcons]
+      rw [Multiset.map_cons, Multiset.sum_cons, Multiset.sum_eq_zero
+        (fun x hx => by
+          obtain ⟨z, hz, rfl⟩ := Multiset.mem_map.mp hx
+          exact hdistzero z hz), add_zero]
+    rw [hevalsum, h1] at hAvaleval
+    exact hAvaleval
+  -- the designated root lies in the closed integral closure
+  have hAcoeffC : ∀ i, A.coeff i ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    intro i
+    rcases Nat.eq_zero_or_pos i with rfl | hipos
+    · rw [hcoeff0]
+      exact hc'
+    rcases eq_or_ne i 1 with rfl | hi1
+    · rw [hcoeff1]
+      exact subset_closure (Subalgebra.neg_mem _ (Subalgebra.one_mem _))
+    have hcoeffi : A.coeff i = if i = q then 1 else 0 := by
+      rw [hA]
+      simp only [Polynomial.coeff_add, Polynomial.coeff_X_pow, Polynomial.coeff_neg,
+        Polynomial.coeff_X, Polynomial.coeff_C]
+      rw [if_neg (by omega : ¬ i = 0), if_neg (by omega : ¬ (1 : ℕ) = i)]
+      ring
+    rw [hcoeffi]
+    split
+    · exact subset_closure (Subalgebra.one_mem _)
+    · exact subset_closure (Subalgebra.zero_mem _)
+  have hz₀C : z₀ ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier :=
+    mem_closure_integralClosure_of_monic_root hAmonic hAcoeffC
+      (Polynomial.isRoot_of_mem_roots hz₀Z)
+  exact ⟨z₀, hz₀C, hz₀near⟩
+
 end TrustworthyKedlaya.pAdicHahnSeries
