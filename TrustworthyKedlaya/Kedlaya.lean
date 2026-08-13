@@ -11,6 +11,7 @@ public import Mathlib.RingTheory.LaurentSeries
 public import Mathlib.Topology.Defs.Basic
 import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.UPAlgebraic
+import TrustworthyKedlaya.AlgSupportBound
 
 /-!
 ## Main statements
@@ -145,6 +146,8 @@ open Ordinal in
 /-- **Kedlaya (2001b), Section 4.** The order type of the support of a `ℚ_[p]`-algebraic `p`-adic
 Hahn series is at most `ω^ω`. -/
 theorem kedlaya_2001b_ordinal_bound (f : 𝕃_[p]) (hp : IsAlgebraic ℚ_[p] f) :
-    typeLT f.support ≤ omega0 ^ omega0 := by admit
+    typeLT f.support ≤ omega0 ^ omega0 :=
+  pAdicHahnSeries.typeLT_support_le_of_isIntegral
+    (pAdicHahnSeries.alg_QpUn_of_alg_Qp p f hp).isIntegral
 
 end TrustworthyKedlaya
