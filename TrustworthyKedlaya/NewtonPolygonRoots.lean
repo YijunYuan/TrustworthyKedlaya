@@ -64,6 +64,14 @@ theorem sum_ne_top : ∀ {A : Multiset (WithTop ℚ)}, (∀ a ∈ A, a ≠ ⊤) 
     exact WithTop.add_ne_top.mpr ⟨h a (Multiset.mem_cons_self a t),
       ih fun b hb => h b (Multiset.mem_cons_of_mem hb)⟩
 
+/-- A member of a multiset of values with finite sum is itself finite. -/
+theorem ne_top_of_mem_of_sum_ne_top {A : Multiset (WithTop ℚ)} (hA : A.sum ≠ ⊤)
+    {a : WithTop ℚ} (ha : a ∈ A) : a ≠ ⊤ := by
+  intro h0
+  obtain ⟨A', rfl⟩ := Multiset.exists_cons_of_mem ha
+  rw [Multiset.sum_cons, h0, WithTop.top_add] at hA
+  exact hA rfl
+
 /-- Strict upper coe-bounds add: if `a < ↑p` and `b < ↑q` then `a + b < ↑(p + q)`. -/
 theorem add_lt_coe_add {p q : ℚ} {a b : WithTop ℚ} (ha : a < (p : WithTop ℚ))
     (hb : b < (q : WithTop ℚ)) : a + b < ((p + q : ℚ) : WithTop ℚ) := by
@@ -706,6 +714,61 @@ theorem isTopIndex_countP [Nontrivial F] (hv : ∀ y : F, v y = ⊤ → y = 0)
 
 /-! ### The main theorem -/
 
+/-- Multisets of values in `ℚ ∪ {∞}` are determined by their cardinality together
+with the counts of entries `≤ x` and `< x` (all rational `x`) and of finite
+entries. -/
+theorem multiset_eq_of_countP_cuts {M₁ M₂ : Multiset (WithTop ℚ)}
+    (hcard : M₁.card = M₂.card)
+    (htop : M₁.countP (fun w => w ≠ ⊤) = M₂.countP (fun w => w ≠ ⊤))
+    (hle : ∀ x : ℚ, M₁.countP (· ≤ (x : WithTop ℚ)) = M₂.countP (· ≤ (x : WithTop ℚ)))
+    (hlt : ∀ x : ℚ, M₁.countP (· < (x : WithTop ℚ)) = M₂.countP (· < (x : WithTop ℚ))) :
+    M₁ = M₂ := by
+  classical
+  refine Multiset.ext.mpr fun a => ?_
+  -- auxiliary counting identities
+  have hkey_top : ∀ M : Multiset (WithTop ℚ),
+      M.count ⊤ + M.countP (fun w => w ≠ ⊤) = M.card := by
+    intro M
+    have h1 := congrArg Multiset.card (Multiset.filter_add_not (fun w => w = ⊤) M)
+    rw [Multiset.card_add] at h1
+    have h2 : M.count ⊤ = (M.filter fun w => w = ⊤).card := by
+      rw [Multiset.count, Multiset.countP_eq_card_filter]
+      exact congrArg Multiset.card (Multiset.filter_congr fun w _ => eq_comm)
+    have h3 : M.countP (fun w => w ≠ ⊤) = (M.filter fun w => ¬ (w = ⊤)).card :=
+      Multiset.countP_eq_card_filter _ _
+    omega
+  have hkey_coe : ∀ (M : Multiset (WithTop ℚ)) (t : ℚ),
+      M.countP (· < (t : WithTop ℚ)) + M.count (t : WithTop ℚ)
+        = M.countP (· ≤ (t : WithTop ℚ)) := by
+    intro M t
+    have h1 := Multiset.filter_add_filter (· < (t : WithTop ℚ)) (· = (t : WithTop ℚ)) M
+    have h2 : (M.filter fun w => w < (t : WithTop ℚ) ∨ w = (t : WithTop ℚ))
+        = M.filter (· ≤ (t : WithTop ℚ)) :=
+      Multiset.filter_congr fun w _ => (le_iff_lt_or_eq (a := w) (b := (t : WithTop ℚ))).symm
+    have h3 : (M.filter fun w => w < (t : WithTop ℚ) ∧ w = (t : WithTop ℚ)) = 0 := by
+      rw [Multiset.filter_eq_nil]
+      rintro w - ⟨hlt', rfl⟩
+      exact lt_irrefl _ hlt'
+    rw [h2, h3, add_zero] at h1
+    have h4 := congrArg Multiset.card h1
+    rw [Multiset.card_add] at h4
+    have h5 : M.count (t : WithTop ℚ) = (M.filter fun w => w = (t : WithTop ℚ)).card := by
+      rw [Multiset.count, Multiset.countP_eq_card_filter]
+      exact congrArg Multiset.card (Multiset.filter_congr fun w _ => eq_comm)
+    rw [Multiset.countP_eq_card_filter, Multiset.countP_eq_card_filter]
+    omega
+  induction a using WithTop.recTopCoe with
+  | top =>
+    have k₁ := hkey_top M₁
+    have k₂ := hkey_top M₂
+    omega
+  | coe t =>
+    have k₁ := hkey_coe M₁ t
+    have k₂ := hkey_coe M₂ t
+    have h₁ := hle t
+    have h₂ := hlt t
+    omega
+
 /-- **The Newton polygon reads off the root valuations**
 (`lem:newton-polygon-roots`; Kedlaya 2001b, Section 3).  Let `Y₁, Y₂` be root
 multisets of the same size over (possibly different) commutative rings carrying
@@ -762,50 +825,360 @@ theorem map_v_eq_of_v_coeff_eq {F₁ : Type*} [CommRing F₁] [Nontrivial F₁]
     fun x => (isLtCutIndex_countP v₁ Y₁ x).unique (hlt₂ x)
   have hcards : (Y₁.map v₁).card = (Y₂.map v₂).card := by
     rw [Multiset.card_map, Multiset.card_map, hcard]
-  -- multiset extensionality on counts
-  refine Multiset.ext.mpr fun a => ?_
-  -- auxiliary counting identities
-  have hkey_top : ∀ M : Multiset (WithTop ℚ),
-      M.count ⊤ + M.countP (fun w => w ≠ ⊤) = M.card := by
-    intro M
-    have h1 := congrArg Multiset.card (Multiset.filter_add_not (fun w => w = ⊤) M)
-    rw [Multiset.card_add] at h1
-    have h2 : M.count ⊤ = (M.filter fun w => w = ⊤).card := by
-      rw [Multiset.count, Multiset.countP_eq_card_filter]
-      exact congrArg Multiset.card (Multiset.filter_congr fun w _ => eq_comm)
-    have h3 : M.countP (fun w => w ≠ ⊤) = (M.filter fun w => ¬ (w = ⊤)).card :=
-      Multiset.countP_eq_card_filter _ _
-    omega
-  have hkey_coe : ∀ (M : Multiset (WithTop ℚ)) (t : ℚ),
-      M.countP (· < (t : WithTop ℚ)) + M.count (t : WithTop ℚ)
-        = M.countP (· ≤ (t : WithTop ℚ)) := by
-    intro M t
-    have h1 := Multiset.filter_add_filter (· < (t : WithTop ℚ)) (· = (t : WithTop ℚ)) M
-    have h2 : (M.filter fun w => w < (t : WithTop ℚ) ∨ w = (t : WithTop ℚ))
-        = M.filter (· ≤ (t : WithTop ℚ)) :=
-      Multiset.filter_congr fun w _ => (le_iff_lt_or_eq (a := w) (b := (t : WithTop ℚ))).symm
-    have h3 : (M.filter fun w => w < (t : WithTop ℚ) ∧ w = (t : WithTop ℚ)) = 0 := by
-      rw [Multiset.filter_eq_nil]
-      rintro w - ⟨hlt', rfl⟩
-      exact lt_irrefl _ hlt'
-    rw [h2, h3, add_zero] at h1
-    have h4 := congrArg Multiset.card h1
-    rw [Multiset.card_add] at h4
-    have h5 : M.count (t : WithTop ℚ) = (M.filter fun w => w = (t : WithTop ℚ)).card := by
-      rw [Multiset.count, Multiset.countP_eq_card_filter]
-      exact congrArg Multiset.card (Multiset.filter_congr fun w _ => eq_comm)
-    rw [Multiset.countP_eq_card_filter, Multiset.countP_eq_card_filter]
-    omega
-  induction a using WithTop.recTopCoe with
-  | top =>
-    have k₁ := hkey_top (Y₁.map v₁)
-    have k₂ := hkey_top (Y₂.map v₂)
-    omega
-  | coe t =>
-    have k₁ := hkey_coe (Y₁.map v₁) t
-    have k₂ := hkey_coe (Y₂.map v₂) t
-    have h₁ := hle t
-    have h₂ := hlt t
-    omega
+  exact multiset_eq_of_countP_cuts hcards htop hle hlt
+
+/-! ### Congruence robustness -/
+
+/-- **The Newton-polygon dictionary is congruence-robust**
+(`lem:polygon-congruence`; Kedlaya 2001b, Section 3).  Let `Y, Z` be root
+multisets of the same size `n` over a commutative ring carrying a
+`ℚ ∪ {∞}`-valued additive valuation `v` whose only `∞`-valued element is `0`,
+and write `P = ∏_{y ∈ Y}(X - y)`, `Q = ∏_{z ∈ Z}(X - z)`.  If for some `k > 0`
+every coefficient difference obeys `σ_{n-i}(v(Y)) + k ≤ v ((P - Q).coeff i)` —
+the floor delivered, exactly as in `exists_root_sub_valuation_le`, by a
+size-`(n-i)` sub-multiset witness `T ≤ Y.map v` — then `Z.map v = Y.map v`.
+
+This upgrades `map_v_eq_of_v_coeff_eq`: a congruence cannot control coefficient
+valuations above the Newton polygon, but it pins them below the depth
+`σ_{n-i} + k`, which covers the polygon's corners (where
+`v (P.coeff (n - j)) = σ_j` exactly); at every other index the cut floors beat
+the congruence depth, so the extreme-minimizer characterizations transfer from
+the coefficient profile of `P` to that of `Q` and the root-valuation counts
+agree — the `∞`-count included, since a floor `σ_j = ∞` forces the matching
+coefficients to have valuation `∞` on both sides. -/
+theorem map_v_eq_of_v_coeff_sub [Nontrivial F] (hv : ∀ y : F, v y = ⊤ → y = 0)
+    (Y Z : Multiset F) (hcard : Y.card = Z.card) {k : ℚ} (hk : 0 < k)
+    (hcong : ∀ i < Y.card, ∃ T ≤ Y.map v, T.card = Y.card - i ∧
+      T.sum + (k : WithTop ℚ) ≤
+        v ((((Y.map fun y => X - C y).prod) - ((Z.map fun y => X - C y).prod)).coeff i)) :
+    Z.map v = Y.map v := by
+  classical
+  -- both products are monic of degree `Y.card`
+  have hPmonic : ((Y.map fun y => X - C y).prod).Monic :=
+    monic_multiset_prod_of_monic _ _ fun y _ => monic_X_sub_C y
+  have hQmonic : ((Z.map fun y => X - C y).prod).Monic :=
+    monic_multiset_prod_of_monic _ _ fun y _ => monic_X_sub_C y
+  have hPdeg : ((Y.map fun y => X - C y).prod).natDegree = Y.card :=
+    natDegree_multiset_prod_X_sub_C_eq_card Y
+  have hQdeg : ((Z.map fun y => X - C y).prod).natDegree = Y.card := by
+    rw [natDegree_multiset_prod_X_sub_C_eq_card, hcard]
+  have hlead : v (((Z.map fun y => X - C y).prod).coeff (Y.card - 0))
+      = v (((Y.map fun y => X - C y).prod).coeff (Y.card - 0)) := by
+    rw [Nat.sub_zero]
+    conv_lhs => rw [← hQdeg, hQmonic.coeff_natDegree]
+    conv_rhs => rw [← hPdeg, hPmonic.coeff_natDegree]
+  -- coefficientwise, below the congruence depth the two valuation profiles agree;
+  -- at or above it, both sides clear the floor `T.sum + k`
+  have hdisj : ∀ j ≤ Y.card,
+      v (((Z.map fun y => X - C y).prod).coeff (Y.card - j))
+        = v (((Y.map fun y => X - C y).prod).coeff (Y.card - j)) ∨
+      ∃ T ≤ Y.map v, T.card = j ∧
+        T.sum + (k : WithTop ℚ)
+          ≤ v (((Y.map fun y => X - C y).prod).coeff (Y.card - j)) ∧
+        T.sum + (k : WithTop ℚ)
+          ≤ v (((Z.map fun y => X - C y).prod).coeff (Y.card - j)) := by
+    intro j hjn
+    rcases Nat.eq_zero_or_pos j with rfl | hj1
+    · exact Or.inl hlead
+    · obtain ⟨T, hT, hTcard, hTbound⟩ := hcong (Y.card - j) (by omega)
+      have hTcard' : T.card = j := by rw [hTcard]; omega
+      have hQP : ((Z.map fun y => X - C y).prod).coeff (Y.card - j)
+          = ((Y.map fun y => X - C y).prod).coeff (Y.card - j)
+            - (((Y.map fun y => X - C y).prod)
+                - ((Z.map fun y => X - C y).prod)).coeff (Y.card - j) := by
+        rw [Polynomial.coeff_sub]
+        ring
+      rcases lt_or_ge (v (((Y.map fun y => X - C y).prod).coeff (Y.card - j)))
+          (v ((((Y.map fun y => X - C y).prod)
+            - ((Z.map fun y => X - C y).prod)).coeff (Y.card - j))) with hlt | hge
+      · refine Or.inl ?_
+        rw [hQP, v.map_sub_eq_of_lt_left hlt]
+      · refine Or.inr ⟨T, hT, hTcard', hTbound.trans hge, ?_⟩
+        rw [hQP]
+        exact v.map_le_sub (hTbound.trans hge) hTbound
+  -- transfer the `≤ x` characterization to the profile of `Q`
+  have hle₂ : ∀ x : ℚ, IsLeCutIndex
+      (fun j => v (((Z.map fun y => X - C y).prod).coeff (Y.card - j)))
+      Y.card x ((Y.map v).countP (· ≤ (x : WithTop ℚ))) := by
+    intro x
+    obtain ⟨hcn, hmin₁, hstrict₁⟩ := isLeCutIndex_countP v Y x
+    have hcfilter : (Y.map v).countP (· ≤ (x : WithTop ℚ))
+        = (Y.filter fun y => v y ≤ (x : WithTop ℚ)).card := Multiset.countP_map _ _ _
+    have hfilter_eq : (Y.map v).filter (· ≤ (x : WithTop ℚ))
+        = (Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v := by
+      rw [Multiset.filter_map]
+      exact congrArg (Multiset.map v) (Multiset.filter_congr fun y _ => Iff.rfl)
+    have hindex : (Y.filter fun y => ¬ (v y ≤ (x : WithTop ℚ))).card
+        = Y.card - (Y.map v).countP (· ≤ (x : WithTop ℚ)) := by
+      have h1 := congrArg Multiset.card
+        (Multiset.filter_add_not (fun y => v y ≤ (x : WithTop ℚ)) Y)
+      rw [Multiset.card_add] at h1
+      omega
+    have hcorner : v (((Y.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (· ≤ (x : WithTop ℚ))))
+        = ((Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v).sum := by
+      rw [← hindex]
+      exact v_coeff_eq_sum_of_separated v Y _
+        (fun y _ hy => (hy.trans_lt (WithTop.coe_lt_top x)).ne)
+        (fun y _ hy y' _ hy' => hy.trans_lt (not_le.mp hy'))
+    have hLfin : ((Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v).sum ≠ ⊤ := by
+      refine sum_ne_top fun a ha => ?_
+      obtain ⟨y, hy, rfl⟩ := Multiset.mem_map.mp ha
+      exact ((Multiset.mem_filter.mp hy).2.trans_lt (WithTop.coe_lt_top x)).ne
+    -- cut floors against the corner, for arbitrary size-`j` witnesses
+    have hfloor : ∀ T : Multiset (WithTop ℚ), T ≤ Y.map v →
+        ((Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v).sum + T.card • (x : WithTop ℚ)
+          ≤ T.sum + ((Y.map v).countP (· ≤ (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+      intro T hT
+      have hcut := cut_sum_le (p := (· ≤ (x : WithTop ℚ))) hT
+        (fun w _ hw => hw) (fun w _ hw => (not_le.mp hw).le)
+      rwa [hfilter_eq, Multiset.card_map, ← hcfilter] at hcut
+    have hfloor_lt : ∀ T : Multiset (WithTop ℚ), T ≤ Y.map v →
+        (Y.map v).countP (· ≤ (x : WithTop ℚ)) < T.card →
+        ((Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v).sum + T.card • (x : WithTop ℚ)
+          < T.sum + ((Y.map v).countP (· ≤ (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+      intro T hT hc
+      have hcut := cut_sum_lt_of_card_lt (p := (· ≤ (x : WithTop ℚ))) hT
+        (fun w _ hw => hw) (fun w _ hw => not_le.mp hw)
+        (by rw [hfilter_eq, Multiset.card_map, ← hcfilter]; exact hc)
+      rwa [hfilter_eq, Multiset.card_map, ← hcfilter] at hcut
+    -- the corner of the profile of `Q` matches the corner of `P`
+    have hpin : v (((Z.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (· ≤ (x : WithTop ℚ))))
+        = v (((Y.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (· ≤ (x : WithTop ℚ)))) := by
+      rcases hdisj _ hcn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+      · exact heq
+      · exfalso
+        have h1 : T.sum + (k : WithTop ℚ)
+            ≤ ((Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v).sum := by
+          rw [← hcorner]
+          exact hTP
+        have h2 := hfloor T hT
+        rw [hTcard] at h2
+        have h3 : ((Y.filter fun y => v y ≤ (x : WithTop ℚ)).map v).sum ≤ T.sum :=
+          (WithTop.add_le_add_iff_right
+            (by rw [← WithTop.coe_nsmul]; exact WithTop.coe_ne_top)).mp h2
+        have hTfin : T.sum ≠ ⊤ := by
+          intro h0
+          rw [h0, WithTop.top_add] at h1
+          exact hLfin (top_le_iff.mp h1)
+        obtain ⟨q, hq⟩ := WithTop.ne_top_iff_exists.mp hTfin
+        obtain ⟨l, hl⟩ := WithTop.ne_top_iff_exists.mp hLfin
+        rw [← hq, ← hl] at h1 h3
+        rw [← WithTop.coe_add, WithTop.coe_le_coe] at h1
+        rw [WithTop.coe_le_coe] at h3
+        linarith
+    refine ⟨hcn, fun j hjn => ?_, fun j hjn hcj => ?_⟩
+    · have hgoal : v (((Z.map fun y => X - C y).prod).coeff
+            (Y.card - (Y.map v).countP (· ≤ (x : WithTop ℚ)))) + j • (x : WithTop ℚ)
+          ≤ v (((Z.map fun y => X - C y).prod).coeff (Y.card - j))
+            + ((Y.map v).countP (· ≤ (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+        rcases hdisj j hjn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+        · rw [hpin, heq]
+          exact hmin₁ j hjn
+        · rw [hpin, hcorner]
+          have h2 := hfloor T hT
+          rw [hTcard] at h2
+          refine h2.trans (add_le_add_left ?_ _)
+          exact le_trans (le_add_of_nonneg_right (by exact_mod_cast hk.le)) hTQ
+      exact hgoal
+    · have hgoal : v (((Z.map fun y => X - C y).prod).coeff
+            (Y.card - (Y.map v).countP (· ≤ (x : WithTop ℚ)))) + j • (x : WithTop ℚ)
+          < v (((Z.map fun y => X - C y).prod).coeff (Y.card - j))
+            + ((Y.map v).countP (· ≤ (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+        rcases hdisj j hjn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+        · rw [hpin, heq]
+          exact hstrict₁ j hjn hcj
+        · rw [hpin, hcorner]
+          have h2 := hfloor_lt T hT (by rw [hTcard]; exact hcj)
+          rw [hTcard] at h2
+          refine h2.trans_le (add_le_add_left ?_ _)
+          exact le_trans (le_add_of_nonneg_right (by exact_mod_cast hk.le)) hTQ
+      exact hgoal
+  -- transfer the `< x` characterization to the profile of `Q`
+  have hlt₂ : ∀ x : ℚ, IsLtCutIndex
+      (fun j => v (((Z.map fun y => X - C y).prod).coeff (Y.card - j)))
+      Y.card x ((Y.map v).countP (· < (x : WithTop ℚ))) := by
+    intro x
+    obtain ⟨hcn, hmin₁, hstrict₁⟩ := isLtCutIndex_countP v Y x
+    have hcfilter : (Y.map v).countP (· < (x : WithTop ℚ))
+        = (Y.filter fun y => v y < (x : WithTop ℚ)).card := Multiset.countP_map _ _ _
+    have hfilter_eq : (Y.map v).filter (· < (x : WithTop ℚ))
+        = (Y.filter fun y => v y < (x : WithTop ℚ)).map v := by
+      rw [Multiset.filter_map]
+      exact congrArg (Multiset.map v) (Multiset.filter_congr fun y _ => Iff.rfl)
+    have hindex : (Y.filter fun y => ¬ (v y < (x : WithTop ℚ))).card
+        = Y.card - (Y.map v).countP (· < (x : WithTop ℚ)) := by
+      have h1 := congrArg Multiset.card
+        (Multiset.filter_add_not (fun y => v y < (x : WithTop ℚ)) Y)
+      rw [Multiset.card_add] at h1
+      omega
+    have hcorner : v (((Y.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (· < (x : WithTop ℚ))))
+        = ((Y.filter fun y => v y < (x : WithTop ℚ)).map v).sum := by
+      rw [← hindex]
+      exact v_coeff_eq_sum_of_separated v Y _
+        (fun y _ hy => (hy.trans (WithTop.coe_lt_top x)).ne)
+        (fun y _ hy y' _ hy' => hy.trans_le (not_lt.mp hy'))
+    have hLfin : ((Y.filter fun y => v y < (x : WithTop ℚ)).map v).sum ≠ ⊤ := by
+      refine sum_ne_top fun a ha => ?_
+      obtain ⟨y, hy, rfl⟩ := Multiset.mem_map.mp ha
+      exact ((Multiset.mem_filter.mp hy).2.trans (WithTop.coe_lt_top x)).ne
+    have hfloor : ∀ T : Multiset (WithTop ℚ), T ≤ Y.map v →
+        ((Y.filter fun y => v y < (x : WithTop ℚ)).map v).sum + T.card • (x : WithTop ℚ)
+          ≤ T.sum + ((Y.map v).countP (· < (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+      intro T hT
+      have hcut := cut_sum_le (p := (· < (x : WithTop ℚ))) hT
+        (fun w _ hw => hw.le) (fun w _ hw => not_lt.mp hw)
+      rwa [hfilter_eq, Multiset.card_map, ← hcfilter] at hcut
+    have hfloor_lt : ∀ T : Multiset (WithTop ℚ), T ≤ Y.map v →
+        T.card < (Y.map v).countP (· < (x : WithTop ℚ)) →
+        ((Y.filter fun y => v y < (x : WithTop ℚ)).map v).sum + T.card • (x : WithTop ℚ)
+          < T.sum + ((Y.map v).countP (· < (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+      intro T hT hc
+      have hcut := cut_sum_lt_of_lt_card (p := (· < (x : WithTop ℚ))) hT
+        (fun w _ hw => hw) (fun w _ hw => not_lt.mp hw)
+        (by rw [hfilter_eq, Multiset.card_map, ← hcfilter]; exact hc)
+      rwa [hfilter_eq, Multiset.card_map, ← hcfilter] at hcut
+    have hpin : v (((Z.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (· < (x : WithTop ℚ))))
+        = v (((Y.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (· < (x : WithTop ℚ)))) := by
+      rcases hdisj _ hcn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+      · exact heq
+      · exfalso
+        have h1 : T.sum + (k : WithTop ℚ)
+            ≤ ((Y.filter fun y => v y < (x : WithTop ℚ)).map v).sum := by
+          rw [← hcorner]
+          exact hTP
+        have h2 := hfloor T hT
+        rw [hTcard] at h2
+        have h3 : ((Y.filter fun y => v y < (x : WithTop ℚ)).map v).sum ≤ T.sum :=
+          (WithTop.add_le_add_iff_right
+            (by rw [← WithTop.coe_nsmul]; exact WithTop.coe_ne_top)).mp h2
+        have hTfin : T.sum ≠ ⊤ := by
+          intro h0
+          rw [h0, WithTop.top_add] at h1
+          exact hLfin (top_le_iff.mp h1)
+        obtain ⟨q, hq⟩ := WithTop.ne_top_iff_exists.mp hTfin
+        obtain ⟨l, hl⟩ := WithTop.ne_top_iff_exists.mp hLfin
+        rw [← hq, ← hl] at h1 h3
+        rw [← WithTop.coe_add, WithTop.coe_le_coe] at h1
+        rw [WithTop.coe_le_coe] at h3
+        linarith
+    refine ⟨hcn, fun j hjn => ?_, fun j hjn hjc => ?_⟩
+    · have hgoal : v (((Z.map fun y => X - C y).prod).coeff
+            (Y.card - (Y.map v).countP (· < (x : WithTop ℚ)))) + j • (x : WithTop ℚ)
+          ≤ v (((Z.map fun y => X - C y).prod).coeff (Y.card - j))
+            + ((Y.map v).countP (· < (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+        rcases hdisj j hjn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+        · rw [hpin, heq]
+          exact hmin₁ j hjn
+        · rw [hpin, hcorner]
+          have h2 := hfloor T hT
+          rw [hTcard] at h2
+          refine h2.trans (add_le_add_left ?_ _)
+          exact le_trans (le_add_of_nonneg_right (by exact_mod_cast hk.le)) hTQ
+      exact hgoal
+    · have hgoal : v (((Z.map fun y => X - C y).prod).coeff
+            (Y.card - (Y.map v).countP (· < (x : WithTop ℚ)))) + j • (x : WithTop ℚ)
+          < v (((Z.map fun y => X - C y).prod).coeff (Y.card - j))
+            + ((Y.map v).countP (· < (x : WithTop ℚ))) • (x : WithTop ℚ) := by
+        rcases hdisj j hjn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+        · rw [hpin, heq]
+          exact hstrict₁ j hjn hjc
+        · rw [hpin, hcorner]
+          have h2 := hfloor_lt T hT (by rw [hTcard]; exact hjc)
+          rw [hTcard] at h2
+          refine h2.trans_le (add_le_add_left ?_ _)
+          exact le_trans (le_add_of_nonneg_right (by exact_mod_cast hk.le)) hTQ
+      exact hgoal
+  -- transfer the finite-count characterization to the profile of `Q`
+  have htop₂ : IsTopIndex
+      (fun j => v (((Z.map fun y => X - C y).prod).coeff (Y.card - j)))
+      Y.card ((Y.map v).countP (fun w => w ≠ ⊤)) := by
+    obtain ⟨hcn, hfin₁, htop₁⟩ := isTopIndex_countP v hv Y
+    have hcfilter : (Y.map v).countP (fun w => w ≠ ⊤)
+        = (Y.filter fun y => v y ≠ ⊤).card := Multiset.countP_map _ _ _
+    have hfilter_eq : (Y.map v).filter (fun w => w ≠ ⊤)
+        = (Y.filter fun y => v y ≠ ⊤).map v := by
+      rw [Multiset.filter_map]
+      exact congrArg (Multiset.map v) (Multiset.filter_congr fun y _ => Iff.rfl)
+    have hindex : (Y.filter fun y => ¬ (v y ≠ ⊤)).card
+        = Y.card - (Y.map v).countP (fun w => w ≠ ⊤) := by
+      have h1 := congrArg Multiset.card (Multiset.filter_add_not (fun y => v y ≠ ⊤) Y)
+      rw [Multiset.card_add] at h1
+      omega
+    have hcorner : v (((Y.map fun y => X - C y).prod).coeff
+          (Y.card - (Y.map v).countP (fun w => w ≠ ⊤)))
+        = ((Y.filter fun y => v y ≠ ⊤).map v).sum := by
+      rw [← hindex]
+      exact v_coeff_eq_sum_of_separated v Y _ (fun y _ hy => hy)
+        (fun y _ hy y' _ hy' =>
+          lt_of_lt_of_eq (lt_top_iff_ne_top.mpr hy) (not_not.mp hy').symm)
+    have hLfin : ((Y.filter fun y => v y ≠ ⊤).map v).sum ≠ ⊤ := by
+      refine sum_ne_top fun a ha => ?_
+      obtain ⟨y, hy, rfl⟩ := Multiset.mem_map.mp ha
+      exact (Multiset.mem_filter.mp hy).2
+    refine ⟨hcn, ?_, fun j hjn hcj => ?_⟩
+    · have hgoal : v (((Z.map fun y => X - C y).prod).coeff
+            (Y.card - (Y.map v).countP (fun w => w ≠ ⊤))) ≠ ⊤ := by
+        rcases hdisj _ hcn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+        · rw [heq]
+          exact hfin₁
+        · exfalso
+          have hTfin : T.sum ≠ ⊤ := by
+            intro h0
+            rw [h0, WithTop.top_add, hcorner] at hTP
+            exact hLfin (top_le_iff.mp hTP)
+          -- a size-`count` sub-multiset of finite sum is the finite part itself
+          have hTsub : T ≤ (Y.map v).filter (fun w => w ≠ ⊤) :=
+            Multiset.le_filter.mpr ⟨hT, fun a ha => ne_top_of_mem_of_sum_ne_top hTfin ha⟩
+          have hTeq : T = (Y.map v).filter (fun w => w ≠ ⊤) := by
+            refine Multiset.eq_of_le_of_card_le hTsub ?_
+            rw [hTcard, Multiset.countP_eq_card_filter]
+          have hTsum : T.sum = ((Y.filter fun y => v y ≠ ⊤).map v).sum := by
+            rw [hTeq, hfilter_eq]
+          rw [hcorner, hTsum] at hTP
+          obtain ⟨l, hl⟩ := WithTop.ne_top_iff_exists.mp hLfin
+          rw [← hl, ← WithTop.coe_add, WithTop.coe_le_coe] at hTP
+          linarith
+      exact hgoal
+    · have hgoal : v (((Z.map fun y => X - C y).prod).coeff (Y.card - j)) = ⊤ := by
+        rcases hdisj j hjn with heq | ⟨T, hT, hTcard, hTP, hTQ⟩
+        · rw [heq]
+          exact htop₁ j hjn hcj
+        · -- a sub-multiset larger than the finite part contains an `∞` entry
+          have hTtop : T.sum = ⊤ := by
+            by_contra h0
+            have hTsub : T ≤ (Y.map v).filter (fun w => w ≠ ⊤) :=
+              Multiset.le_filter.mpr ⟨hT, fun a ha => ne_top_of_mem_of_sum_ne_top h0 ha⟩
+            have hle := Multiset.card_le_card hTsub
+            rw [hTcard, ← Multiset.countP_eq_card_filter] at hle
+            omega
+          rw [hTtop, WithTop.top_add] at hTQ
+          exact top_le_iff.mp hTQ
+      exact hgoal
+  -- the counts agree, and multiset extensionality on counts concludes
+  have htop_eq : (Z.map v).countP (fun w => w ≠ ⊤) = (Y.map v).countP (fun w => w ≠ ⊤) := by
+    have h₂ := isTopIndex_countP v hv Z
+    rw [← hcard] at h₂
+    exact h₂.unique htop₂
+  have hle_eq : ∀ x : ℚ, (Z.map v).countP (· ≤ (x : WithTop ℚ))
+      = (Y.map v).countP (· ≤ (x : WithTop ℚ)) := by
+    intro x
+    have h₂ := isLeCutIndex_countP v Z x
+    rw [← hcard] at h₂
+    exact h₂.unique (hle₂ x)
+  have hlt_eq : ∀ x : ℚ, (Z.map v).countP (· < (x : WithTop ℚ))
+      = (Y.map v).countP (· < (x : WithTop ℚ)) := by
+    intro x
+    have h₂ := isLtCutIndex_countP v Z x
+    rw [← hcard] at h₂
+    exact h₂.unique (hlt₂ x)
+  refine multiset_eq_of_countP_cuts ?_ htop_eq hle_eq hlt_eq
+  rw [Multiset.card_map, Multiset.card_map]
+  exact hcard.symm
 
 end TrustworthyKedlaya
