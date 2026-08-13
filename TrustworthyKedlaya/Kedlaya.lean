@@ -15,7 +15,7 @@ import TrustworthyKedlaya.UPAlgebraic
 /-!
 ## Main statements
 
-- `TrustworthyKedlaya.kedlaya_2001a_theorem15`: the integrality criterion for Hahn series
+- `TrustworthyKedlaya.kedlaya_2001a_theorem15_half`: the integrality criterion for Hahn series
   over `𝔽̄_p((t))`, i.e. Kedlaya (2017), Theorem 11.11 (equivalently Kedlaya (2001a), Theorem 15).
 - `TrustworthyKedlaya.kedlaya_2017_theorem13_4`: the description of the completed integral
   closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`, i.e. Kedlaya (2017), Theorem 13.5.
@@ -56,7 +56,7 @@ The base-`p` digit sequence `(bᵢ)_{i≥1}` is modelled as a finitely-supported
 `d : ℕ →₀ ℕ` (with `d i` the digit `b_{i+1}`), so the value
 `∑ i, d i * p^{-(i+1)}` is a finite rational; the digit bound is `∑ i, d i ≤ c` and
 each digit satisfies `d i < p`. Positivity of `a` is carried as a hypothesis where
-needed (e.g. in `kedlaya_2001a_theorem15`). -/
+needed (e.g. in `kedlaya_2001a_theorem15_half`). -/
 def Sabc (a : ℕ+) (b c : ℕ) : Set ℚ :=
   { s : ℚ | ∃ (n : ℤ) (d : ℕ →₀ ℕ),
       -b ≤ n ∧ (∀ i, d i < p) ∧ (d.sum fun _ v => v) ≤ c ∧
@@ -78,7 +78,7 @@ The sign in front of the second sum is a **minus**: the published eq. (2.2) prin
 that is a typo, as corroborated by the paper's own Remark 2.7. We take `f : ℚ → 𝔽̄_p` rather than
 `f : Tc p c → 𝔽̄_p` so that the theorem can compose it directly with the coefficient function
 `f_m`; faithfulness of the domain `T_c` is part of the informal content and is recovered in
-`kedlaya_2001a_theorem15` by restricting the digits via `c`. -/
+`kedlaya_2001a_theorem15_half` by restricting the digits via `c`. -/
 def twistSeq (f : ℚ → 𝔽ᵃ_[p]) (j : ℕ) (b : ℕ →₀ ℕ) (n : ℕ) : 𝔽ᵃ_[p] :=
   f (-(∑ i ∈ Finset.range (j - 1), (b i : ℚ) * (p : ℚ) ^ (-(i + 1 : ℤ)))
      - (p : ℚ) ^ (-(n : ℤ)) *
@@ -87,7 +87,7 @@ def twistSeq (f : ℚ → 𝔽ᵃ_[p]) (j : ℕ) (b : ℕ →₀ ℕ) (n : ℕ) 
 open LaurentSeries in
 /-- The order-embedding `ℤ ↪ ℚ` of value groups induces the ring inclusion of the
 integer-supported Hahn series `𝔽̄_p((t))` into `𝔽̄_p((t^ℚ))`. Its range is the subring
-over which integrality is asserted in `kedlaya_2001a_theorem15`. -/
+over which integrality is asserted in `kedlaya_2001a_theorem15_half`. -/
 noncomputable def intHahnEmbedding :
     (𝔽ᵃ_[p])⸨X⸩ →+* HahnSeries ℚ (𝔽ᵃ_[p]) :=
   HahnSeries.embDomainRingHom (Int.castAddHom ℚ) Rat.intCast_injective
