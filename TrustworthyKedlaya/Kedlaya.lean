@@ -109,8 +109,9 @@ A series `x = ∑ᵢ xᵢ tⁱ ∈ 𝔽̄_p((t^ℚ))` is integral over `𝔽̄_p
   `twistSeq` (built from `f_m`, with digit sum `≤ c`) becomes periodic of period `N` after
   at most `M` terms.
 
-The converse of this statement is also proved in Kedlaya's papers, but we do not need it for our
-  purposes, so we do not formalize it.
+The converse also holds (the other half of Kedlaya (2001a), Theorem 15) and is needed for
+`kedlaya_2017_theorem13_4` (blueprint node `lem:up-algebraic`).  Per the owner's ruling
+(inbox I-0024) this statement is to be upgraded to an `↔` once the converse is formalized.
 -/
 theorem kedlaya_2001a_theorem15_half (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
     IsIntegral (𝔽ᵃ_[p])⸨X⸩ x
