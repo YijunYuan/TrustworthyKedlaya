@@ -33,6 +33,7 @@ import TrustworthyKedlaya.SabcOrderType
 import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.ShadowCalculus
 import TrustworthyKedlaya.ShadowCongruence
+import TrustworthyKedlaya.SliceSpan
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TameKummer
 import TrustworthyKedlaya.TowerEmbedding
