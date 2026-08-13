@@ -10,15 +10,25 @@ public import TrustworthyKedlaya.RootMatching
 public import Mathlib.RingTheory.HahnSeries.Valuation
 
 /-!
-# Shadowing the coefficients of a split polynomial
+# Roots vary continuously across characteristics
 
 The shadow map `S : 𝔽̄_p((t^ℚ)) → 𝕃_[p]` is neither additive nor multiplicative, but its
 carries are `p`-divisible.  This file transports that calculus from elements to the
-coefficients of split polynomials (blueprint `lem:shadow-symmetric-congruence`): the
-coefficients of `∏_{y ∈ Y}(X - S(y))` agree with the shadows of the coefficients of
-`∏_{y ∈ Y}(X - y)` to depth `σ_{n-i}(W) + 1`, where `W` is the valuation multiset of
-`Y` and `σ_j` the sum of the `j` smallest elements (encoded by minimal witnesses as in
-`TrustworthyKedlaya.RootMatching`).
+coefficients of split polynomials and derives Kedlaya's continuity of roots:
+
+- `exists_sum_le_val_coeff_shadow` (`lem:shadow-symmetric-congruence`): the
+  coefficients of `∏_{y ∈ Y}(X - S(y))` agree with the shadows of the coefficients of
+  `∏_{y ∈ Y}(X - y)` to depth `σ_{n-i}(W) + 1`, where `W` is the valuation multiset of
+  `Y` and `σ_j` the sum of the `j` smallest elements (encoded by minimal witnesses as
+  in `TrustworthyKedlaya.RootMatching`);
+- `roots_continuity_forward` / `roots_continuity_reverse` (`lem:roots-continuity`;
+  Kedlaya 2001b): if the shadows of the coefficients of the split monic
+  `P = ∏_{y ∈ Y}(X - y)` are within `σ_{n-i}(W) + k` of the coefficients of the split
+  monic `Q = ∏_{z ∈ Z}(X - z)` (`k ≤ 1`, equal valuation multisets), then each root of
+  either polynomial of valuation `s` matches a root of the other, with
+  `val (S(y) - z) ≥ s + k/m` for `m` the multiplicity of `s`.  Both directions follow
+  from `exists_root_sub_valuation_le` applied to the pair `(∏(X - S(y)), Q)` over
+  `𝕃_[p]`.
 
 The `WithTop`-valued wrappers `le_val_shadow_mul_sub'`, `le_val_shadow_neg_add'`,
 `le_val_shadow_add_sub'` restate the carry bounds of `ShadowCalculus` with `orderTop`
@@ -46,7 +56,8 @@ theorem shadow_one : shadow (1 : HahnSeries ℚ (𝔽ᵃ_[p])) = 1 := by
       (1 : HahnSeries ℚ (𝔽ᵃ_[p])).coeff (1 : HahnSeries ℚ (𝔽ᵃ_[p])).isPWO_support' = 1 := by
     apply HahnSeries.ext
     funext q
-    change teichmuller p ((1 : HahnSeries ℚ (𝔽ᵃ_[p])).coeff q) = (1 : LiftedPAdicHahnSeries p).coeff q
+    change teichmuller p ((1 : HahnSeries ℚ (𝔽ᵃ_[p])).coeff q)
+      = (1 : LiftedPAdicHahnSeries p).coeff q
     rw [HahnSeries.coeff_one, HahnSeries.coeff_one]
     split
     · exact map_one _
@@ -157,7 +168,8 @@ theorem exists_sum_le_val_coeff_shadow (Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p
       have hRmonic : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C (shadow y)).prod).Monic := by
         rw [hRmap]
         exact monic_multiset_prod_of_monic _ _ fun z _ => monic_X_sub_C z
-      have hPdeg : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C y).prod).natDegree = (y₀ ::ₘ Y).card :=
+      have hPdeg : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C y).prod).natDegree
+          = (y₀ ::ₘ Y).card :=
         natDegree_multiset_prod_X_sub_C_eq_card _
       have hRdeg : (((y₀ ::ₘ Y).map fun y => X - Polynomial.C (shadow y)).prod).natDegree
           = (y₀ ::ₘ Y).card := by
@@ -180,7 +192,8 @@ theorem exists_sum_le_val_coeff_shadow (Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p
         have := Nat.lt_of_not_le hbig
         rwa [Multiset.card_cons] at this
       simp only [Multiset.map_cons, Multiset.prod_cons, Multiset.card_cons]
-      set Pp : Polynomial (HahnSeries ℚ (𝔽ᵃ_[p])) := (Y.map fun y => X - Polynomial.C y).prod with hPp
+      set Pp : Polynomial (HahnSeries ℚ (𝔽ᵃ_[p])) := (Y.map fun y => X - Polynomial.C y).prod
+        with hPp
       set Rp : Polynomial (𝕃_[p]) := (Y.map fun y => X - Polynomial.C (shadow y)).prod with hRp
       obtain ⟨Tm, hTmle, hTmcard, hTmmin⟩ :=
         exists_min_sum_powersetCard (y₀.orderTop ::ₘ Y.map HahnSeries.orderTop)
@@ -233,7 +246,8 @@ theorem exists_sum_le_val_coeff_shadow (Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p
             (by rw [Multiset.card_cons, hT₄card]; omega)
           rw [Multiset.sum_cons] at h
           exact add_le_add (le_trans h (add_le_add le_rfl hT₄sum)) le_rfl
-        have hdiff : ((X - Polynomial.C (shadow y₀)) * Rp).coeff 0 - shadow (((X - Polynomial.C y₀) * Pp).coeff 0)
+        have hdiff : ((X - Polynomial.C (shadow y₀)) * Rp).coeff 0
+              - shadow (((X - Polynomial.C y₀) * Pp).coeff 0)
             = -(shadow y₀ * (Rp.coeff 0 - shadow (Pp.coeff 0)))
               - (shadow y₀ * shadow (Pp.coeff 0) - shadow (y₀ * Pp.coeff 0))
               - (shadow (-(y₀ * Pp.coeff 0)) + shadow (y₀ * Pp.coeff 0)) := by
@@ -318,5 +332,137 @@ theorem exists_sum_le_val_coeff_shadow (Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p
           ring
         rw [hdiff]
         exact (val p).map_le_sub ((val p).map_le_sub ((val p).map_le_sub h1 h2) h3) h4
+
+/-! ### Roots vary continuously across characteristics -/
+
+section RootsContinuity
+
+variable (Y : Multiset (HahnSeries ℚ (𝔽ᵃ_[p]))) (Z : Multiset (𝕃_[p]))
+
+/-- The combined coefficientwise congruence: if the shadows of the coefficients of
+`P = ∏_{y ∈ Y}(X - y)` are within `σ_{n-i}(W) + k` of the coefficients of
+`Q = ∏_{z ∈ Z}(X - z)`, with `k ≤ 1`, then so are the coefficients of
+`R = ∏_{y ∈ Y}(X - S(y))` — the shadow-symmetric congruence absorbs the difference. -/
+theorem exists_sum_le_val_coeff_sub_of_shadow_congruence
+    {k : ℚ} (hk1 : k ≤ 1)
+    (hcong : ∀ i < Y.card, ∃ T ≤ Y.map HahnSeries.orderTop, T.card = Y.card - i ∧
+      T.sum + (k : WithTop ℚ) ≤ val p
+        (shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i)
+          - ((Z.map fun z => X - Polynomial.C z).prod).coeff i))
+    {i : ℕ} (hi : i < Y.card) :
+    ∃ T ≤ Y.map HahnSeries.orderTop, T.card = Y.card - i ∧
+      T.sum + (k : WithTop ℚ) ≤ val p
+        ((((Y.map fun y => X - Polynomial.C (shadow y)).prod)
+          - ((Z.map fun z => X - Polynomial.C z).prod)).coeff i) := by
+  classical
+  obtain ⟨T₀, hT₀le, hT₀card, hT₀min⟩ :=
+    exists_min_sum_powersetCard (Y.map HahnSeries.orderTop) (j := Y.card - i)
+      (by rw [Multiset.card_map]; exact Nat.sub_le _ _)
+  refine ⟨T₀, hT₀le, hT₀card, ?_⟩
+  obtain ⟨T₁, hT₁le, hT₁card, hT₁sum⟩ := exists_sum_le_val_coeff_shadow Y i
+  obtain ⟨T₂, hT₂le, hT₂card, hT₂sum⟩ := hcong i hi
+  rw [Polynomial.coeff_sub]
+  have hsplit : ((Y.map fun y => X - Polynomial.C (shadow y)).prod).coeff i
+        - ((Z.map fun z => X - Polynomial.C z).prod).coeff i
+      = (((Y.map fun y => X - Polynomial.C (shadow y)).prod).coeff i
+          - shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i))
+        + (shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i)
+          - ((Z.map fun z => X - Polynomial.C z).prod).coeff i) := by
+    ring
+  rw [hsplit]
+  refine (val p).map_le_add ?_ ?_
+  · refine le_trans ?_ hT₁sum
+    refine le_trans (add_le_add (hT₀min T₁ hT₁le (by rw [hT₁card])) le_rfl) ?_
+    exact add_le_add le_rfl (by exact_mod_cast hk1)
+  · exact le_trans (add_le_add (hT₀min T₂ hT₂le (by rw [hT₂card])) le_rfl) hT₂sum
+
+/-- **Roots vary continuously across characteristics, forward direction**
+(`lem:roots-continuity`; Kedlaya 2001b, the continuity-of-roots lemma): under the
+normalized coefficient congruence to depth `σ_{n-i}(W) + k`, every root `y` of
+`P = ∏_{y ∈ Y}(X - y)` of valuation `s` has a companion root `z` of
+`Q = ∏_{z ∈ Z}(X - z)` with `val z = s` and `val (S(y) - z) ≥ s + k/m`, where `m` is
+the multiplicity of `s` in the common valuation multiset. -/
+theorem roots_continuity_forward
+    (hW : Y.map HahnSeries.orderTop = Z.map (val p))
+    {k : ℚ} (hk1 : k ≤ 1)
+    (hcong : ∀ i < Y.card, ∃ T ≤ Y.map HahnSeries.orderTop, T.card = Y.card - i ∧
+      T.sum + (k : WithTop ℚ) ≤ val p
+        (shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i)
+          - ((Z.map fun z => X - Polynomial.C z).prod).coeff i))
+    {y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : y ∈ Y) {s : ℚ} (hs : y.orderTop = (s : WithTop ℚ)) :
+    ∃ z ∈ Z, val p z = (s : WithTop ℚ) ∧
+      ((s + k / ((Y.map HahnSeries.orderTop).count ((s : WithTop ℚ)) : ℚ) : ℚ) : WithTop ℚ)
+        ≤ val p (shadow y - z) := by
+  classical
+  have hmapshadow : (Y.map shadow).map (val p) = Y.map HahnSeries.orderTop := by
+    rw [Multiset.map_map]
+    exact Multiset.map_congr rfl fun y _ => val_shadow y
+  have hRmap : ((Y.map shadow).map fun u => X - Polynomial.C u)
+      = Y.map fun y => X - Polynomial.C (shadow y) := by
+    rw [Multiset.map_map]
+    rfl
+  have h := exists_root_sub_valuation_le (val p) (Y.map shadow) Z
+    (by rw [hmapshadow, hW])
+    (k := k)
+    (fun i hi => by
+      rw [Multiset.card_map] at hi ⊢
+      rw [hmapshadow, hRmap]
+      exact exists_sum_le_val_coeff_sub_of_shadow_congruence Y Z hk1 hcong hi)
+    (u := shadow y) (Multiset.mem_map_of_mem shadow hy)
+    (s := s) (by rw [val_shadow, hs])
+  obtain ⟨z, hzZ, hzval, hzbound⟩ := h
+  refine ⟨z, hzZ, hzval, ?_⟩
+  rwa [hmapshadow] at hzbound
+
+/-- **Roots vary continuously across characteristics, reverse direction**
+(`lem:roots-continuity`): every root `z` of `Q` of valuation `s` has a companion root
+`y` of `P` with `orderTop y = s` and `val (S(y) - z) ≥ s + k/m`. -/
+theorem roots_continuity_reverse
+    (hW : Y.map HahnSeries.orderTop = Z.map (val p))
+    {k : ℚ} (hk1 : k ≤ 1)
+    (hcong : ∀ i < Y.card, ∃ T ≤ Y.map HahnSeries.orderTop, T.card = Y.card - i ∧
+      T.sum + (k : WithTop ℚ) ≤ val p
+        (shadow (((Y.map fun y => X - Polynomial.C y).prod).coeff i)
+          - ((Z.map fun z => X - Polynomial.C z).prod).coeff i))
+    {z : 𝕃_[p]} (hz : z ∈ Z) {s : ℚ} (hs : val p z = (s : WithTop ℚ)) :
+    ∃ y ∈ Y, y.orderTop = (s : WithTop ℚ) ∧
+      ((s + k / ((Y.map HahnSeries.orderTop).count ((s : WithTop ℚ)) : ℚ) : ℚ) : WithTop ℚ)
+        ≤ val p (shadow y - z) := by
+  classical
+  have hmapshadow : (Y.map shadow).map (val p) = Y.map HahnSeries.orderTop := by
+    rw [Multiset.map_map]
+    exact Multiset.map_congr rfl fun y _ => val_shadow y
+  have hRmap : ((Y.map shadow).map fun u => X - Polynomial.C u)
+      = Y.map fun y => X - Polynomial.C (shadow y) := by
+    rw [Multiset.map_map]
+    rfl
+  have hcard : Z.card = Y.card := by
+    have h := congrArg Multiset.card hW
+    rw [Multiset.card_map, Multiset.card_map] at h
+    exact h.symm
+  have h := exists_root_sub_valuation_le (val p) Z (Y.map shadow)
+    (by rw [hmapshadow, hW])
+    (k := k)
+    (fun i hi => by
+      rw [hcard] at hi
+      obtain ⟨T, hTle, hTcard, hTsum⟩ :=
+        exists_sum_le_val_coeff_sub_of_shadow_congruence Y Z hk1 hcong hi
+      refine ⟨T, by rwa [← hW], by rw [hTcard, hcard], ?_⟩
+      rw [hRmap]
+      have hneg : ((Z.map fun y => X - Polynomial.C y).prod
+            - (Y.map fun y => X - Polynomial.C (shadow y)).prod).coeff i
+          = -(((Y.map fun y => X - Polynomial.C (shadow y)).prod
+              - (Z.map fun y => X - Polynomial.C y).prod).coeff i) := by
+        rw [← Polynomial.coeff_neg, neg_sub]
+      rw [hneg, (val p).map_neg]
+      exact hTsum)
+    (u := z) hz (s := s) hs
+  obtain ⟨u, huU, huval, hubound⟩ := h
+  obtain ⟨y, hyY, rfl⟩ := Multiset.mem_map.mp huU
+  refine ⟨y, hyY, by rwa [val_shadow] at huval, ?_⟩
+  rw [(val p).map_sub_swap]
+  rwa [← hW] at hubound
+
+end RootsContinuity
 
 end TrustworthyKedlaya.pAdicHahnSeries
