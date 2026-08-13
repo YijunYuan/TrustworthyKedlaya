@@ -27,6 +27,7 @@ import TrustworthyKedlaya.PGroupGalois
 import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.SabcOrderType
 import TrustworthyKedlaya.SeparableUP
+import TrustworthyKedlaya.ShadowCalculus
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TameKummer
 import TrustworthyKedlaya.TowerEmbedding
