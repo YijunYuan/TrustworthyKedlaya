@@ -34,6 +34,7 @@ import TrustworthyKedlaya.RootMatching
 import TrustworthyKedlaya.SabcOrderType
 import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.ShadowCalculus
+import TrustworthyKedlaya.ShadowCollapse
 import TrustworthyKedlaya.ShadowCongruence
 import TrustworthyKedlaya.SliceSpan
 import TrustworthyKedlaya.SupportSets

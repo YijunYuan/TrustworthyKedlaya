@@ -62,6 +62,19 @@ variable {p}
     (x y : HahnSeries ℚ (𝔽ᵃ_[p])) (q : ℚ) :
     (coeffwise p φ hφ x y).coeff q = φ (x.coeff q) (y.coeff q) := rfl
 
+/-- The support of a coefficientwise combination lies in the union of the two
+supports. -/
+theorem support_coeffwise_subset (φ : 𝔽ᵃ_[p] → 𝔽ᵃ_[p] → 𝔽ᵃ_[p]) (hφ : φ 0 0 = 0)
+    (x y : HahnSeries ℚ (𝔽ᵃ_[p])) :
+    (coeffwise p φ hφ x y).support ⊆ x.support ∪ y.support := by
+  intro q hq
+  rw [HahnSeries.mem_support, coeff_coeffwise] at hq
+  rcases eq_or_ne (x.coeff q) 0 with hx0 | hx0
+  · rcases eq_or_ne (y.coeff q) 0 with hy0 | hy0
+    · exact absurd (by rw [hx0, hy0, hφ]) hq
+    · exact Set.mem_union_right _ ((HahnSeries.mem_support _ _).mpr hy0)
+  · exact Set.mem_union_left _ ((HahnSeries.mem_support _ _).mpr hx0)
+
 /-- Twist sequences of a pointwise binary combination are the termwise combinations
 of the twist sequences (twist sequences are computed pointwise). -/
 lemma twistSeq_comp₂ (φ : 𝔽ᵃ_[p] → 𝔽ᵃ_[p] → 𝔽ᵃ_[p]) (f g : ℚ → 𝔽ᵃ_[p]) (j : ℕ)
