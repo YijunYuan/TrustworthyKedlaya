@@ -5,6 +5,7 @@ import TrustworthyKedlaya.ArtinSchreierGalois
 import TrustworthyKedlaya.ArtinSchreierNeg
 import TrustworthyKedlaya.ArtinSchreierPos
 import TrustworthyKedlaya.Basic
+import TrustworthyKedlaya.CRootClosed
 import TrustworthyKedlaya.Coeffwise
 import TrustworthyKedlaya.ColumnAddition
 import TrustworthyKedlaya.DefeqGuards
