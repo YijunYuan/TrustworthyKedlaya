@@ -166,7 +166,8 @@ theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP 
         = val p (a i - P.coeff i) + i • val p u := by
       rw [(val p).map_mul, (val p).map_pow]
     rw [hterm, ← hvu]
-    have hsmul : ∀ m : ℕ, (m • ((vu : ℚ) : WithTop ℚ) : WithTop ℚ) = ((m • vu : ℚ) : WithTop ℚ) := by
+    have hsmul : ∀ m : ℕ,
+        (m • ((vu : ℚ) : WithTop ℚ) : WithTop ℚ) = ((m • vu : ℚ) : WithTop ℚ) := by
       intro m
       induction m with
       | zero => simp
