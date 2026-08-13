@@ -26,6 +26,7 @@ import TrustworthyKedlaya.LpCoeff
 import TrustworthyKedlaya.LaurentRoots
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.MulCombine
+import TrustworthyKedlaya.WittCarryUPMul
 import TrustworthyKedlaya.Multiplicative
 import TrustworthyKedlaya.NewtonPolygonRoots
 import TrustworthyKedlaya.NewtonSlope
