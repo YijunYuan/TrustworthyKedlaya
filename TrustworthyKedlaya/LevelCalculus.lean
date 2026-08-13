@@ -286,4 +286,166 @@ theorem IsTwistPeriodic.sub {f g : ℚ → 𝔽ᵃ_[p]} {c : ℕ} {Mf Mg Nf Ng :
   have h := hf.add (hg.comp fun v => -v)
   simpa only [sub_eq_add_neg] using h
 
+/-! ### Level drop (blueprint `lem:up-level-drop`)
+
+For `x` supported on `(1/a)·T_c` with its width-`a` slice `(M, N)`-periodic at level
+`c` and slice values in `𝔽_{p^d}`, and `L` a common multiple of `N` and `d` with
+`L ≥ M`, the Artin-Schreier increment `y = x^{1/p^L} − x` stays supported on
+`(1/a)·T_c`, its slice is `(M + L, N)`-periodic at level `c`, its coefficients vanish
+at every exponent whose digits all sit at positions `> M + L`, and
+`y^{p^L} = x − x^{p^L}`.  Support hypotheses and conclusions are phrased through the
+width-`a` slice: `x.coeff (q / a) ≠ 0 → q ∈ T_c`. -/
+
+section LevelDrop
+
+variable {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {c : ℕ} {M N : ℕ+}
+
+/-- A series slice-supported on `T_c` vanishes at slice arguments outside `T_c`. -/
+theorem coeff_slice_eq_zero_of_notMem
+    (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c) {w : ℚ}
+    (hw : w ∉ Tc p c) : x.coeff (w / (a : ℚ)) = 0 := by
+  by_contra h0
+  exact hw (hsupp w h0)
+
+/-- **Level drop, support**: the Artin-Schreier increment stays slice-supported on
+`T_c`. -/
+theorem levelDrop_support (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c)
+    (L : ℕ) (q : ℚ)
+    (hq : ((invFrobeniusHahn p)^[L] x - x).coeff (q / (a : ℚ)) ≠ 0) : q ∈ Tc p c := by
+  rw [HahnSeries.coeff_sub] at hq
+  by_cases hx0 : x.coeff (q / (a : ℚ)) ≠ 0
+  · exact hsupp q hx0
+  · have hxL : ((invFrobeniusHahn p)^[L] x).coeff (q / (a : ℚ)) ≠ 0 := by
+      intro h
+      rw [h, not_not.mp hx0, sub_zero] at hq
+      exact hq rfl
+    rw [coeff_invFrobeniusHahn_iterate] at hxL
+    have hcoeff : x.coeff ((p : ℚ) ^ L * q / (a : ℚ)) ≠ 0 := by
+      intro h
+      rw [show (p : ℚ) ^ L * (q / (a : ℚ)) = (p : ℚ) ^ L * q / (a : ℚ) by ring, h] at hxL
+      exact hxL (Function.iterate_fixed (map_zero _) L)
+    exact Tc_mem_of_pow_mul_mem (hsupp _ hcoeff)
+
+/-- **Level drop, slice periodicity**: the slice of the Artin-Schreier increment is
+`(M + L, N)`-periodic at level `c`. -/
+theorem levelDrop_slice_periodic
+    (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c)
+    (hper : IsTwistPeriodic p (fun z => x.coeff (z / (a : ℚ))) c M N) (L : ℕ+) :
+    IsTwistPeriodic p
+      (fun z => ((invFrobeniusHahn p)^[(L : ℕ)] x - x).coeff (z / (a : ℚ)))
+      c (M + L) N := by
+  have hvanish : ∀ w : ℚ, w ≤ -1 → x.coeff (w / (a : ℚ)) = 0 := fun w hw =>
+    coeff_slice_eq_zero_of_notMem hsupp fun hmem => by
+      have := hmem.2.1
+      linarith
+  have hML : (M : ℕ) + (L : ℕ) ≤ ((M + L : ℕ+) : ℕ) := by simp
+  have hxL : IsTwistPeriodic p
+      (fun z => ((invFrobeniusHahn p)^[(L : ℕ)] x).coeff (z / (a : ℚ))) c (M + L) N := by
+    have hcomp := (isTwistPeriodic_comp_pow_scale (L := (L : ℕ)) hML hvanish hper).comp
+      (((frobeniusEquiv (𝔽ᵃ_[p]) p).symm)^[(L : ℕ)])
+    have heq : (fun z => ((invFrobeniusHahn p)^[(L : ℕ)] x).coeff (z / (a : ℚ)))
+        = fun z => ((frobeniusEquiv (𝔽ᵃ_[p]) p).symm)^[(L : ℕ)]
+            (x.coeff ((p : ℚ) ^ (L : ℕ) * z / (a : ℚ))) := by
+      funext z
+      rw [coeff_invFrobeniusHahn_iterate]
+      congr 2
+      ring
+    rw [heq]
+    exact hcomp
+  have hx' : IsTwistPeriodic p (fun z => x.coeff (z / (a : ℚ))) c (M + L) N :=
+    hper.mono le_rfl (by simp) dvd_rfl
+  have hsub := hxL.sub hx'
+  have hfin := hsub.mono le_rfl
+    (by simp : ((max (M + L) (M + L) : ℕ+) : ℕ) ≤ ((M + L : ℕ+) : ℕ))
+    (PNat.dvd_iff.mp (PNat.lcm_dvd dvd_rfl dvd_rfl))
+  have heqf : (fun z => ((invFrobeniusHahn p)^[(L : ℕ)] x - x).coeff (z / (a : ℚ)))
+      = fun z => ((invFrobeniusHahn p)^[(L : ℕ)] x).coeff (z / (a : ℚ))
+          - x.coeff (z / (a : ℚ)) := by
+    funext z
+    rw [HahnSeries.coeff_sub]
+  rw [heqf]
+  exact hfin
+
+/-- **Level drop, deep coefficients vanish**: at every exponent all of whose digits
+sit at positions `> M + L` (with `L` a common multiple of `N` and `d`, `L ≥ M`, and
+the slice values on `T_c` lying in `𝔽_{p^d}`), the Artin-Schreier increment has zero
+coefficient.  Equivalently, every surviving exponent of maximal level has its first
+digit at a position `≤ M + L`. -/
+theorem levelDrop_deep_coeff
+    (hsupp : ∀ q : ℚ, x.coeff (q / (a : ℚ)) ≠ 0 → q ∈ Tc p c)
+    (hper : IsTwistPeriodic p (fun z => x.coeff (z / (a : ℚ))) c M N) {d L : ℕ}
+    (hval : ∀ z ∈ Tc p c, x.coeff (z / (a : ℚ)) ^ p ^ d = x.coeff (z / (a : ℚ)))
+    (hdL : d ∣ L) (hNL : (N : ℕ) ∣ L)
+    {e : ℕ →₀ ℕ} (he : ∀ i, e i < p) (hsum : (e.sum fun _ v => v) ≤ c)
+    (hdeep : ∀ i, i < (M : ℕ) + L → e i = 0) :
+    ((invFrobeniusHahn p)^[L] x - x).coeff (-fracVal p e / (a : ℚ)) = 0 := by
+  have hpq : (0 : ℚ) < (p : ℚ) := by exact_mod_cast hp.out.pos
+  have he0L : ∀ i < L, e i = 0 := fun i hi => hdeep i (by omega)
+  rw [HahnSeries.coeff_sub, coeff_invFrobeniusHahn_iterate]
+  have harg : (p : ℚ) ^ L * (-fracVal p e / (a : ℚ))
+      = -fracVal p (dropGapDig 0 L e) / (a : ℚ) := by
+    rw [fracVal_dropGapDig_zero he0L]
+    ring
+  rw [harg]
+  -- The two slice values agree, by iterating the period `L/N` times along the
+  -- rebased digit string.
+  have hfix : x.coeff (-fracVal p e / (a : ℚ))
+      = x.coeff (-fracVal p (dropGapDig 0 L e) / (a : ℚ)) := by
+    set D : ℕ →₀ ℕ := dropGapDig 0 ((M : ℕ) + L) e with hD
+    have htw : ∀ n : ℕ, twistSeq p (fun z => x.coeff (z / (a : ℚ))) 1 D n
+        = x.coeff (-((p : ℚ) ^ (-(n : ℤ)) * fracVal p D) / (a : ℚ)) := by
+      intro n
+      rw [twistSeq_eq_neg_fracVal_gapDig, fracVal_gapDig_one]
+    have hDval : fracVal p D = (p : ℚ) ^ ((M : ℕ) + L) * fracVal p e :=
+      fracVal_dropGapDig_zero hdeep
+    have hDd : ∀ i, D i < p := fun i => dropGapDig_lt p he _ _ i
+    have hDsum : (D.sum fun _ v => v) ≤ c := by
+      rw [hD, sum_dropGapDig_zero hdeep]
+      exact hsum
+    have hiter := eventually_periodic_iterate
+      (y := fun n => twistSeq p (fun z => x.coeff (z / (a : ℚ))) 1 D n)
+      (M := (M : ℕ)) (N := (N : ℕ))
+      (fun n hn => hper 1 D Nat.one_pos hDd hDsum n hn) (L / (N : ℕ)) (M : ℕ) le_rfl
+    rw [Nat.mul_div_cancel' hNL] at hiter
+    rw [htw, htw, hDval] at hiter
+    have hexp1 : (p : ℚ) ^ (-(((M : ℕ) + L : ℕ) : ℤ))
+        * ((p : ℚ) ^ ((M : ℕ) + L) * fracVal p e) = fracVal p e := by
+      rw [← mul_assoc, ← zpow_natCast (p : ℚ) ((M : ℕ) + L), ← zpow_add₀ hpq.ne']
+      simp
+    have hexp2 : (p : ℚ) ^ (-((M : ℕ) : ℤ))
+        * ((p : ℚ) ^ ((M : ℕ) + L) * fracVal p e) = fracVal p (dropGapDig 0 L e) := by
+      rw [fracVal_dropGapDig_zero he0L, ← mul_assoc, ← zpow_natCast (p : ℚ) ((M : ℕ) + L),
+        ← zpow_add₀ hpq.ne', ← zpow_natCast (p : ℚ) L,
+        show -((M : ℕ) : ℤ) + (((M : ℕ) + L : ℕ) : ℤ) = (L : ℤ) by push_cast; ring]
+    rw [show ((M : ℕ) + L : ℕ) = (M : ℕ) + L from rfl] at hiter
+    rw [hexp1] at hiter
+    rw [hexp2] at hiter
+    exact hiter
+  rw [← hfix]
+  -- The common value lies in `𝔽_{p^L}`, so the `p^L`-th root fixes it.
+  by_cases he0 : e = 0
+  · subst he0
+    have h0 : x.coeff (-fracVal p (0 : ℕ →₀ ℕ) / (a : ℚ)) = 0 := by
+      rw [fracVal_zero]
+      refine coeff_slice_eq_zero_of_notMem hsupp fun hmem => ?_
+      rw [neg_zero] at hmem
+      exact lt_irrefl 0 hmem.2.2
+    rw [h0, Function.iterate_fixed (map_zero _) L, sub_zero]
+  · have hTc : -fracVal p e ∈ Tc p c := neg_fracVal_mem_Tc he hsum he0
+    have hv := hval _ hTc
+    obtain ⟨k, hk⟩ := hdL
+    have hvL : x.coeff (-fracVal p e / (a : ℚ)) ^ p ^ L
+        = x.coeff (-fracVal p e / (a : ℚ)) := by
+      rw [hk]
+      exact pow_pow_mul_eq_self hv k
+    rw [frobeniusEquiv_symm_iterate_fixed hvL, sub_self]
+
+/-- **Level drop, Artin-Schreier identity**: `y^{p^L} = x − x^{p^L}` for the
+increment `y = x^{1/p^L} − x`. -/
+theorem levelDrop_pow_eq (x : HahnSeries ℚ (𝔽ᵃ_[p])) (L : ℕ) :
+    ((invFrobeniusHahn p)^[L] x - x) ^ p ^ L = x - x ^ p ^ L := by
+  rw [sub_pow_char_pow, invFrobeniusHahn_iterate_pow]
+
+end LevelDrop
+
 end TrustworthyKedlaya.UP
