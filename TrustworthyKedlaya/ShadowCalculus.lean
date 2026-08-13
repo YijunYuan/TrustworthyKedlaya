@@ -613,4 +613,34 @@ theorem le_val_shadow_mul_sub (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) (a b : ℚ)
     rw [hΔcoeff, HahnSeries.coeff_mul]
     exact teichmuller_sum_sub_mem_span _ _
 
+/-! ### Recentering a shadow approximation (`lem:recentering-congruence`) -/
+
+/-- **Recentering estimate**: if `z` approximates the shadow of `y` to depth `g`,
+then after recentering by any `ŷ`, the difference `z - S(ŷ)` approximates the shadow
+of `y - ŷ` to depth at least `min g (v_t(y - ŷ) + 1)`: the only loss is one additive
+Teichmüller carry, supported at or above the recentered valuation. -/
+theorem le_val_recenter_sub_shadow (y yh : HahnSeries ℚ (𝔽ᵃ_[p])) (z : 𝕃_[p])
+    {g : WithTop ℚ} (hz : g ≤ val p (z - shadow y)) :
+    min g ((y - yh).orderTop + 1)
+      ≤ val p ((z - shadow yh) - shadow (y - yh)) := by
+  have hsplit : (z - shadow yh) - shadow (y - yh)
+      = (z - shadow y) + (shadow ((y - yh) + yh) - shadow (y - yh) - shadow yh) := by
+    rw [sub_add_cancel]
+    ring
+  rw [hsplit]
+  by_cases hyy : y - yh = 0
+  · rw [hyy, HahnSeries.orderTop_zero, zero_add, shadow_zero, sub_zero, sub_self,
+      add_zero, top_add]
+    exact le_trans (min_le_left _ _) hz
+  · have hdef : ((y - yh).orderTop + 1)
+        ≤ val p (shadow ((y - yh) + yh) - shadow (y - yh) - shadow yh) := by
+      have hcarry := le_val_shadow_add_sub (y - yh) yh ((y - yh).order)
+        (fun q hq _ => HahnSeries.order_le_of_coeff_ne_zero hq)
+      have hcast : (y - yh).orderTop + 1 = (((y - yh).order + 1 : ℚ) : WithTop ℚ) := by
+        rw [← HahnSeries.order_eq_orderTop_of_ne_zero hyy]
+        rw [WithTop.coe_add, WithTop.coe_one]
+      rw [hcast]
+      exact hcarry
+    exact le_trans (min_le_min hz hdef) ((val p).map_add _ _)
+
 end TrustworthyKedlaya.pAdicHahnSeries
