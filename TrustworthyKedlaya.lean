@@ -39,4 +39,5 @@ import TrustworthyKedlaya.TameKummer
 import TrustworthyKedlaya.TowerEmbedding
 import TrustworthyKedlaya.Truncation
 import TrustworthyKedlaya.TwistPeriodicity
+import TrustworthyKedlaya.UPAlgebraic
 import TrustworthyKedlaya.WittVector
