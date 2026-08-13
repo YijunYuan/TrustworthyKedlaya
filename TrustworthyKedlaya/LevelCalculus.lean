@@ -7,6 +7,7 @@ module
 
 public import TrustworthyKedlaya.FrobeniusUP
 public import TrustworthyKedlaya.FiniteImage
+public import TrustworthyKedlaya.ArtinSchreierNeg
 
 /-!
 # Dismantling a UP series along digit-sum levels
@@ -125,17 +126,6 @@ theorem sum_dropGapDig_zero {L : ℕ} {e : ℕ →₀ ℕ} (he0 : ∀ i < L, e i
     gapDig_dropGapDig fun i _ hi => he0 i (by omega)
   conv_rhs => rw [← hgd]
   rw [gapDig_sum]
-
-/-- Pushing all digits `L` positions deeper divides the fractional value by `p^L`. -/
-theorem fracVal_gapDig_one (L : ℕ) (E : ℕ →₀ ℕ) :
-    fracVal p (gapDig 1 L E) = (p : ℚ) ^ (-(L : ℤ)) * fracVal p E := by
-  have hfv := fracVal_gapDig_split (p := p) 1 L E
-  have h1 : (1 : ℕ) - 1 = 0 := rfl
-  rw [h1] at hfv
-  simp only [Nat.not_lt_zero, Nat.zero_le] at hfv
-  rw [(Finsupp.filter_eq_zero_iff _ _).mpr fun x hx => hx.elim,
-    (Finsupp.filter_eq_self_iff _ _).mpr fun x _ => trivial, fracVal_zero, zero_add] at hfv
-  exact hfv
 
 /-! ### Membership in `T_c` -/
 
