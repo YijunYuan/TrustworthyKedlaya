@@ -15,7 +15,7 @@ import TrustworthyKedlaya.TwistPeriodicity
 `TrustworthyKedlaya.UP` re-states `Sabc`, `Tc` and `twistSeq` so that the uniform
 periodicity machinery can live *below* `Kedlaya.lean` in the import graph.  The
 `example`s here pin the copies to the originals by `rfl`, and pin `UP.IsUP` to the
-exact conclusion of `kedlaya_2001a_theorem15_half`: if either side drifts, this
+exact conclusion of `kedlaya_2001a_theorem15`: if either side drifts, this
 file stops elaborating and the build fails.
 -/
 

@@ -13,7 +13,7 @@ public import Mathlib.Data.PNat.Prime
 
 For `K = 𝔽̄_p`, the twist-recurrence machinery of Kedlaya (2001a) degenerates to a
 *uniform eventual periodicity* condition on twist sequences, which is exactly the form
-of `kedlaya_2001a_theorem15_half`.  This file sets up that invariant and its basic
+of `kedlaya_2001a_theorem15`.  This file sets up that invariant and its basic
 calculus: the support sets `S_{a,b,c}`, twist sequences, `(M, N)`-periodicity at a
 digit-sum level `c`, uniformly periodic (UP) Hahn series, and the closure properties
 that only involve reindexing and value-wise operations.
@@ -87,7 +87,7 @@ def IsTwistPeriodic (f : ℚ → 𝔽ᵃ_[p]) (c : ℕ) (M N : ℕ+) : Prop :=
 /-- A Hahn series `x ∈ 𝔽̄_p((t^ℚ))` is *uniformly periodic* (UP) if its support lies in
 some `S_{a,b,c}` and, for a single pair `(M, N)`, every slice function
 `f_m(z) = x_{(m+z)/a}` (`m ≥ -b`) is `(M, N)`-periodic at level `c`.  This is exactly
-the conclusion of `kedlaya_2001a_theorem15_half`. -/
+the conclusion of `kedlaya_2001a_theorem15`. -/
 def IsUP (x : HahnSeries ℚ (𝔽ᵃ_[p])) : Prop :=
   ∃ (a : ℕ+) (b c : ℕ), x.support ⊆ Sabc p a b c ∧
     ∃ M N : ℕ+, ∀ m : ℤ, -(b : ℤ) ≤ m →

@@ -1,11 +1,11 @@
 # TrustworthyKedlaya
 
 Formalize the three target theorems in
-`TrustworthyKedlaya/Kedlaya.lean` (task statement: `prompt.md`):
+`TrustworthyKedlaya/Kedlaya.lean`:
 
-- `kedlaya_2001a_theorem15_half` — integral over F̄_p((t)) ⇔ S_{a,b,c}
+- `kedlaya_2001a_theorem15` — integral over F̄_p((t)) ⇔ S_{a,b,c}
   support + eventually periodic twist sequences ([Kedlaya2001a] Thm 15).
-  **Fully proved** (upgraded from ⇒ to ⇔ with owner approval).
+  **Fully proved.**
 - `kedlaya_2017_theorem13_4` — completed integral closure statement
   ([Kedlaya2017] Thm 13.4, part). **Fully proved.**
 - `kedlaya_2001b_ordinal_bound` — support order type of a ℚ_p-algebraic p-adic
@@ -26,7 +26,6 @@ p^k-th-root descaling plus Frobenius congruence amplification.
   definitions to the originals by `rfl` so drift breaks the build.
   `PAdicHahnSeries.lean`, `WittVector.lean`, `Miscellaneous.lean` are
   human-provided infrastructure.
-- `prompt.md` — the original task statement.
 
 ## Build
 
