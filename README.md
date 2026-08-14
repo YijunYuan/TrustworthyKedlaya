@@ -15,9 +15,11 @@ Everything is specialized to K = F̄_p; per [Kedlaya2017, §2] the 2001a theory
 is valid in that case. The three target statements are protected (inbox
 I-0001): never alter them, only replace `by admit` with kernel-checked proofs.
 Target 2 (`kedlaya_2017_theorem13_4`) is the only remaining intentional
-`admit`: the forward inclusion is proved, the reverse-inclusion chain chapter
-(blueprint, after [Kedlaya2001b] Thm 7 part 2) is written, and the single
-open claim is the adapted-lift existence in `lem:gain-accumulation`.
+`admit`: the forward inclusion is proved, and the reverse inclusion follows
+the published proof of [Kedlaya2001b] Thm 7 part 2 (pp. 335–336): one-shot
+p^k-th-root descaling plus Frobenius congruence amplification (route pivot
+I-0048, s0084). All four supporting blueprint leaves are proved; the
+`lem:approx-by-integral` assembly and closing iteration remain.
 
 ## Layout
 
