@@ -1,5 +1,6 @@
 import TrustworthyKedlaya.Additive
 import TrustworthyKedlaya.AlgSupportBound
+import TrustworthyKedlaya.ApproxByIntegral
 import TrustworthyKedlaya.ArtinSchreierClosure
 import TrustworthyKedlaya.ArtinSchreierGalois
 import TrustworthyKedlaya.ArtinSchreierNeg
