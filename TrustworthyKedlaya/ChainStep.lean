@@ -9,44 +9,45 @@ public import TrustworthyKedlaya.CRootClosed
 public import TrustworthyKedlaya.ShadowCongruence
 
 /-!
-# One step of the re-adapted recentered chain
+# Root extraction against an adapted lift of a recentered hat polynomial
 
-Blueprint `lem:chain-step` (Kedlaya 2001b, Section 3, the per-step structure
-(a)–(f) inside the proof of Theorem 7): a *chain state* for the block anchor
-`(r, s, Yhat, ahat)` carries the accumulated char-`p` recentering `ĝ`, the
-accumulated `p`-adic extracted sum `g` (an element of the closed integral
-closure `C` of `ℚᵘⁿ_[p]`), and a monic *adapted lift* `P` whose coefficients
-lie in `C` and are within `σ_{n-i}(W) + 1` of the shadows of the coefficients
-of the recentered hat polynomial `∏_{y ∈ Yhat}(X - (y - ĝ))`.
+Reusable extraction engine for the descaling route of blueprint
+`lem:approx-by-integral` (the published proof of Kedlaya 2001b, Theorem 7,
+part 2): a `ChainState` for the anchor `(r, s, Yhat, ahat)` packages a monic
+polynomial `P` over `𝕃_[p]` with coefficients in the closed integral closure
+`C` of `ℚᵘⁿ_[p]`, coefficientwise within `σ_{n-i}(W) + 1` of the shadows of
+the coefficients of the recentered split hat polynomial
+`∏_{y ∈ Yhat}(X - (y - ĝ))`, together with a residual approximation
+`val ((r - g) - S(ahat - ĝ)) ≥ s + 1`.  In the one-shot descaling argument
+the congruence is exact (`ĝ = 0`, `P` the coefficientwise shadow companion),
+which is a special case of this state.
 
-`ChainState.exists_step` records everything the blueprint proof of
-`lem:chain-step` establishes unconditionally from a state: the polygon match
-pins the root valuations of `P` to the `t`-adic ones
-(`ChainState.map_orderTop_eq_roots_map_val`); evaluation at the exact shadow
-root plus `lem:approx-root` — packaged as `roots_continuity_forward` — extract
-a root `z` of `P` with `z ∈ C`, `val z = s_c` and
-`val (S(ŷ) - z) ≥ s_c + 1/m`; and recentering by the depth-one slice
-`ŵ = trunc (s_c + 1) z` advances invariant (1) by `1/m ≥ 1/n` while
-regenerating invariant (2) at the fixed depth `s + 1`.
-
-What the step deliberately does **not** produce is the next stage's adapted
-lift restoring invariant (3): that existence is the analytic content isolated
-in blueprint `lem:gain-accumulation`.
+`ChainState.map_orderTop_eq_roots_map_val` is the polygon match: the adapted
+congruence pins the valuation multiset of the roots of `P` over the
+algebraically closed `𝕃_[p]` to the `t`-adic root valuations.
+`ChainState.exists_step` extracts a root `z` of `P` with `z ∈ C`,
+`val z = s_c` and `val (S(ŷ) - z) ≥ s_c + 1/m` (via
+`roots_continuity_forward`), bounds the residual advance by
+`min (s + 1) (s_c + 1/m)`, and records the depth-one-slice recentering
+estimates (`ŵ = trunc (s_c + 1) z` raises the hat-root depth by `≥ 1/m` and
+regenerates the residual congruence at depth `s + 1`) — the per-step clauses
+retained from the retired chain formulation of the arXiv version, kept for
+reuse.
 
 ## Main statements
 
-- `TrustworthyKedlaya.pAdicHahnSeries.ChainState`: the chain-state invariant
-  pack, invariants (1)–(3) in `j`-free form.
+- `TrustworthyKedlaya.pAdicHahnSeries.ChainState`: the adapted-lift state.
 - `TrustworthyKedlaya.pAdicHahnSeries.ChainState.map_orderTop_eq_roots_map_val`:
   the polygon match.
-- `TrustworthyKedlaya.pAdicHahnSeries.ChainState.exists_step`: one chain step —
-  root extraction, `C`-membership, distance bounds, slice recentering, and the
-  advance of invariants (1)–(2).
+- `TrustworthyKedlaya.pAdicHahnSeries.ChainState.exists_step`: root
+  extraction, `C`-membership, distance bounds, and slice-recentering
+  estimates.
 
 ## References
 
 - K. S. Kedlaya, *Power series and `p`-adic algebraic closures*, J. Number
-  Theory 89 (2001) [Ked01b], Section 3, proof of Theorem 7, steps (a)–(f).
+  Theory 89 (2001) [Ked01b], pp. 333–336 (published version), proof of
+  Theorem 7.
 -/
 
 @[expose] public section
@@ -58,8 +59,9 @@ open scoped TrustworthyKedlaya.UP
 
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
-/-- A **chain state** for the block anchor `(r, s, Yhat, ahat)` (blueprint
-`lem:chain-step`): `Yhat` is the root multiset of the hat polynomial and
+/-- A **chain state** for the block anchor `(r, s, Yhat, ahat)` (an adapted
+lift in the sense of the descaling route of `lem:approx-by-integral`): `Yhat`
+is the root multiset of the hat polynomial and
 `ahat ∈ Yhat` the distinguished root whose shadow approximates the residual
 target `r` at depth `s + 1`.  The data are the accumulated char-`p` recentering
 `ĝ`, the accumulated `p`-adic extracted sum `g`, and the adapted lift `P`; the
@@ -120,8 +122,8 @@ theorem shadow_congruence (St : ChainState r s Yhat ahat) :
   rw [← (IsAlgClosed.splits St.lift).eq_prod_roots_of_monic St.lift_monic]
   exact hTsum
 
-/-- **Polygon match** (blueprint `lem:chain-step`, first step of the proof):
-invariant (3) pins the valuation multiset of the roots of the adapted lift over
+/-- **Polygon match**: the adapted congruence (invariant (3)) pins the
+valuation multiset of the roots of the adapted lift over
 the algebraically closed `𝕃_[p]` to the `t`-adic root-valuation multiset `W` of
 the recentered hat polynomial. -/
 theorem map_orderTop_eq_roots_map_val (St : ChainState r s Yhat ahat) :
@@ -170,8 +172,8 @@ theorem map_orderTop_eq_roots_map_val (St : ChainState r s Yhat ahat) :
   rw [← hmapshadow]
   exact h.symm
 
-/-- **One step of the re-adapted recentered chain** (blueprint `lem:chain-step`):
-from a chain state whose current hat root `ŷ = ahat - ĝ` has exact depth `s_c`,
+/-- **Root extraction and slice recentering against an adapted lift**: from a
+chain state whose current hat root `ŷ = ahat - ĝ` has exact depth `s_c`,
 extract a root `z` of the adapted lift with `z ∈ C`, `val z = s_c` and
 `val (S(ŷ) - z) ≥ s_c + 1/m` (`m` ≥ 1 the multiplicity of `s_c` among the
 recentered `t`-adic root depths, `m ≤ n`), so that the residual advances at
@@ -179,8 +181,9 @@ depth `min (s + 1) (s_c + 1/m)`; recentering by the depth-one slice
 `ŵ = trunc (s_c + 1) z` raises the hat-root depth to at least `s_c + 1/m` and
 regenerates invariant (2) at the fixed depth `s + 1`.
 
-The step does **not** produce the next adapted lift (invariant (3) at the new
-state); that existence is blueprint `lem:gain-accumulation`. -/
+The step does **not** re-establish invariant (3) at the recentered state; in
+the one-shot descaling route of `lem:approx-by-integral` no re-established
+lift is needed. -/
 theorem exists_step (St : ChainState r s Yhat ahat) (hahat : ahat ∈ Yhat) {sc : ℚ}
     (hsc : (ahat - St.recenter).orderTop = (sc : WithTop ℚ)) :
     ∃ z ∈ St.lift.roots, ∃ m : ℕ,
