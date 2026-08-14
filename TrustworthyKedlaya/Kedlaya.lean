@@ -12,6 +12,7 @@ public import Mathlib.Topology.Defs.Basic
 import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.UPAlgebraic
 import TrustworthyKedlaya.AlgSupportBound
+import TrustworthyKedlaya.AlgCoeffToIntegral
 
 /-!
 ## Main statements
@@ -140,7 +141,7 @@ theorem kedlaya_2017_theorem13_4 :
     closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier =
     closure { f : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]), IsAlgebraic (𝔽ᵃ_[p])⸨X⸩ f' ∧
       (exists_canonical_expansion f).choose.val = f'.coeff }
-    := by admit
+    := pAdicHahnSeries.closure_integralClosure_eq_closure_algebraic_coeff
 
 open Ordinal in
 /-- **Kedlaya (2001b), Section 4.** The order type of the support of a `ℚ_[p]`-algebraic `p`-adic
