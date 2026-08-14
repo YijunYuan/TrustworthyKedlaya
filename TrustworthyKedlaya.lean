@@ -36,6 +36,7 @@ import TrustworthyKedlaya.NewtonPolygonRoots
 import TrustworthyKedlaya.NewtonSlope
 import TrustworthyKedlaya.PAdicHahnSeries
 import TrustworthyKedlaya.PGroupGalois
+import TrustworthyKedlaya.PowAmplify
 import TrustworthyKedlaya.Rescale
 import TrustworthyKedlaya.RootMatching
 import TrustworthyKedlaya.SabcOrderType
