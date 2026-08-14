@@ -9,12 +9,13 @@ Formalize the three target theorems in
 - `kedlaya_2017_theorem13_4` — completed integral closure statement
   ([Kedlaya2017] Thm 13.4, part).
 - `kedlaya_2001b_ordinal_bound` — support order type of a ℚ_p-algebraic p-adic
-  Hahn series is ≤ ω^ω ([Kedlaya2001b] §4).
+  Hahn series is ≤ ω^ω ([Kedlaya2001b] §4). **Fully proved.**
 
 Everything is specialized to K = F̄_p; per [Kedlaya2017, §2] the 2001a theory
 is valid in that case. The three target statements are protected (inbox
 I-0001): never alter them, only replace `by admit` with kernel-checked proofs.
-Targets 2 and 3 are the only remaining intentional `admit`s.
+Target 2 (`kedlaya_2017_theorem13_4`) is the only remaining intentional
+`admit`.
 
 ## Layout
 
@@ -24,6 +25,8 @@ Targets 2 and 3 are the only remaining intentional `admit`s.
   `PAdicHahnSeries.lean`, `WittVector.lean`, `Miscellaneous.lean` are
   human-provided infrastructure.
 - `blueprint/main.tex` — the math blueprint; `hgraph/` — the dependency graph.
+- `scratch/` — committed numeric-evidence scripts and outputs from the target-2
+  route-decision phase (numerics closed per I-0042); evidence, not library code.
 - `prompt.md`, `refs/` — frozen task statement and source papers (read-only).
   The shared reference library is at the workspace root `references/`.
 
