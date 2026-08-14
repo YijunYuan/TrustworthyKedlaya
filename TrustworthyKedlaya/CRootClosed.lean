@@ -501,4 +501,107 @@ theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
       (Polynomial.isRoot_of_mem_roots hz₀Z)
   exact ⟨z₀, hz₀C, hz₀near⟩
 
+/-! ### The closed integral closure is a subring (`lem:c-subring`) -/
+
+/-- `C` contains the image of `ℚᵘⁿ_[p]`. -/
+theorem algebraMap_mem_closure_integralClosure (c : ℚᵘⁿ_[p]) :
+    algebraMap ℚᵘⁿ_[p] 𝕃_[p] c ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier :=
+  subset_closure (Subalgebra.algebraMap_mem _ c)
+
+/-- `C` is closed under addition: approximants add. -/
+theorem add_mem_closure_integralClosure {x y : 𝕃_[p]}
+    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hy : y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) :
+    x + y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+  refine mem_closure_of_forall_exists_near fun n => ?_
+  obtain ⟨a, haS, hax⟩ := exists_near_of_mem_closure hx n
+  obtain ⟨b, hbS, hby⟩ := exists_near_of_mem_closure hy n
+  refine ⟨a + b, Subalgebra.add_mem _ haS hbS, ?_⟩
+  have hsplit : (x + y) - (a + b) = (x - a) + (y - b) := by ring
+  rw [hsplit]
+  exact (val p).map_le_add hax hby
+
+/-- `C` is closed under negation. -/
+theorem neg_mem_closure_integralClosure {x : 𝕃_[p]}
+    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) :
+    -x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+  refine mem_closure_of_forall_exists_near fun n => ?_
+  obtain ⟨a, haS, hax⟩ := exists_near_of_mem_closure hx n
+  refine ⟨-a, Subalgebra.neg_mem _ haS, ?_⟩
+  have hsplit : -x - -a = a - x := by ring
+  rw [hsplit, (val p).map_sub_swap]
+  exact hax
+
+/-- `C` is closed under multiplication: `xy - ab = x(y - b) + b(x - a)`, and the
+valuations of `x` and `b` are bounded below independently of the approximation
+depth. -/
+theorem mul_mem_closure_integralClosure {x y : 𝕃_[p]}
+    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hy : y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) :
+    x * y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+  rcases eq_or_ne x 0 with rfl | hx0
+  · rw [zero_mul]
+    exact subset_closure (Subalgebra.zero_mem _)
+  rcases eq_or_ne y 0 with rfl | hy0
+  · rw [mul_zero]
+    exact subset_closure (Subalgebra.zero_mem _)
+  obtain ⟨vx, hvx⟩ := WithTop.ne_top_iff_exists.mp
+    (fun h => hx0 (val_eq_top_iff.mp h))
+  obtain ⟨vy, hvy⟩ := WithTop.ne_top_iff_exists.mp
+    (fun h => hy0 (val_eq_top_iff.mp h))
+  obtain ⟨M, hM⟩ := exists_nat_ge (max 0 (max (-vx) (-vy)))
+  have hMx : -vx ≤ (M : ℚ) := le_trans (le_max_of_le_right (le_max_left _ _)) hM
+  have hMy : -vy ≤ (M : ℚ) := le_trans (le_max_of_le_right (le_max_right _ _)) hM
+  refine mem_closure_of_forall_exists_near fun n => ?_
+  obtain ⟨a, haS, hax⟩ := exists_near_of_mem_closure hx (n + M)
+  obtain ⟨b, hbS, hby⟩ := exists_near_of_mem_closure hy (n + M)
+  refine ⟨a * b, Subalgebra.mul_mem _ haS hbS, ?_⟩
+  have hsplit : x * y - a * b = x * (y - b) + b * (x - a) := by ring
+  rw [hsplit]
+  refine (val p).map_le_add ?_ ?_
+  · rw [(val p).map_mul, ← hvx]
+    calc ((n : ℚ) : WithTop ℚ) ≤ ((vx + (n + M : ℕ) : ℚ) : WithTop ℚ) := by
+          rw [WithTop.coe_le_coe]
+          push_cast
+          linarith
+      _ = ((vx : ℚ) : WithTop ℚ) + (((n + M : ℕ) : ℚ) : WithTop ℚ) := by
+          rw [← WithTop.coe_add]
+      _ ≤ ((vx : ℚ) : WithTop ℚ) + val p (y - b) := add_le_add le_rfl hby
+  · rw [(val p).map_mul]
+    have hvb : min ((vy : WithTop ℚ)) ((((n + M : ℕ) : ℚ)) : WithTop ℚ) ≤ val p b := by
+      have hb : b = y - (y - b) := by ring
+      rw [hb]
+      exact (val p).map_le_sub (le_trans (min_le_left _ _) (le_of_eq hvy))
+        (le_trans (min_le_right _ _) hby)
+    rcases le_total (vy : WithTop ℚ) ((((n + M : ℕ) : ℚ)) : WithTop ℚ) with hmin | hmin
+    · rw [min_eq_left hmin] at hvb
+      calc ((n : ℚ) : WithTop ℚ) ≤ ((vy + (n + M : ℕ) : ℚ) : WithTop ℚ) := by
+            rw [WithTop.coe_le_coe]
+            push_cast
+            linarith
+        _ = ((vy : ℚ) : WithTop ℚ) + (((n + M : ℕ) : ℚ) : WithTop ℚ) := by
+            rw [← WithTop.coe_add]
+        _ ≤ val p b + val p (x - a) := add_le_add hvb hax
+    · rw [min_eq_right hmin] at hvb
+      calc ((n : ℚ) : WithTop ℚ)
+          ≤ (((n + M : ℕ) + (n + M : ℕ) : ℚ) : WithTop ℚ) := by
+            rw [WithTop.coe_le_coe]
+            push_cast
+            linarith
+        _ = (((n + M : ℕ) : ℚ) : WithTop ℚ) + (((n + M : ℕ) : ℚ) : WithTop ℚ) := by
+            rw [← WithTop.coe_add]
+        _ ≤ val p b + val p (x - a) := add_le_add hvb hax
+
+/-- `C` is closed under powers. -/
+theorem pow_mem_closure_integralClosure {x : 𝕃_[p]}
+    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) (n : ℕ) :
+    x ^ n ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+  induction n with
+  | zero =>
+    rw [pow_zero]
+    exact subset_closure (Subalgebra.one_mem _)
+  | succ n ih =>
+    rw [pow_succ]
+    exact mul_mem_closure_integralClosure ih hx
+
 end TrustworthyKedlaya.pAdicHahnSeries
