@@ -14,11 +14,6 @@ Formalize the three target theorems in
 Everything is specialized to K = F̄_p; per [Kedlaya2017, §2] the 2001a theory
 is valid in that case.
 
-**Status (2026-08-14): COMPLETE.** All three targets are kernel-checked with
-no `admit`/`sorry` and `lake build` is green. The target-2 reverse inclusion
-follows the published proof of [Kedlaya2001b] Thm 7 part 2 (pp. 335–336):
-p^k-th-root descaling plus Frobenius congruence amplification.
-
 ## Layout
 
 - `TrustworthyKedlaya/` — Lean sources. Proof machinery sits below
@@ -31,3 +26,16 @@ p^k-th-root descaling plus Frobenius congruence amplification.
 
 `lake build` from this directory. The library root `TrustworthyKedlaya.lean`
 must import every module — a bare build only checks what the root reaches.
+
+## References
+- K. S. Kedlaya, *Power series and p-adic algebraic closures*, J. Number Theory 89 (2001)
+  [Ked01a].
+- K. S. Kedlaya, *The algebraic closure of the power series field in positive characteristic*,
+  Proc. Amer. Math. Soc. 129 (2001) [Ked01b].
+- K. S. Kedlaya, *On the algebraicity of generalized power series*, Beiträge Algebra Geom. 58
+  (2017) [Ked17].
+
+## Author
+- Yijun Yuan (human)
+- [Archon-Horizen](https://github.com/frenzymath/Archon-Horizon) (Agentic system of [FrenzyMath](https://github.com/frenzymath))
+- Claude Fable 5 (LLM of Anthropic, Inc.)
