@@ -10,7 +10,7 @@ public import TrustworthyKedlaya.RootMatching
 /-!
 # The Newton polygon reads off the root valuations
 
-Blueprint `lem:newton-polygon-roots` (Kedlaya 2001b): for a split monic polynomial
+The Newton-polygon dictionary (Kedlaya 2001b): for a split monic polynomial
 `P = ∏_{y ∈ Y}(X - y)` over a ring with an additive valuation `v : F → ℚ ∪ {∞}`
 whose only `∞`-valued element is `0`, the valuation multiset `v(Y)` is determined
 by the coefficient-valuation data `(v(P_i))_i`.  Determination is formalized in
@@ -37,7 +37,8 @@ valuation (and the low valuations finite), then
 `v (P.coeff (card Y₁)) = ∑ v(Y₀)` *exactly* — proved by factoring `P = P₀ * P₁`
 and isolating the unique minimal term `P₀.coeff 0 * P₁.leadingCoeff` of the
 coefficient convolution; every other term is strictly larger by the coefficient
-floors of `lem:split-coeff-floor` together with the strict low/high separation.
+floors of `exists_sum_le_v_coeff_prod_X_sub_C` together with the strict low/high
+separation.
 
 ## References
 
@@ -770,7 +771,7 @@ theorem multiset_eq_of_countP_cuts {M₁ M₂ : Multiset (WithTop ℚ)}
     omega
 
 /-- **The Newton polygon reads off the root valuations**
-(`lem:newton-polygon-roots`; Kedlaya 2001b, Section 3).  Let `Y₁, Y₂` be root
+(Kedlaya 2001b, Section 3).  Let `Y₁, Y₂` be root
 multisets of the same size over (possibly different) commutative rings carrying
 `ℚ ∪ {∞}`-valued additive valuations whose only `∞`-valued element is `0`.  If the
 split monic polynomials `∏_{y ∈ Y₁}(X - y)` and `∏_{y ∈ Y₂}(X - y)` have
@@ -830,7 +831,7 @@ theorem map_v_eq_of_v_coeff_eq {F₁ : Type*} [CommRing F₁] [Nontrivial F₁]
 /-! ### Congruence robustness -/
 
 /-- **The Newton-polygon dictionary is congruence-robust**
-(`lem:polygon-congruence`; Kedlaya 2001b, Section 3).  Let `Y, Z` be root
+(Kedlaya 2001b, Section 3).  Let `Y, Z` be root
 multisets of the same size `n` over a commutative ring carrying a
 `ℚ ∪ {∞}`-valued additive valuation `v` whose only `∞`-valued element is `0`,
 and write `P = ∏_{y ∈ Y}(X - y)`, `Q = ∏_{z ∈ Z}(X - z)`.  If for some `k > 0`
@@ -1275,7 +1276,7 @@ theorem countP_ne_top_map_min {W : Multiset (WithTop ℚ)} {Θ : ℚ} :
   rw [Multiset.countP_eq_card.mpr h, Multiset.card_map]
 
 /-- **The Θ-capped Newton-polygon dictionary is congruence-robust**
-(`lem:polygon-congruence-capped`; Kedlaya 2001b, Section 3).  Let `Y, Z` be root
+(Kedlaya 2001b, Section 3).  Let `Y, Z` be root
 multisets of the same size `n` over a commutative ring carrying a
 `ℚ ∪ {∞}`-valued additive valuation `v`, and write `P = ∏_{y ∈ Y}(X - y)`,
 `Q = ∏_{z ∈ Z}(X - z)`.  If for some `k > 0` every coefficient difference is

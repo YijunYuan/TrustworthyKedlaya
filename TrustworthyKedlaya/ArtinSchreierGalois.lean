@@ -22,8 +22,7 @@ there is `c : E` with `Tr(c) = ∑_{i<p} σ^i c = 1`; the weighted sum
 `θ^p - θ` is fixed by the whole group, hence lies in `F`; finally `[F(θ):F]`
 divides the prime `p` and is not `1`, so `F(θ) = E`.
 
-This is Lemma `lem:degree-p-artin-schreier` of the blueprint (Kedlaya 2001a, proof of
-Lemma 3).
+This is Kedlaya 2001a, proof of Lemma 3.
 -/
 
 @[expose] public section

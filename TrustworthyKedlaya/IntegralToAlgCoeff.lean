@@ -17,12 +17,12 @@ public import TrustworthyKedlaya.IntTruncation
 /-!
 # Integral elements have coefficient functions from algebraic series
 
-Blueprint `prop:integral-to-alg-coeff` (Kedlaya 2001b, Theorem 7, first part, with
-the recentering of the second part; Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]`
+This file proves Kedlaya 2001b, Theorem 7, first part, with the recentering of
+the second part (Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]`
 integral over `ℚᵘⁿ_[p]` lies in the closure of the set of elements whose canonical
 coefficient function is the coefficient function of a Hahn series algebraic over
-`𝔽̄_p((t))`.  By `lem:trunc-up-closure` that closure is the set `B'` of
-truncationwise-UP elements, so the statement reduces to `IsTruncUP f`.
+`𝔽̄_p((t))`.  That closure is the set `B'` of truncationwise-UP elements
+(`TrustworthyKedlaya.TruncUPClosure`), so the statement reduces to `IsTruncUP f`.
 
 The proof is a Newton iteration steered towards `f`, restarted at every step:
 
@@ -37,14 +37,12 @@ The proof is a Newton iteration steered towards `f`, restarted at every step:
   coefficient valuation.  The truncations are UP, hence algebraic over
   `𝔽̄_p((t))`; the hat polynomial they form splits in the relative algebraic
   closure of `𝔽̄_p((t))` inside the Hahn field, its coefficient valuations agree
-  with those of `Q`, so the Newton polygon forces equal root-valuation multisets
-  (`lem:newton-polygon-roots`), and the continuity of roots
-  (`lem:roots-continuity`, reverse direction) matches `r` with the shadow of an
+  with those of `Q`, so the Newton polygon forces equal root-valuation multisets,
+  and the continuity of roots (reverse direction) matches `r` with the shadow of an
   algebraic root to depth `val r + 1/n`.
 * Iteration (`exists_isTruncUP_near_of_root`): recenter `Q` by `X + C g` and repeat;
-  the recentered coefficients stay in `B'` because `B'` is a subring
-  (`lem:witt-carry-up`, `lem:witt-carry-up-mul`), and the recentered roots stay
-  nonnegative.  The gain `1/n` per step makes the partial sums converge to `f`.
+  the recentered coefficients stay in `B'` because `B'` is a subring, and the
+  recentered roots stay nonnegative.  The gain `1/n` per step makes the partial sums converge to `f`.
 * Scaling (`isTruncUP_of_isIntegral_QpUn`): a general annihilator is first scaled
   by `p^N` to force all roots into the valuation ring; `B'` absorbs the scaling
   because it contains all integer monomials `[a]·p^m` and is a subring.
@@ -55,7 +53,7 @@ The proof is a Newton iteration steered towards `f`, restarted at every step:
 - `TrustworthyKedlaya.pAdicHahnSeries.isTruncUP_of_isIntegral_QpUn`: integral
   elements over `ℚᵘⁿ_[p]` are truncationwise UP.
 - `TrustworthyKedlaya.pAdicHahnSeries.mem_closure_algebraic_coeff_of_isIntegral`:
-  `prop:integral-to-alg-coeff`.
+  the forward inclusion (Kedlaya 2001b, Theorem 7, first part).
 
 ## References
 
@@ -134,7 +132,7 @@ theorem isTruncUP_ZpUn_embd (a : ℤᵘⁿ_[p]) : IsTruncUP (ZpUn_embd a) := by
       _ ≤ (((n + 1 : ℕ) : ℚ) : WithTop ℚ) + val p (ZpUn_embd w) :=
           add_le_add le_rfl (le_val_ZpUn_embd w)
 
-/-- **`ℚᵘⁿ_[p]` lands in `B'`** (the coefficient step of `prop:integral-to-alg-coeff`):
+/-- **`ℚᵘⁿ_[p]` lands in `B'`** (the coefficient step of the forward inclusion):
 the canonical coefficient function of an element of `ℚᵘⁿ_[p]` is a Laurent series,
 so the element is truncationwise UP. -/
 theorem isTruncUP_algebraMap_QpUn (c : ℚᵘⁿ_[p]) :
@@ -274,7 +272,7 @@ theorem multiset_sum_le_untop'_sum {W T : Multiset (WithTop ℚ)}
 
 /-! ### One steered Newton step -/
 
-/-- **One steered Newton step** (`prop:integral-to-alg-coeff`, iteration body): let
+/-- **One steered Newton step** (the iteration body): let
 `Q` be a monic polynomial of degree `n ≥ 1` over `𝕃_[p]` with all coefficients in
 `B'` and all roots of valuation `≥ 0`, and let `r` be a root.  Then some `h ∈ B'`
 (the shadow of a root of the truncated hat polynomial, algebraic over `𝔽̄_p((t))`)
@@ -474,7 +472,7 @@ theorem exists_isTruncUP_approx_of_root
 
 /-! ### The iteration and the proposition -/
 
-/-- **The steered Newton iteration** (`prop:integral-to-alg-coeff`, iteration):
+/-- **The steered Newton iteration**:
 under the hypotheses of the step lemma, every root `f` of `Q` admits, for every
 `j`, an approximant `g ∈ B'` of nonnegative valuation with
 `val (f - g) ≥ j/n`.  Induct: recenter `Q` by `X + C g` (the coefficients stay
@@ -555,7 +553,7 @@ theorem exists_isTruncUP_near_of_root
       exact add_le_add hgnear le_rfl
 
 /-- **Integral elements over `ℚᵘⁿ_[p]` are truncationwise UP**
-(`prop:integral-to-alg-coeff`, subring form).  Scale a monic annihilator by `p^N`
+(subring form).  Scale a monic annihilator by `p^N`
 so that all roots land in the valuation ring, run the steered Newton iteration,
 and let `B'`-closedness absorb the limit and the descaling monomial. -/
 theorem isTruncUP_of_isIntegral_QpUn {f : 𝕃_[p]}
@@ -657,7 +655,7 @@ theorem isTruncUP_of_isIntegral_QpUn {f : 𝕃_[p]}
   exact (isTruncUP_single_intCast _ _).mul hfB'
 
 /-- **Integral elements have coefficient functions from algebraic series: forward
-inclusion** (`prop:integral-to-alg-coeff`; Kedlaya 2001b, Theorem 7, first part;
+inclusion** (Kedlaya 2001b, Theorem 7, first part;
 Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]` integral over `ℚᵘⁿ_[p]` lies in the
 closure of the set of elements whose canonical coefficient function is the
 coefficient function of a Hahn series algebraic over `𝔽̄_p((t))`. -/

@@ -12,9 +12,9 @@ public import TrustworthyKedlaya.NewtonPolygonRoots
 /-!
 # The closed integral closure of `ℚᵘⁿ_[p]` is closed under roots of monic polynomials
 
-Blueprint `lem:c-root-closed`: write `C` for the closure (valued topology) of the
-integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`.  Every root in `𝕃_[p]` of a monic
-polynomial with coefficients in `C` lies in `C`.
+Write `C` for the closure (valued topology) of the integral closure of `ℚᵘⁿ_[p]`
+in `𝕃_[p]`.  Every root in `𝕃_[p]` of a monic polynomial with coefficients in `C`
+lies in `C`.
 
 Perturb each coefficient to an integral element at valuation depth `Θ`: the
 perturbed polynomial `P'` is monic with integral coefficients, so all of its roots
@@ -27,7 +27,7 @@ closure), and `v(P'(u)) ≥ Θ - B` with `B` fixed by the degree and `v(u)`.  Si
 ## Main statements
 
 - `TrustworthyKedlaya.pAdicHahnSeries.mem_closure_integralClosure_of_monic_root`:
-  `lem:c-root-closed`.
+  every root in `𝕃_[p]` of a monic polynomial with coefficients in `C` lies in `C`.
 
 ## References
 
@@ -67,10 +67,9 @@ theorem isIntegral_QpUn_of_monic_root {P : Polynomial 𝕃_[p]} (hP : P.Monic)
   rw [Polynomial.IsRoot, ← hP₀, Polynomial.eval_map] at this
   exact this
 
-/-- **The closed integral closure is closed under roots of monic polynomials**
-(`lem:c-root-closed`): let `C` be the closure of the integral closure of `ℚᵘⁿ_[p]`
-in `𝕃_[p]`.  Every root in `𝕃_[p]` of a monic polynomial with coefficients in `C`
-lies in `C`. -/
+/-- **The closed integral closure is closed under roots of monic polynomials**:
+let `C` be the closure of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`.  Every root
+in `𝕃_[p]` of a monic polynomial with coefficients in `C` lies in `C`. -/
 theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP : P.Monic)
     (hcoeff : ∀ i, P.coeff i ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
     {u : 𝕃_[p]} (hu : P.IsRoot u) :
@@ -264,7 +263,7 @@ private theorem coe_nsmul_withTop (m : ℕ) (r : ℚ) :
   | succ k ih =>
     rw [succ_nsmul, succ_nsmul, ih, ← WithTop.coe_add]
 
-/-- **Artin-Schreier depth transfer** (`lem:as-depth-transfer`): let `u ∈ 𝕃_[p]`
+/-- **Artin-Schreier depth transfer**: let `u ∈ 𝕃_[p]`
 have valuation `γ > 0` and let `q ≥ 2`, so that `u` is an exact root of
 `X^q - X + c*` with `c* := u - u^q` of valuation `γ`.  If `c' ∈ C` (the closed
 integral closure of `ℚᵘⁿ_[p]`) approximates `c*` to valuation `γ + e` with
@@ -277,12 +276,11 @@ approximation depth transfers to the root distance in full — there is no divis
 by the degree.
 
 The hypothesis `0 < γ` is essential: for `γ < 0` the point `(1, 0)` lies above
-the polygon and all `q` roots share the valuation `γ` (see hgraph node
-`prop:alg-coeff-to-integral`, comments 10-11: the fractional-window pieces of the
-UP decomposition have `γ ∈ (-1/a, 0)`, so this lemma does *not* apply to them
-as-is; the candidate repair works with the recentered root-difference polygon in
-the width-refined benign regime `(q-1)|γ| < 1`).  This proof is the template for
-that variant. -/
+the polygon and all `q` roots share the valuation `γ`.  In particular the
+fractional-window pieces of the UP decomposition have `γ ∈ (-1/a, 0)`, so this
+lemma does *not* apply to them as-is; the variant needed there works with the
+recentered root-difference polygon in the width-refined benign regime
+`(q-1)|γ| < 1`, with this proof as the template. -/
 theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
     (hγ : 0 < γ) (he : 0 < e) {q : ℕ} (hq : 2 ≤ q)
     (hu : val p u = ((γ : ℚ) : WithTop ℚ))
@@ -501,7 +499,7 @@ theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
       (Polynomial.isRoot_of_mem_roots hz₀Z)
   exact ⟨z₀, hz₀C, hz₀near⟩
 
-/-! ### The closed integral closure is a subring (`lem:c-subring`) -/
+/-! ### The closed integral closure is a subring -/
 
 /-- `C` contains the image of `ℚᵘⁿ_[p]`. -/
 theorem algebraMap_mem_closure_integralClosure (c : ℚᵘⁿ_[p]) :

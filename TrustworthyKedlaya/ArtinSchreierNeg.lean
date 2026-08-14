@@ -16,7 +16,7 @@ public import Mathlib.Algebra.BigOperators.Finprod
 For `y` uniformly periodic with support in `S_{a,b,c} ∩ (-∞, 0)`, the series
 `x = ∑_i t^i ∑_{n ≥ 1} (y_{i p^n})^{1/p^n}` is a well-defined Hahn series supported on
 `S_{a,b,b+c} ∩ (-∞, 0)`, satisfies `x^p - x = y`, and is again uniformly periodic
-(Kedlaya (2001a), part of the proof of Lemma 4; `lem:as-root-neg` of the blueprint).
+(Kedlaya (2001a), part of the proof of Lemma 4).
 
 The uniform periodicity is the hard kernel of the whole Theorem-15 route: the naive
 "each twist sequence of `x` is a bounded sum of twist sequences of `y`" argument fails
@@ -28,7 +28,7 @@ Kedlaya (2017), Remark 2.7).  The correct argument couples the twist sequences o
   strings by one place; this couples the twist sequence of `x` at slice `m` and gap
   position `j` to the one at slice `pm - b₁` and gap position `j - 1` (same index),
   resp. at slice `pm` and gap position `1` (index shifted by one) — the two cases of
-  `lem:as-twist-couple`.
+  the coupling relation.
 * At gap position `1` and slice `0` the coupling is a Frobenius-affine recursion
   `c_{n+1}^p = c_n + y_n`, handled by the orbit lemma
   `eventually_periodic_of_frobenius_affine`.
@@ -38,8 +38,8 @@ Kedlaya (2017), Remark 2.7).  The correct argument couples the twist sequences o
 * At gap positions `j ≥ 2` the coupling transfers periodicity verbatim (no parameter
   growth), closing an induction on `j`.
 
-All sequence values live in a single finite subfield `𝔽_{p^D}` (`lem:as-subfield`),
-as required by the orbit lemma; the resulting uniform data is `(M + L, N·p·D)`.
+All sequence values live in a single finite subfield `𝔽_{p^D}`, as required by the
+orbit lemma; the resulting uniform data is `(M + L, N·p·D)`.
 
 ## Main statements
 
@@ -53,7 +53,7 @@ as required by the orbit lemma; the resulting uniform data is `(M + L, N·p·D)`
   `TrustworthyKedlaya.UP.twistSeq_couple_gap_ge_two`: the coupling relations.
 - `TrustworthyKedlaya.UP.sliceWitness_of_asPair`: the ladder — a slice witness for `x`.
 - `TrustworthyKedlaya.UP.exists_artinSchreier_root_of_support_neg`: the packaged
-  statement (`lem:as-root-neg`).
+  statement.
 
 ## References
 
@@ -549,7 +549,7 @@ theorem pow_pow_eq_self_of_asPair {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+
 Along `x^p = x + y`, `p`-th powers of the twist sequences of `x` are twist sequences of
 `x + y`: the evaluation point is multiplied by `p`, which shifts the digit string one
 place — dropping the leading digit into the slice index when the gap sits at `j ≥ 2`,
-and shortening the gap by one when it sits at `j = 1` (`lem:as-twist-couple`). -/
+and shortening the gap by one when it sits at `j = 1`. -/
 
 /-- **Coupling at gap position 1**: the `p`-th power of the gap-one twist sequence of
 the slice `m` of `x` at index `n + 1` is the gap-one twist sequence of the slice `p·m`
@@ -617,8 +617,8 @@ theorem twistSeq_slice_add (x y : HahnSeries ℚ (𝔽ᵃ_[p])) (a : ℕ+) (m : 
 
 /-! ### The ladder: uniform periodicity of the Artin-Schreier root -/
 
-/-- **The ladder** (`lem:as-root-neg`, periodicity part): if `x^p = x + y`, `y` has a
-width-`a` slice witness with data `(b, c, M, N)` and negative support, and `x` is
+/-- **The ladder** (periodicity part): if `x^p = x + y`, `y` has a width-`a` slice
+witness with data `(b, c, M, N)` and negative support, and `x` is
 supported in `S_{a,b,C} ∩ (-∞,0)`, then `x` has a width-`a` slice witness with data
 `(b, C, M + L, N·p·D)`, where `p^L > b` and `𝔽_{p^D}` is the common subfield of the
 pair.  Gap-one twist sequences at slice `0` satisfy the Frobenius-affine recursion
@@ -757,8 +757,8 @@ theorem sliceWitness_of_asPair {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {
   intro j dig hj hdig hsum n hn
   exact master j hj m dig hdig hsum n (by exact_mod_cast hn)
 
-/-- **Artin-Schreier roots of negatively supported UP series** (`lem:as-root-neg`):
-if `y` has a width-`a` slice witness with data `(b, c, M, N)` and support in
+/-- **Artin-Schreier roots of negatively supported UP series**: if `y` has a
+width-`a` slice witness with data `(b, c, M, N)` and support in
 `(-∞, 0)`, then there is a Hahn series `x` with `x^p - x = y`, support in `(-∞, 0)`,
 and a width-`a` slice witness with data `(b, b + c)`; in particular `x` is uniformly
 periodic. -/

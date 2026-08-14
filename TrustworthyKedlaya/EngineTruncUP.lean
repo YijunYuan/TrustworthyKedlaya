@@ -10,9 +10,10 @@ public import TrustworthyKedlaya.ShadowCollapse
 /-!
 # Sums of shadows have UP truncations
 
-The truncation engine behind `lem:witt-carry-up`: for UP series `u₁, …, u_k` and an
-integer cutoff `θ`, the restriction to `(-∞, θ)` of the canonical coefficient
-function of `∑ⱼ S(uⱼ) ∈ 𝕃_[p]` is UP (`lem:shadow-sum-trunc-up`).
+The truncation engine behind the truncationwise-UP predicate `IsTruncUP`
+(`TrustworthyKedlaya.WittCarryUP`): for UP series `u₁, …, u_k` and an integer cutoff
+`θ`, the restriction to `(-∞, θ)` of the canonical coefficient function of
+`∑ⱼ S(uⱼ) ∈ 𝕃_[p]` is UP.
 
 The proof is a strong induction on the integer gap `θ - v`, where `v` is a common
 integer lower bound for the supports.  One round of the pair collapse
@@ -32,8 +33,7 @@ bounds into agreement of truncations.
   `p`-adic distance `≥ θ` have equal truncations below `θ`.
 - `TrustworthyKedlaya.pAdicHahnSeries.exists_carry_list`: the iterated pair
   collapse for a finite list of shadows.
-- `TrustworthyKedlaya.pAdicHahnSeries.isUP_trunc_list_sum_shadow`: the engine
-  (`lem:shadow-sum-trunc-up`).
+- `TrustworthyKedlaya.pAdicHahnSeries.isUP_trunc_list_sum_shadow`: the engine.
 
 ## References
 
@@ -290,7 +290,7 @@ private theorem isUP_trunc_of_le {θ v : ℤ} (hθv : θ ≤ v)
   rw [h0]
   exact UP.isUP_zero p
 
-/-- Induction core for `lem:shadow-sum-trunc-up`: induction on an upper bound `g` for
+/-- Induction core for `isUP_trunc_list_sum_shadow`: induction on an upper bound `g` for
 the integer gap `θ - v` between the cutoff and the common support bound. -/
 private theorem isUP_trunc_aux :
     ∀ g : ℕ, ∀ θ v : ℤ, (θ - v).toNat ≤ g →
@@ -424,7 +424,7 @@ theorem exists_int_support_bound (L : List (HahnSeries ℚ (𝔽ᵃ_[p]))) :
       · exact hvu q (lt_of_lt_of_le hq hqvu)
       · exact hv' z hz q (lt_of_lt_of_le hq hqv')
 
-/-- **Sums of shadows have UP truncations** (`lem:shadow-sum-trunc-up`): for UP
+/-- **Sums of shadows have UP truncations**: for UP
 series `u₁, …, u_k` and an integer cutoff `θ`, the restriction to `(-∞, θ)` of the
 canonical coefficient function of `∑ⱼ S(uⱼ)` is UP. -/
 theorem isUP_trunc_list_sum_shadow (L : List (HahnSeries ℚ (𝔽ᵃ_[p])))

@@ -12,17 +12,17 @@ public import TrustworthyKedlaya.SeparableUP
 /-!
 # The truncationwise-UP elements are the closure of the algebraic-coefficient set
 
-Blueprint `lem:trunc-up-closure` (Kedlaya 2001b/2017): inside `𝕃_[p]`, the closure
+The closure identification of Kedlaya 2001b/2017: inside `𝕃_[p]`, the closure
 of the set `A` of elements whose canonical coefficient function is the coefficient
 function of a Hahn series algebraic over `𝔽̄_p((t))` equals the set `B'` of
-truncationwise-UP elements (`IsTruncUP`, from `lem:witt-carry-up`).
+truncationwise-UP elements (`IsTruncUP`, from `TrustworthyKedlaya.WittCarryUP`).
 
 * `A ⊆ B'`: such an element *is* the shadow of its algebraic (hence integral,
-  hence UP by `thm:integral-implies-up`) coefficient series, and shadows of UP
+  hence UP by `UP.isUP_of_isIntegral`) coefficient series, and shadows of UP
   series are truncationwise UP; `B'` is `p`-adically closed
   (`isTruncUP_of_forall_exists_near`), so `closure A ⊆ B'`.
 * `B' ⊆ closure A`: for `g ∈ B'` and a cutoff `n` the truncation
-  `trunc n g` is UP, hence algebraic over the Laurent field (`lem:up-algebraic`),
+  `trunc n g` is UP, hence algebraic over the Laurent field (`UP.IsUP.isAlgebraic`),
   and its shadow approximates `g` to valuation `≥ n` (`le_val_sub_shadow_trunc`).
 
 The topological bridge is `mem_closure_of_forall_exists_near` /
@@ -123,11 +123,11 @@ theorem exists_near_of_mem_closure {S : Set 𝕃_[p]} {g : 𝕃_[p]}
 /-! ### The closure bridge -/
 
 /-- **The truncationwise-UP elements are the closure of the algebraic-coefficient
-set** (`lem:trunc-up-closure`; the first step of Kedlaya 2001b, Theorem 7 /
+set** (the first step of Kedlaya 2001b, Theorem 7 /
 Kedlaya 2017, Theorem 13.5): the closure of the set of `f ∈ 𝕃_[p]` whose
 canonical coefficient function is the coefficient function of a Hahn series
 algebraic over `𝔽̄_p((t))` is exactly the set `B'` of truncationwise-UP elements
-of `lem:witt-carry-up`. -/
+(`IsTruncUP`). -/
 theorem closure_algebraic_coeff_eq_setOf_isTruncUP :
     closure {f : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]),
         IsAlgebraic ((𝔽ᵃ_[p])⸨X⸩) f' ∧ coeff f = f'.coeff}

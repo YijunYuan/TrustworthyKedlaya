@@ -13,9 +13,9 @@ public import TrustworthyKedlaya.EngineTruncUP
 The set `B'` of truncationwise-UP elements of `𝕃_[p]` — those `g` whose canonical
 coefficient function restricts to a UP series below every natural cutoff — contains
 the shadow of every UP series, is closed under addition and negation, and is
-`p`-adically closed (`lem:witt-carry-up`).  In particular it contains every
-`p`-adic limit of finite sums of shadows of UP series, which is how the Newton
-iteration of `prop:integral-to-alg-coeff` consumes it.
+`p`-adically closed.  In particular it contains every
+`p`-adic limit of finite sums of shadows of UP series, which is how the steered
+Newton iteration (`TrustworthyKedlaya.IntegralToAlgCoeff`) consumes it.
 
 The membership predicate is `TrustworthyKedlaya.pAdicHahnSeries.IsTruncUP`.
 Addition runs through the truncation engine
@@ -94,8 +94,8 @@ theorem le_val_sub_shadow_trunc (θ : ℚ) (g : 𝕃_[p]) :
 
 /-! ### Shadows, zero, and `p`-adic closedness -/
 
-/-- **`B'` contains the shadow of every UP series** (`lem:witt-carry-up`, first
-clause): the canonical coefficient function of `S(u)` is `u` itself. -/
+/-- **`B'` contains the shadow of every UP series**: the canonical coefficient
+function of `S(u)` is `u` itself. -/
 theorem isTruncUP_shadow {u : HahnSeries ℚ (𝔽ᵃ_[p])} (hu : UP.IsUP p u) :
     IsTruncUP (shadow u) := by
   intro n
@@ -116,7 +116,7 @@ theorem isTruncUP_zero : IsTruncUP (0 : 𝕃_[p]) := by
   rw [h0]
   exact UP.isUP_zero p
 
-/-- **`B'` is `p`-adically closed** (`lem:witt-carry-up`, closedness clause): an
+/-- **`B'` is `p`-adically closed**: an
 element approximable to arbitrary `p`-adic precision by members of `B'` is itself
 a member — its truncation below `n` coincides with that of an approximant at
 distance `≥ n`. -/
@@ -131,7 +131,7 @@ theorem isTruncUP_of_forall_exists_near {g : 𝕃_[p]}
 
 /-! ### Additive closure -/
 
-/-- **`B'` is closed under addition** (`lem:witt-carry-up`, sum clause): replace
+/-- **`B'` is closed under addition**: replace
 each summand by the shadow of its truncation below `n` (distance `≥ n`), and run
 the truncation engine on the two shadows. -/
 theorem IsTruncUP.add {g g' : 𝕃_[p]} (hg : IsTruncUP g) (hg' : IsTruncUP g') :
@@ -222,7 +222,7 @@ theorem IsTruncUP.p_pow_mul {g : 𝕃_[p]} (hg : IsTruncUP g) (i : ℕ) :
       = ((p : ℕ) : 𝕃_[p]) * (((p : ℕ) : 𝕃_[p]) ^ i * g) by ring]
     exact ih.p_mul
 
-/-- **`B'` is closed under negation** (`lem:witt-carry-up`, negation clause): below
+/-- **`B'` is closed under negation**: below
 any cutoff `n`, the telescoping identity
 `-g = ∑_{i=0}^{K} (p-1) pⁱ g - p^{K+1} g` replaces `-g` by a finite sum of
 members of `B'` up to an error `p^{K+1} g` of valuation `> n`. -/

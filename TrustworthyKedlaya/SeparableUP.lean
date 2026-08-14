@@ -13,8 +13,7 @@ public import Mathlib.RingTheory.Polynomial.SeparableDegree
 # Integral elements of the Hahn field are UP
 
 A Hahn series `x ∈ 𝔽̄_p((t^ℚ))` that is integral over `B = 𝔽̄_p((t))` is
-uniformly periodic (Kedlaya (2001a), proof of Theorem 15; `lem:separable-up`
-and `thm:integral-implies-up` of the blueprint).
+uniformly periodic (Kedlaya (2001a), proof of Theorem 15).
 
 Separable case: the splitting field `L` of the minimal polynomial `P` is finite
 Galois over `B` (the normal closure of `B(x)`), so it embeds over `B` into
@@ -30,10 +29,8 @@ and `x` is UP by iterated inverse-Frobenius stability
 
 ## Main statements
 
-- `TrustworthyKedlaya.UP.isUP_of_isIntegral_separable`: the separable case
-  (`lem:separable-up`).
-- `TrustworthyKedlaya.UP.isUP_of_isIntegral`: the general case
-  (`thm:integral-implies-up`).
+- `TrustworthyKedlaya.UP.isUP_of_isIntegral_separable`: the separable case.
+- `TrustworthyKedlaya.UP.isUP_of_isIntegral`: the general case.
 
 ## References
 
@@ -49,7 +46,7 @@ open LaurentSeries Polynomial
 
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
-/-- **Separable algebraic elements are UP** (`lem:separable-up`): a Hahn series
+/-- **Separable algebraic elements are UP**: a Hahn series
 integral over `𝔽̄_p((t))` with separable minimal polynomial is uniformly periodic. -/
 theorem isUP_of_isIntegral_separable {x : HahnSeries ℚ (𝔽ᵃ_[p])}
     (hint : IsIntegral ((𝔽ᵃ_[p])⸨X⸩) x)
@@ -109,7 +106,7 @@ theorem isUP_of_isIntegral_separable {x : HahnSeries ℚ (𝔽ᵃ_[p])}
   omega
 
 /-- **Integral over `𝔽̄_p((t))` implies uniformly periodic**
-(`thm:integral-implies-up`; Kedlaya (2001a), Theorem 15, one direction): every
+(Kedlaya (2001a), Theorem 15, one direction): every
 Hahn series integral over `𝔽̄_p((t))` is uniformly periodic.  In characteristic
 `p` the minimal polynomial is `Q(X^{p^e})` with `Q` separable, so `x^{p^e}` is
 UP by the separable case, and `x` is UP by inverse-Frobenius stability. -/

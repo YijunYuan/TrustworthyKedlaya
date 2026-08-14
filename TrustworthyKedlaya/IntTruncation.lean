@@ -14,7 +14,7 @@ public import TrustworthyKedlaya.Rescale
 
 Truncation at the point `0` preserves UP (`TrustworthyKedlaya.Truncation`); this
 file transports that statement to an arbitrary integer cutoff `θ` by conjugating
-with the exponent shift `x ↦ t^{-θ}·x` (`lem:up-int-truncate`).  Monomials with
+with the exponent shift `x ↦ t^{-θ}·x`.  Monomials with
 integer exponents are UP, multiplication by them preserves UP
 (`TrustworthyKedlaya.Multiplicative`), and restriction windows translate along
 the shift, so
@@ -28,7 +28,7 @@ complementary restriction is the difference `x - x|_{(-∞,θ)}`.
   identity for restriction windows.
 - `TrustworthyKedlaya.UP.IsUP.hahnRestrict_Iio_intCast` /
   `TrustworthyKedlaya.UP.IsUP.hahnRestrict_Ici_intCast`: truncations of a UP
-  series below and at-or-above an integer point are UP (`lem:up-int-truncate`).
+  series below and at-or-above an integer point are UP.
 
 ## References
 
@@ -65,8 +65,7 @@ theorem hahnRestrict_Iio_eq_single_mul (θ : ℚ) (x : HahnSeries ℚ (𝔽ᵃ_[
   · rw [coeff_hahnRestrict_of_notMem x (by simpa using hq),
       coeff_hahnRestrict_of_notMem _ (by simp [Set.mem_Iio]; linarith)]
 
-/-- **Truncation below an arbitrary integer point preserves UP**
-(`lem:up-int-truncate`, first part). -/
+/-- **Truncation below an arbitrary integer point preserves UP**. -/
 theorem IsUP.hahnRestrict_Iio_intCast {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x)
     (θ : ℤ) : IsUP p (hahnRestrict (Set.Iio (θ : ℚ)) x) := by
   rw [hahnRestrict_Iio_eq_single_mul]
@@ -76,8 +75,7 @@ theorem IsUP.hahnRestrict_Iio_intCast {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : I
   obtain ⟨a, b, c, hs, M, N, hper⟩ := hneg.mul hx
   exact (isUP_single_intCast p θ 1).mul (isUP_hahnRestrict_Iio hs hper)
 
-/-- **Truncation at-or-above an arbitrary integer point preserves UP**
-(`lem:up-int-truncate`, second part). -/
+/-- **Truncation at-or-above an arbitrary integer point preserves UP**. -/
 theorem IsUP.hahnRestrict_Ici_intCast {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x)
     (θ : ℤ) : IsUP p (hahnRestrict (Set.Ici (θ : ℚ)) x) := by
   have hdecomp : hahnRestrict (Set.Ici (θ : ℚ)) x

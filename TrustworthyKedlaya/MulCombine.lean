@@ -17,15 +17,15 @@ coefficient pairs `(x.coeff s₁, y.coeff s₂)` over the antidiagonal decomposi
 antidiagonal bijections between twist evaluation points preserve each coefficient
 pair, so the **multiset itself** is twist-periodic.  Consequently *any* function `Φ`
 of the pair multiset with `Φ ∅ = 0` produces a UP series from two UP series, with
-periodicity data independent of `Φ` (`lem:up-mul-combine`).  The Teichmüller product
-digits of `lem:shadow-mul-collapse` are the intended instances.
+periodicity data independent of `Φ`.  The Teichmüller product digits of the shadow
+multiplication collapse are the intended instances.
 
 ## Main statements
 
 - `TrustworthyKedlaya.UP.mulPairs`: the coefficient-pair multiset of an antidiagonal.
 - `TrustworthyKedlaya.UP.mulCombine`: the series `q ↦ Φ (mulPairs x y q)`.
 - `TrustworthyKedlaya.UP.mulPairs_transport`: the multiset is preserved along the
-  twist transport (core of `lem:up-mul-combine`).
+  twist transport.
 - `TrustworthyKedlaya.UP.IsUP.mulCombine`: UP-ness of convolution combinations.
 
 ## References
@@ -44,8 +44,7 @@ variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 
 /-- The **coefficient-pair multiset** of two Hahn series along the antidiagonal of
 `q`: the multiset of pairs `(x.coeff s₁, y.coeff s₂)` over the finitely many
-decompositions `q = s₁ + s₂` with both coefficients nonzero
-(`lem:up-mul-combine`). -/
+decompositions `q = s₁ + s₂` with both coefficients nonzero. -/
 noncomputable def mulPairs (x y : HahnSeries ℚ (𝔽ᵃ_[p])) (q : ℚ) :
     Multiset (𝔽ᵃ_[p] × 𝔽ᵃ_[p]) :=
   (Finset.antidiagonal x.isPWO_support y.isPWO_support q).val.map
@@ -94,8 +93,7 @@ theorem mulPairs_eq_zero_of_lt {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {v v' : ℚ}
 
 variable (p) in
 /-- The **convolution combination** of two Hahn series under a multiset function `Φ`
-with `Φ 0 = 0`: the series with coefficient `Φ (mulPairs x y q)` at each exponent
-(`lem:up-mul-combine`). -/
+with `Φ 0 = 0`: the series with coefficient `Φ (mulPairs x y q)` at each exponent. -/
 noncomputable def mulCombine (Φ : Multiset (𝔽ᵃ_[p] × 𝔽ᵃ_[p]) → 𝔽ᵃ_[p]) (hΦ : Φ 0 = 0)
     (x y : HahnSeries ℚ (𝔽ᵃ_[p])) : HahnSeries ℚ (𝔽ᵃ_[p]) where
   coeff q := Φ (mulPairs p x y q)
@@ -112,8 +110,8 @@ noncomputable def mulCombine (Φ : Multiset (𝔽ᵃ_[p] × 𝔽ᵃ_[p]) → �
 
 /-! ### Transport of the coefficient-pair multiset -/
 
-/-- **Transport of the coefficient-pair multiset** (core of `lem:up-mul-combine`):
-under the twist-sequence agreement hypotheses of `mul_antidiagonal_transport`, the
+/-- **Transport of the coefficient-pair multiset**: under the twist-sequence
+agreement hypotheses of `mul_antidiagonal_transport`, the
 coefficient-pair multisets at the twist evaluation points of gap sizes `ν₁` and `ν₂`
 coincide — the antidiagonal bijection matches the index sets, and the agreement of
 the factor twist sequences matches the coefficient pairs. -/
@@ -220,10 +218,10 @@ theorem mulPairs_transport {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
 
 /-! ### Periodicity of the slices of a convolution combination -/
 
-/-- **Periodicity of the slices of a convolution combination**
-(`lem:up-mul-combine`): at a common slice width `a`, every slice of
-`mulCombine Φ hΦ x y` is periodic at level `c₁ + c₂` with the same data
-`(max(M₁,M₂) + (K + n₀), lcm(N₁,N₂))` as the product — independently of `Φ`. -/
+/-- **Periodicity of the slices of a convolution combination**: at a common slice
+width `a`, every slice of `mulCombine Φ hΦ x y` is periodic at level `c₁ + c₂` with
+the same data `(max(M₁,M₂) + (K + n₀), lcm(N₁,N₂))` as the product — independently
+of `Φ`. -/
 theorem isTwistPeriodic_mulCombine_slice
     (Φ : Multiset (𝔽ᵃ_[p] × 𝔽ᵃ_[p]) → 𝔽ᵃ_[p]) (hΦ : Φ 0 = 0)
     {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
@@ -317,7 +315,7 @@ theorem isUP_mulCombine_of_common_width
   obtain ⟨s₁, h₁, s₂, h₂, rfl⟩ := exists_support_add_of_mulPairs_ne_zero hne
   exact Sabc_add_subset p (hxs h₁) (hys h₂)
 
-/-- **UP is stable under convolution combinations** (`lem:up-mul-combine`): for any
+/-- **UP is stable under convolution combinations**: for any
 function `Φ` of the coefficient-pair multiset with `Φ 0 = 0` and UP series `x`, `y`,
 the series with coefficients `Φ (mulPairs x y q)` is UP.  Taking `Φ` to be the sum
 of the pairwise products recovers `IsUP.mul`. -/

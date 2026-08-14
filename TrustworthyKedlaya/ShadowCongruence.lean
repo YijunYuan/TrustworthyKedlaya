@@ -16,13 +16,13 @@ The shadow map `S : 𝔽̄_p((t^ℚ)) → 𝕃_[p]` is neither additive nor mult
 carries are `p`-divisible.  This file transports that calculus from elements to the
 coefficients of split polynomials and derives Kedlaya's continuity of roots:
 
-- `exists_sum_le_val_coeff_shadow` (`lem:shadow-symmetric-congruence`): the
+- `exists_sum_le_val_coeff_shadow`: the
   coefficients of `∏_{y ∈ Y}(X - S(y))` agree with the shadows of the coefficients of
   `∏_{y ∈ Y}(X - y)` to depth `σ_{n-i}(W) + 1`, where `W` is the valuation multiset of
   `Y` and `σ_j` the sum of the `j` smallest elements (encoded by minimal witnesses as
   in `TrustworthyKedlaya.RootMatching`);
-- `roots_continuity_forward` / `roots_continuity_reverse` (`lem:roots-continuity`;
-  Kedlaya 2001b): if the shadows of the coefficients of the split monic
+- `roots_continuity_forward` / `roots_continuity_reverse` (Kedlaya 2001b): if the
+  shadows of the coefficients of the split monic
   `P = ∏_{y ∈ Y}(X - y)` are within `σ_{n-i}(W) + k` of the coefficients of the split
   monic `Q = ∏_{z ∈ Z}(X - z)` (`k ≤ 1`, equal valuation multisets), then each root of
   either polynomial of valuation `s` matches a root of the other, with
@@ -128,10 +128,10 @@ theorem le_val_shadow_add_sub' (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) :
 
 /-! ### Shadowing the coefficients of a split polynomial -/
 
-/-- **Shadowing the coefficients of a split polynomial**
-(`lem:shadow-symmetric-congruence`): the coefficients of `∏_{y ∈ Y}(X - S(y))` agree
-with the shadows of the coefficients of `∏_{y ∈ Y}(X - y)` to depth `σ_{n-i}(W) + 1`,
-where `W = Y.map orderTop` and `σ` is delivered by a minimal witness `T`.
+/-- **Shadowing the coefficients of a split polynomial**: the coefficients of
+`∏_{y ∈ Y}(X - S(y))` agree with the shadows of the coefficients of `∏_{y ∈ Y}(X - y)`
+to depth `σ_{n-i}(W) + 1`, where `W = Y.map orderTop` and `σ` is delivered by a minimal
+witness `T`.
 
 Induction on `Y`, comparing `(X - S(y₀))·R` with the shadow of `(X - y₀)·P`
 coefficientwise: the difference decomposes into the inductive difference, a
@@ -377,7 +377,7 @@ theorem exists_sum_le_val_coeff_sub_of_shadow_congruence
   · exact le_trans (add_le_add (hT₀min T₂ hT₂le (by rw [hT₂card])) le_rfl) hT₂sum
 
 /-- **Roots vary continuously across characteristics, forward direction**
-(`lem:roots-continuity`; Kedlaya 2001b, the continuity-of-roots lemma): under the
+(Kedlaya 2001b, the continuity-of-roots lemma): under the
 normalized coefficient congruence to depth `σ_{n-i}(W) + k`, every root `y` of
 `P = ∏_{y ∈ Y}(X - y)` of valuation `s` has a companion root `z` of
 `Q = ∏_{z ∈ Z}(X - z)` with `val z = s` and `val (S(y) - z) ≥ s + k/m`, where `m` is
@@ -414,9 +414,9 @@ theorem roots_continuity_forward
   refine ⟨z, hzZ, hzval, ?_⟩
   rwa [hmapshadow] at hzbound
 
-/-- **Roots vary continuously across characteristics, reverse direction**
-(`lem:roots-continuity`): every root `z` of `Q` of valuation `s` has a companion root
-`y` of `P` with `orderTop y = s` and `val (S(y) - z) ≥ s + k/m`. -/
+/-- **Roots vary continuously across characteristics, reverse direction**: every root
+`z` of `Q` of valuation `s` has a companion root `y` of `P` with `orderTop y = s` and
+`val (S(y) - z) ≥ s + k/m`. -/
 theorem roots_continuity_reverse
     (hW : Y.map HahnSeries.orderTop = Z.map (val p))
     {k : ℚ} (hk1 : k ≤ 1)

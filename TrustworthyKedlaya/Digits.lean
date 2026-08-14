@@ -413,7 +413,8 @@ coprime to `p` either terminates exactly (when `k` divides both the head and the
 numerators separately), or the remainder cycles through a nonzero orbit across the gap
 and deposits a nonzero quotient digit at least once every `k` positions, forcing the
 digit sum of the quotient to grow linearly with the gap length.  These lemmas are the
-arithmetic engine behind the slice-width upgrade for UP series (`lem:up-rescale`). -/
+arithmetic engine behind the slice-width upgrade for UP series
+(`TrustworthyKedlaya.Rescale`). -/
 
 /-- **Remainder-orbit lemma.**  If `k ∤ A` and `k` is coprime to `p`, the base-`p` digit
 stream of the quotients `A p^d / k` never stays zero for `k` consecutive positions:

@@ -12,8 +12,8 @@ public import TrustworthyKedlaya.Additive
 
 A UP presentation of `x` consists of a support parameter `a` with
 `supp x ⊆ S_{a,b,c}` and uniform periodicity data `(M, N)` for the width-`a` slices.
-This file proves that the width can be replaced by **any multiple** `k·a`
-(`lem:up-rescale`): the "some (any)" clause of Kedlaya (2001a), Definition 2, which
+This file proves that the width can be replaced by **any multiple** `k·a`:
+the "some (any)" clause of Kedlaya (2001a), Definition 2, which
 the paper leaves unproved, and the step that lets two UP series be compared at a
 common width.
 
@@ -43,8 +43,8 @@ throughout; only the preperiod grows, by the uniform amount `k(c+1)`.
   `S_{a,b,c} ⊆ S_{ka, kb+(k-1), kc}` via carry normalization.
 - `TrustworthyKedlaya.UP.SliceWitness.width_mul`: a slice witness at width `a`
   yields one at width `k·a`, with the same period `N`.
-- `TrustworthyKedlaya.UP.IsUP.add`: UP is closed under addition (`lem:up-add`),
-  by passing to the common width `a·a'`.
+- `TrustworthyKedlaya.UP.IsUP.add`: UP is closed under addition, by passing to
+  the common width `a·a'`.
 
 ## References
 
@@ -622,7 +622,7 @@ theorem SliceWitness.width_mul_p_pow {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ
     obtain ⟨b', c', hw⟩ := ih hstep
     exact ⟨b', c', SliceWitness.of_width_eq (by rw [pow_succ, mul_assoc]) hw⟩
 
-/-- **Slice-width upgrade** (`lem:up-rescale`): a UP witness at width `a` yields one
+/-- **Slice-width upgrade**: a UP witness at width `a` yields one
 at width `k·a` for *every* positive integer `k`, keeping the same period `N`.  The
 factorization `k = p^e·k₀` splits the upgrade into `e` digit-shift steps and one
 coprime long-division step. -/
@@ -639,7 +639,7 @@ theorem SliceWitness.width_mul {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b 
     show ((p.toPNat hp.out.pos : ℕ+) : ℕ) = p from rfl, hfact]
   ring
 
-/-- **UP is stable under addition** (`lem:up-add`): upgrade both presentations to the
+/-- **UP is stable under addition**: upgrade both presentations to the
 common slice width `a'·a` and add slicewise. -/
 theorem IsUP.add {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) (hy : IsUP p y) :
     IsUP p (x + y) := by

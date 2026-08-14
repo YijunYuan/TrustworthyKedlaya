@@ -12,9 +12,8 @@ public import Mathlib.Data.Nat.Choose.Dvd
 /-!
 # `p`-power amplification of congruences and power shadows
 
-Blueprint `lem:pow-congruence-amplify` and `lem:shadow-pow-carry` (Kedlaya
-2001b, p. 336: the Frobenius step "raising both sides of the congruence to the
-`p^k`-th power"):
+Two amplification results (Kedlaya 2001b, p. 336: the Frobenius step "raising
+both sides of the congruence to the `p^k`-th power"):
 
 - `le_val_pow_pow_sub`: if `w ≤ val x`, `w ≤ val y` and
   `val (x - y) ≥ w + e` with `e ≥ 0`, then
@@ -121,8 +120,8 @@ theorem le_val_pow_char_sub {x y : 𝕃_[p]} {w e : ℚ} (he : 0 ≤ e)
       _ ≤ val p ((x - y) ^ j) + val p (y ^ (p - j)) + val p ((p.choose j : 𝕃_[p])) :=
           add_le_add (add_le_add hA hB) hC
 
-/-- **`p^k`-power amplification of congruences** (`lem:pow-congruence-amplify`;
-Kedlaya 2001b, p. 336): from `val (x - y) ≥ w + e` with `w` a common lower
+/-- **`p^k`-power amplification of congruences** (Kedlaya 2001b, p. 336): from
+`val (x - y) ≥ w + e` with `w` a common lower
 bound for `val x`, `val y` and `e ≥ 0`,
 `val (x^{p^k} - y^{p^k}) ≥ p^k w + min 1 (p^k e)`: each `p`-th power multiplies
 the congruence excess by `p` until it reaches the absolute carry depth `1`. -/
@@ -194,8 +193,8 @@ theorem forall_le_coeff_pow {u : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℚ}
     push_cast
     linarith
 
-/-- **Iterated multiplication carry for power shadows**
-(`lem:shadow-pow-carry`): for `u` supported at exponents `≥ a` and `j ≥ 1`,
+/-- **Iterated multiplication carry for power shadows**: for `u` supported at
+exponents `≥ a` and `j ≥ 1`,
 `val (S(u)^j - S(u^j)) ≥ j a + 1`.  Induction on `j`: each step is one
 multiplication carry (`le_val_shadow_mul_sub`) plus the inductive difference
 scaled by `S(u)`. -/

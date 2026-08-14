@@ -16,9 +16,9 @@ public import TrustworthyKedlaya.IntTruncation
 A sum of two shadows of Hahn series expands, below any cutoff, into a finite sum
 of shadows: `S(y) + S(y') = S(y + y') + ∑_{1 ≤ i ≤ K} S(tⁱ·zᵢ) + E` with
 `v_p(E) ≥ v + K + 1`, where `zᵢ` is the coefficientwise carry-digit series
-`(zᵢ)_q = carryDigit i (y_q) (y'_q)` (`lem:shadow-pair-collapse`).  Each carry
+`(zᵢ)_q = carryDigit i (y_q) (y'_q)`.  Each carry
 term shifts supports strictly upward, which drives the truncation induction of
-`lem:shadow-sum-trunc-up`.
+`TrustworthyKedlaya.EngineTruncUP`.
 
 The proof works at the lifted level: at each exponent the Teichmüller carry
 congruence (`TrustworthyKedlaya.TeichCarry`) makes the defect coefficientwise
@@ -35,7 +35,7 @@ divisibility into the valuation bound.
   coefficientwise `p^k`-divisibility plus a support bound `v` gives valuation
   `≥ v + k`.
 - `TrustworthyKedlaya.pAdicHahnSeries.le_val_shadow_add_collapse`: the carry
-  expansion bound (`lem:shadow-pair-collapse`).
+  expansion bound.
 
 ## References
 
@@ -129,7 +129,7 @@ theorem le_val_mkLp_of_forall_pow_dvd_coeff {Δ : LiftedPAdicHahnSeries p} {k : 
   exact hczero _ (hbelow _ (by linarith))
 
 /-- The shifted carry-digit series `tⁱ·zᵢ` of two UP series are UP
-(`lem:shadow-pair-collapse`, first clause). -/
+(the UP clause of the carry expansion). -/
 theorem isUP_single_mul_coeffwise_carry {y y' : HahnSeries ℚ (𝔽ᵃ_[p])}
     (hy : UP.IsUP p y) (hy' : UP.IsUP p y') (i : ℕ) :
     UP.IsUP p (HahnSeries.single (i : ℚ) (1 : 𝔽ᵃ_[p])
@@ -138,7 +138,7 @@ theorem isUP_single_mul_coeffwise_carry {y y' : HahnSeries ℚ (𝔽ᵃ_[p])}
   rw [Int.cast_natCast] at h
   exact h.mul (hy.coeffwise hy' (carryDigit p i) (carryDigit_zero_zero p i))
 
-/-- **Carry expansion for a sum of two shadows** (`lem:shadow-pair-collapse`): with
+/-- **Carry expansion for a sum of two shadows**: with
 `zᵢ` the coefficientwise carry-digit series of `y` and `y'`, the defect
 `S(y) + S(y') - S(y+y') - ∑_{1 ≤ i ≤ K} S(tⁱ·zᵢ)` has valuation at least
 `v + K + 1`, where `v` bounds both supports from below. -/

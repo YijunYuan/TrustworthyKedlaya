@@ -13,9 +13,9 @@ public import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 /-!
 # `𝕃_p` is algebraically closed
 
-The transfinite Newton recursion (Wang-Yuan, Theorem 2.8; Kedlaya 2001b, Proposition 2;
-blueprint `lem:lp-alg-closed`): every polynomial over `𝕃_[p]` of positive degree has a
-root, so `𝕃_[p]` is algebraically closed.
+The transfinite Newton recursion (Wang-Yuan, Theorem 2.8; Kedlaya 2001b, Proposition 2):
+every polynomial over `𝕃_[p]` of positive degree has a root, so `𝕃_[p]` is algebraically
+closed.
 
 The argument is by contradiction.  Assume `f` has no root at all.  Then at every
 approximation `r` the shifted polynomial `f(T + r)` has a nonzero constant term, so it has
@@ -567,7 +567,7 @@ theorem exists_eval_eq_zero (hdeg : f.natDegree ≠ 0) : ∃ r : 𝕃_[p], f.eva
   exact no_root_false hdeg h
 
 /-- **`𝕃_p` is algebraically closed** (Wang-Yuan, Theorem 2.8; Kedlaya 2001b,
-Proposition 2; blueprint `lem:lp-alg-closed`). -/
+Proposition 2). -/
 instance isAlgClosed : IsAlgClosed (𝕃_[p]) := by
   refine IsAlgClosed.of_exists_root _ fun P _ hirr => ?_
   obtain ⟨r, hr⟩ := exists_eval_eq_zero P hirr.natDegree_pos.ne'

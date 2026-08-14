@@ -24,7 +24,7 @@ shows that for every finite field extension `L/B`:
 * when `K` is algebraically closed, the residue field of `L` is `K` and the
   extension is totally ramified (`e = [L:B]`).
 
-This is Lemma `lem:ext-valuation` of the blueprint (Kedlaya 2001a, §3).
+This is Kedlaya 2001a, §3.
 -/
 
 @[expose] public section
@@ -502,7 +502,7 @@ theorem span_pow_eq_top_of_spectralNorm_pow_eq [IsAlgClosed K] {π : L} {e : ℕ
 the ramification index equals the degree, i.e. there is `π : L` with
 `‖π‖ ^ [L : K⸨X⸩] = ‖X‖` whose powers give the norms of all nonzero elements.
 (In particular the `e` of `exists_spectralNorm_uniformizer` is exactly `[L : K⸨X⸩]`;
-this subsumes the Galois case of the blueprint statement.) -/
+this subsumes the Galois case of the statement in Kedlaya 2001a, §3.) -/
 theorem exists_spectralNorm_uniformizer_pow_finrank [IsAlgClosed K] :
     ∃ π : L, spectralNorm K⸨X⸩ L π ^ Module.finrank K⸨X⸩ L =
         ‖(HahnSeries.single 1 1 : K⸨X⸩)‖ ∧

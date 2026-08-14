@@ -12,8 +12,8 @@ public import TrustworthyKedlaya.ArtinSchreierNeg
 /-!
 # Dismantling a UP series along digit-sum levels
 
-The level-`c` induction that proves algebraicity of UP series (`lem:up-algebraic`)
-dismantles a series along the *levels* of its exponents: for an exponent `s` written as
+The level-`c` induction that proves algebraicity of UP series dismantles a series along
+the *levels* of its exponents: for an exponent `s` written as
 `as = m - w` with `m ∈ ℤ` and `w ∈ [0,1)`, the level is the digit sum of the canonical
 base-`p` expansion of `w`.  The exponents of level `≤ c'` inside `S_{a,b,c}` are exactly
 the points of `S_{a,b,c'}` (canonical expansions are unique), so level restriction is
@@ -22,8 +22,7 @@ Hahn-series restriction (`hahnRestrict`) to a smaller support set.
 ## Main statements
 
 - `TrustworthyKedlaya.UP.SliceWitness.levelRestrict`: restricting a UP series to the
-  exponents of level at most `c' ≤ c` preserves the UP data, lowering the level to `c'`
-  (blueprint `lem:up-level-restrict`).
+  exponents of level at most `c' ≤ c` preserves the UP data, lowering the level to `c'`.
 
 ## References
 
@@ -37,7 +36,7 @@ namespace TrustworthyKedlaya.UP
 
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
-/-- **Level restriction** (blueprint `lem:up-level-restrict`): if `x` is UP, presented
+/-- **Level restriction**: if `x` is UP, presented
 on `S_{a,b,c}` with every width-`a` slice `(M, N)`-periodic at level `c`, and
 `c' ≤ c`, then the restriction of `x` to the exponents of level at most `c'` — that is,
 `hahnRestrict (Sabc p a b c') x` — is UP, presented on `S_{a,b,c'}` with the same
@@ -276,7 +275,7 @@ theorem IsTwistPeriodic.sub {f g : ℚ → 𝔽ᵃ_[p]} {c : ℕ} {Mf Mg Nf Ng :
   have h := hf.add (hg.comp fun v => -v)
   simpa only [sub_eq_add_neg] using h
 
-/-! ### Level drop (blueprint `lem:up-level-drop`)
+/-! ### Level drop
 
 For `x` supported on `(1/a)·T_c` with its width-`a` slice `(M, N)`-periodic at level
 `c` and slice values in `𝔽_{p^d}`, and `L` a common multiple of `N` and `d` with
@@ -473,7 +472,7 @@ theorem sliceWitness_of_slice_form {x : HahnSeries ℚ (𝔽ᵃ_[p])}
 
 end LevelDrop
 
-/-! ### First-digit decomposition (blueprint `lem:up-first-digit`, part 1)
+/-! ### First-digit decomposition
 
 A point of `T_c` has a unique canonical digit string, whose shallowest digit —
 index `k`, value `β` — partitions the support.  A series slice-supported on `T_c`
@@ -481,7 +480,7 @@ all of whose coefficients vanish at strings with no digit before index `R` is th
 sum of its first-digit restrictions over `k < R`, `0 < β < p`. -/
 
 /-- The points whose canonical digit string has its first (shallowest) digit at
-index `k` (position `k + 1` in the blueprint's 1-indexed convention) with value
+index `k` (position `k + 1` in the paper's 1-indexed convention) with value
 `β`. -/
 def firstDigitSet (p : ℕ) (k β : ℕ) : Set ℚ :=
   {q : ℚ | ∃ e : ℕ →₀ ℕ, (∀ i, e i < p) ∧ q = -fracVal p e ∧
@@ -572,13 +571,13 @@ theorem firstDigit_decomp {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {c : ℕ
     rw [Finset.sum_eq_single k₀ houter
       (fun hout => absurd (Finset.mem_range.mpr hk₀R) hout), hinner]
 
-/-! ### First-digit shift (blueprint `lem:up-first-digit`, part 2)
+/-! ### First-digit shift
 
 Multiplying the first-digit restriction `x^{(k,β)}` by the monomial
 `t^{β p^{-(k+1)}/a}` erases the first digit from every exponent: the result is
 slice-supported on `T_{c-β} ∪ {0}` and its width-`a` slice is `(M + k + 1, N)`-periodic
 at level `c - β`.  This is the step that lowers the digit-sum level in the induction
-proving `lem:up-algebraic`. -/
+proving algebraicity of UP series. -/
 
 section FirstDigitShift
 
@@ -718,7 +717,7 @@ theorem neg_fracVal_mem_firstDigitSet_iff {e : ℕ →₀ ℕ} (he : ∀ i, e i 
   · rintro ⟨hfirst, hval⟩
     exact ⟨e, he, rfl, hfirst, hval⟩
 
-/-- **First-digit shift** (blueprint `lem:up-first-digit`, part 2): the restriction of
+/-- **First-digit shift**: the restriction of
 `x` to the exponents whose first digit is `β` at index `k` (position `k + 1`),
 multiplied by the monomial `t^{β p^{-(k+1)}/a}` that erases that digit. -/
 noncomputable def firstDigitShift (a : ℕ+) (k β : ℕ) (x : HahnSeries ℚ (𝔽ᵃ_[p])) :

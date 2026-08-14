@@ -30,9 +30,8 @@ establishes its metric calculus:
 
 Every route to `kedlaya_2017_theorem13_4` and `kedlaya_2001b_ordinal_bound`
 (Kedlaya 2001b, Section 3; Kedlaya 2017, Section "mixed") factors through these
-estimates: they drive the cross-characteristic Newton comparison
-(`lem:roots-continuity`) and the congruence bookkeeping of both approximation
-propositions.
+estimates: they drive the cross-characteristic Newton comparison and the congruence
+bookkeeping of both approximation propositions.
 
 ## References
 
@@ -430,7 +429,7 @@ theorem le_val_shadow_add_sub (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) (q₀ : ℚ)
 
 /-! ### Second carry bounds: negation and multiplication
 
-The shadow map is also multiplicative to first `p`-adic order (`lem:shadow-mul-carry`):
+The shadow map is also multiplicative to first `p`-adic order:
 the Teichmüller map is multiplicative on the nose, so the carries of a product come only
 from re-Teichmüllerizing the finite antidiagonal sums, each divisible by `p`.  The same
 column bookkeeping bounds `S(-y) + S(y)`. -/
@@ -613,7 +612,7 @@ theorem le_val_shadow_mul_sub (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) (a b : ℚ)
     rw [hΔcoeff, HahnSeries.coeff_mul]
     exact teichmuller_sum_sub_mem_span _ _
 
-/-! ### Recentering a shadow approximation (`lem:recentering-congruence`) -/
+/-! ### Recentering a shadow approximation -/
 
 /-- **Recentering estimate**: if `z` approximates the shadow of `y` to depth `g`,
 then after recentering by any `ŷ`, the difference `z - S(ŷ)` approximates the shadow

@@ -289,7 +289,7 @@ theorem carryDigit_eq_zero_of_notMem (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2
 
 At a column `j` where the result digit `r_j = 0`, the column identity
 `r_j + p·ε_j = w_j + ε_{j+1}` leaves three cases according to the carries: these are
-the engine of the gap-confinement argument (`lem:digit-carry-gap`). -/
+the engine of the gap-confinement argument. -/
 
 /-- A carry entering a zero column of the result propagates out, and pins the column
 to `w_j = p - 1`. -/
@@ -335,7 +335,7 @@ theorem apply_eq_zero_of_carryDigit_eq_zero (w : ℕ →₀ ℕ) (hw : ∀ i, w 
 
 /-! ### The packaged column reduction -/
 
-/-- **Column addition of digit strings** (`lem:carry-seq`): a string `w` of columns
+/-- **Column addition of digit strings**: a string `w` of columns
 `≤ 2(p-1)` — e.g. the columnwise sum of two canonical strings — reduces to a canonical
 string `r` given columnwise by `carryDigit`, plus an integer carry
 `κ = carryBit w 0 ∈ {0,1}`, with `κ + fracVal r = fracVal w`.  By
@@ -390,7 +390,7 @@ theorem exists_carrySum (w : ℕ →₀ ℕ) (hw : ∀ i, w i ≤ 2 * p - 2) :
 If the result digits vanish on a widening gap `[j, j+n)` and the total column sum of
 `w` is bounded by `s < (K+1)(p-1)`, carries die out within the first `K` gap columns:
 from `j+K` on, `w` is zero on the gap and no carry crosses.  This is the confinement
-half of `lem:digit-carry-gap`. -/
+half of the digit-carry gap argument. -/
 
 /-- Carry bits propagate leftwards through a run of zero result digits: a carry at
 gap column `d + m` forces carries at all gap columns down to `d`. -/

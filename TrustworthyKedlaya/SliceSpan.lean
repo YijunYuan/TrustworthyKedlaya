@@ -11,7 +11,7 @@ public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 /-!
 # The slice-span decomposition of a uniformly periodic series
 
-The slice-span decomposition (blueprint `lem:up-slice-span`) writes a UP series
+The slice-span decomposition writes a UP series
 `x` presented on `S_{a,b,c}` as a finite sum `∑ λ_i x_i` with `λ_i` supported in
 `(1/a)·ℤ_{≥ -b}` and `x_i` supported in `(1/a)(T_c ∪ {0})` with slice witness
 `(a, 0, c, M, N)`.
@@ -76,8 +76,8 @@ theorem IsTwistPeriodic.eq_on_levelSet_of_eq_on_confined {f g : ℚ → 𝔽ᵃ_
   rw [← hval f hf, ← hval g hg]
   exact hfg e' he' hbox
 
-/-- **Finite spanning family for the slices** (blueprint `lem:up-slice-span`, span
-step): given a family of `(M, N)`-periodic functions at level `c` indexed by the
+/-- **Finite spanning family for the slices** (the span step): given a family of
+`(M, N)`-periodic functions at level `c` indexed by the
 integers `m ≥ -b`, finitely many members `F (ms 1), …, F (ms r)` with `ms i ≥ -b`
 span the family on the level set: every `F m` (`m ≥ -b`) agrees at every canonical
 expansion of digit sum `≤ c` (including `0`, the empty expansion) with an
@@ -297,7 +297,7 @@ theorem sliceWitness_hahnRestrict_single_mul {x : HahnSeries ℚ (𝔽ᵃ_[p])} 
         exact lt_irrefl _ hpos
     rw [coeff_hahnRestrict_of_notMem _ (hmem _), coeff_hahnRestrict_of_notMem _ (hmem _)]
 
-/-- **Slice-span decomposition** (blueprint `lem:up-slice-span`): a series with slice
+/-- **Slice-span decomposition**: a series with slice
 witness `(a, b, c, M, N)` is a finite sum `x = ∑ i, λ i * xs i` where each `λ i` is
 supported in `(1/a)·ℤ_{≥ -b}` and each `xs i` is supported in the fractional window
 `(1/a)(T_c ∪ {0})` and carries the slice witness `(a, 0, c, M, N)`. -/

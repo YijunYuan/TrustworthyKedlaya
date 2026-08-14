@@ -11,9 +11,9 @@ public import TrustworthyKedlaya.FractionalLaurent
 /-!
 # Uniformly periodic series are algebraic
 
-The converse half of Kedlaya's Theorem 15 (blueprint `lem:up-algebraic`): every
-uniformly periodic Hahn series in `𝔽̄_p((t^ℚ))` is integral — in particular
-algebraic — over the Laurent field `𝔽̄_p((t))`.
+The converse half of Kedlaya's Theorem 15: every uniformly periodic Hahn series
+in `𝔽̄_p((t^ℚ))` is integral — in particular algebraic — over the Laurent field
+`𝔽̄_p((t))`.
 
 The proof is a strong induction on the digit-sum level `c`
 (`isIntegral_of_sliceWitness`).  A series with slice witness `(a, b, c, M, N)`
@@ -271,7 +271,7 @@ theorem isIntegral_of_window_zero {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
   rw [hs0]
   norm_num
 
-/-- **The level induction** (blueprint `lem:up-algebraic`, window form): granted
+/-- **The level induction** (window form): granted
 integrality at all lower levels, a series slice-supported on `T_c ∪ {0}` with
 `(M, N)`-periodic width-`a` slice at level `c` is integral over the Laurent field.
 The constant term splits off; the `T_c` part undergoes the Artin-Schreier level
@@ -415,9 +415,9 @@ private theorem isIntegral_of_window_form {c : ℕ}
   rw [hsplit]
   exact (isIntegral_single _ _).add hx'_int
 
-/-- **Uniformly periodic series are integral over the Laurent field** (blueprint
-`lem:up-algebraic`, induction core): a series with a slice witness at digit-sum
-level `c` is integral over `𝔽̄_p((t))`. -/
+/-- **Uniformly periodic series are integral over the Laurent field** (induction
+core): a series with a slice witness at digit-sum level `c` is integral over
+`𝔽̄_p((t))`. -/
 theorem isIntegral_of_sliceWitness {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} {b c : ℕ}
     {M N : ℕ+} (hx : SliceWitness p x a b c M N) :
     IsIntegral ((𝔽ᵃ_[p])⸨X⸩) x := by
@@ -435,15 +435,13 @@ theorem isIntegral_of_sliceWitness {x : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
     exact isIntegral_of_window_form (fun c' hc' x' a' b' M' N' hx' => IH c' hc' hx')
       hsupp_i hper_i
 
-/-- **Uniformly periodic series are integral over the Laurent field** (blueprint
-`lem:up-algebraic`, integral form). -/
+/-- **Uniformly periodic series are integral over the Laurent field** (integral form). -/
 theorem IsUP.isIntegral {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) :
     IsIntegral ((𝔽ᵃ_[p])⸨X⸩) x := by
   obtain ⟨a, b, c, M, N, hw⟩ := isUP_iff_exists_sliceWitness.mp hx
   exact isIntegral_of_sliceWitness hw
 
-/-- **Uniformly periodic series are algebraic over the Laurent field** (blueprint
-`lem:up-algebraic`). -/
+/-- **Uniformly periodic series are algebraic over the Laurent field**. -/
 theorem IsUP.isAlgebraic {x : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) :
     IsAlgebraic ((𝔽ᵃ_[p])⸨X⸩) x :=
   hx.isIntegral.isAlgebraic

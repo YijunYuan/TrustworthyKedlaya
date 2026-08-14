@@ -10,17 +10,15 @@ public import TrustworthyKedlaya.ApproxByIntegral
 /-!
 # Algebraic coefficient functions give completed-integral elements
 
-Blueprint `prop:alg-coeff-to-integral` and `thm:kedlaya-2017-13-4` (Kedlaya
-2001b, Theorem 7, part 2 / Kedlaya 2017, Theorem 13.5): the shadow of a Hahn
-series integral over `𝔽̄_p((t))` lies in the closure `C` of the integral
-closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`, and consequently the closure of the
-algebraic-coefficient set equals `C`.
+This file proves Kedlaya 2001b, Theorem 7, part 2 (Kedlaya 2017, Theorem
+13.5): the shadow of a Hahn series integral over `𝔽̄_p((t))` lies in the
+closure `C` of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`, and consequently
+the closure of the algebraic-coefficient set equals `C`.
 
-The iteration consumes `lem:approx-by-integral` (full unit gain) exactly as
-the source does: the shadow `f = S(f')` is truncationwise UP
-(`thm:integral-implies-up` + `lem:witt-carry-up`), each residual `f - g` stays
-in `B'` because `C ⊆ B'` (`prop:integral-to-alg-coeff` +
-`lem:trunc-up-closure` + `p`-adic closedness of `B'`) and `B'` is closed under
+The iteration consumes the full-unit-gain approximation by integral elements
+exactly as the source does: the shadow `f = S(f')` is truncationwise UP,
+each residual `f - g` stays in `B'` because `C ⊆ B'` (`B'` contains the
+integral elements and is `p`-adically closed) and `B'` is closed under
 subtraction, so every stage gains a full unit of valuation and the partial
 sums converge to `f` inside the closed set `C`.
 
@@ -29,9 +27,9 @@ sums converge to `f` inside the closed set `C`.
 - `TrustworthyKedlaya.pAdicHahnSeries.isTruncUP_of_mem_closure_integralClosure`:
   `C ⊆ B'`.
 - `TrustworthyKedlaya.pAdicHahnSeries.shadow_mem_closure_integralClosure_of_isIntegral`:
-  the iterated approximation (`prop:alg-coeff-to-integral`).
+  the iterated approximation.
 - `TrustworthyKedlaya.pAdicHahnSeries.closure_integralClosure_eq_closure_algebraic_coeff`:
-  the two closures coincide (`thm:kedlaya-2017-13-4`).
+  the two closures coincide (Kedlaya 2017, Theorem 13.4).
 
 ## References
 
@@ -52,7 +50,7 @@ variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
 /-- Every element of the closure of the integral closure of `ℚᵘⁿ_[p]` is
 truncationwise UP: `C ⊆ B'` (`B'` is `p`-adically closed and contains the
-integral elements by `prop:integral-to-alg-coeff`). -/
+integral elements). -/
 theorem isTruncUP_of_mem_closure_integralClosure {z : 𝕃_[p]}
     (hz : z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) : IsTruncUP z := by
   refine isTruncUP_of_forall_exists_near fun n => ?_
@@ -60,10 +58,10 @@ theorem isTruncUP_of_mem_closure_integralClosure {z : 𝕃_[p]}
   exact ⟨a, isTruncUP_of_isIntegral_QpUn haS, hval⟩
 
 /-- **Shadows of integral Hahn series are completed-integral**
-(`prop:alg-coeff-to-integral`, the iteration): the shadow of a Hahn series
+(the iteration): the shadow of a Hahn series
 integral over `𝔽̄_p((t))` lies in the closure of the integral closure of
-`ℚᵘⁿ_[p]` in `𝕃_[p]`.  Iterate the full unit gain of
-`lem:approx-by-integral`, staying inside `B'` at every stage. -/
+`ℚᵘⁿ_[p]` in `𝕃_[p]`.  Iterate the full unit gain of the approximation by
+integral elements, staying inside `B'` at every stage. -/
 theorem shadow_mem_closure_integralClosure_of_isIntegral
     {f' : HahnSeries ℚ (𝔽ᵃ_[p])} (hf' : IsIntegral ((𝔽ᵃ_[p])⸨X⸩) f') :
     shadow f' ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
@@ -118,7 +116,7 @@ theorem shadow_mem_closure_integralClosure_of_isIntegral
   rwa [closure_closure] at hmem
 
 /-- **Algebraic coefficient functions give completed-integral elements**
-(`prop:alg-coeff-to-integral`, closure form): the closure of the
+(closure form): the closure of the
 algebraic-coefficient set is contained in the closure of the integral closure
 of `ℚᵘⁿ_[p]`. -/
 theorem closure_algebraic_coeff_subset_closure_integralClosure :
@@ -135,7 +133,7 @@ theorem closure_algebraic_coeff_subset_closure_integralClosure :
   exact shadow_mem_closure_integralClosure_of_isIntegral hf'alg.isIntegral
 
 /-- **Kedlaya (2017), Theorem 13.4 / Kedlaya (2001b), Theorem 7**
-(`thm:kedlaya-2017-13-4`, stated below `Kedlaya.lean` in the import graph):
+(stated below `Kedlaya.lean` in the import graph):
 the closure of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]` coincides with the
 closure of the set of elements whose canonical coefficient function is the
 coefficient function of a Hahn series algebraic over `𝔽̄_p((t))`. -/

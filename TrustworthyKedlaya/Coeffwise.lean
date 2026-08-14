@@ -11,8 +11,8 @@ public import TrustworthyKedlaya.Rescale
 # Coefficientwise combinations of UP series
 
 For any function `φ : 𝔽̄_p → 𝔽̄_p → 𝔽̄_p` with `φ 0 0 = 0` and UP series `x`, `y`,
-the series with coefficient `φ (x.coeff q) (y.coeff q)` at each exponent `q` is UP
-(`lem:up-coeffwise`).  Twist sequences evaluate slices pointwise, so they transform
+the series with coefficient `φ (x.coeff q) (y.coeff q)` at each exponent `q` is UP.
+Twist sequences evaluate slices pointwise, so they transform
 termwise under `φ`; supports unite as for addition, and the periodicity data
 combines as `(max M M', lcm N N')` after the common-width upgrade of
 `TrustworthyKedlaya.Rescale`.
@@ -27,7 +27,7 @@ preserved by any termwise image.
 - `TrustworthyKedlaya.UP.coeffwise`: the coefficientwise combination of two Hahn
   series.
 - `TrustworthyKedlaya.UP.IsUP.coeffwise`: UP is stable under coefficientwise
-  combinations (`lem:up-coeffwise`).
+  combinations.
 
 ## References
 
@@ -127,7 +127,7 @@ theorem isUP_coeffwise_of_common_width {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a :
     have hy := isTwistPeriodic_slice_upgrade p hysupp hyper (max c c') m
     exact hx.comp₂ hy φ
 
-/-- **UP is stable under coefficientwise combinations** (`lem:up-coeffwise`): for any
+/-- **UP is stable under coefficientwise combinations**: for any
 binary function `φ` with `φ 0 0 = 0` and UP series `x`, `y`, the series with
 coefficients `φ (x.coeff q) (y.coeff q)` is UP.  This subsumes Hadamard products
 and coefficientwise applications of Witt carry digits. -/

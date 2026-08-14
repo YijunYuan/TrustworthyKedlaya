@@ -13,32 +13,31 @@ public import TrustworthyKedlaya.LevelCalculus
 /-!
 # Approximation by completed-integral elements with full unit gain
 
-Blueprint `lem:approx-by-integral` (the published proof of Kedlaya 2001b,
-Theorem 7, part 2, pp. 335–336): every nonzero truncationwise-UP element
+Following the published proof of Kedlaya 2001b, Theorem 7, part 2,
+pp. 335–336: every nonzero truncationwise-UP element
 `r ∈ B'` of valuation `s` admits `z ∈ C` (the closure of the integral closure
 of `ℚᵘⁿ_[p]` in `𝕃_[p]`) with `val (r - z) ≥ s + 1` — a **full unit** of gain.
 
-The assembly is one-shot.  Since `B' = closure A` (`lem:trunc-up-closure`),
-pick a Hahn series `â` integral over `𝔽̄_p((t))` whose shadow approximates `r`
-at depth `s + 1`; the ultrametric forces `v_t(â) = s` exactly.  *Descale*: a
-monic integrality witness `Q` of degree `n` splits over the Hahn field
-(`lem:laurent-closure-in-hahn`); applying the inverse Frobenius automorphism
-`φ^{-k}` (with `p^k ≥ n`) to its coefficients yields a split polynomial with
-root `ŷ = φ^{-k}(â)` of depth `s' = s/p^k` and coefficients supported in
-`p^{-k}ℤ`.  The *coefficientwise shadow companion* has coefficients in `C`
-(`lem:shadow-fracpow-laurent`) and deviation exactly zero, so the adapted
+The assembly is one-shot.  Since `B' = closure A`, pick a Hahn series `â`
+integral over `𝔽̄_p((t))` whose shadow approximates `r` at depth `s + 1`; the
+ultrametric forces `v_t(â) = s` exactly.  *Descale*: a monic integrality
+witness `Q` of degree `n` splits over the Hahn field; applying the inverse
+Frobenius automorphism `φ^{-k}` (with `p^k ≥ n`) to its coefficients yields a
+split polynomial with root `ŷ = φ^{-k}(â)` of depth `s' = s/p^k` and
+coefficients supported in `p^{-k}ℤ`.  The *coefficientwise shadow companion*
+has coefficients in `C` and deviation exactly zero, so the adapted
 `ChainState` of `ChainStep.lean` applies verbatim: the polygon match and the
 forward continuity of roots extract a companion root `z₀ ∈ C` with
 `val z₀ = s'` and `val (S(ŷ) - z₀) ≥ s' + 1/m ≥ s' + 1/n`.  *Amplify*: raising
 to the `p^k`-th power multiplies the congruence excess up to the absolute
-carry depth (`lem:pow-congruence-amplify`, `min(1, p^k/m) = 1`), while the
-iterated power carry (`lem:shadow-pow-carry`) keeps `S(ŷ)^{p^k}` within
-`s + 1` of `S(â)`; the ultrametric combines the three congruences.
+carry depth (`min(1, p^k/m) = 1`), while the iterated power carry keeps
+`S(ŷ)^{p^k}` within `s + 1` of `S(â)`; the ultrametric combines the three
+congruences.
 
 ## Main statements
 
 - `TrustworthyKedlaya.pAdicHahnSeries.exists_mem_closure_integralClosure_near_of_isTruncUP`:
-  the full unit gain (`lem:approx-by-integral`).
+  the full unit gain.
 
 ## References
 
@@ -142,7 +141,7 @@ theorem val_eq_of_le_val_sub {x y : 𝕃_[p]} {s : ℚ} (hx : val p x = (s : Wit
 /-! ### The full unit gain -/
 
 /-- **Approximation by completed-integral elements, full unit gain**
-(`lem:approx-by-integral`; Kedlaya 2001b, Theorem 7, part 2, published proof):
+(Kedlaya 2001b, Theorem 7, part 2, published proof):
 every truncationwise-UP element `r ∈ B'` of exact valuation `s` admits an
 element `z` of the closure `C` of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`
 with `val (r - z) ≥ s + 1`. -/

@@ -11,7 +11,7 @@ public import TrustworthyKedlaya.IntegralToAlgCoeff
 /-!
 # Shadows of fractional-power Laurent series are completed-integral
 
-Blueprint `lem:shadow-fracpow-laurent`: the shadow of a Hahn series whose support is
+The shadow of a Hahn series whose support is
 contained in `(1/n)·ℤ` lies in the closure (valued topology) of the integral closure
 of `ℚᵘⁿ_[p]` in `𝕃_[p]`.
 
@@ -27,7 +27,7 @@ letting `N → ∞` places the shadow in the closure.
 - `TrustworthyKedlaya.pAdicHahnSeries.single_mem_integralClosure_QpUn`: every
   one-term series `[c]·p^q` is integral over `ℚᵘⁿ_[p]`.
 - `TrustworthyKedlaya.pAdicHahnSeries.shadow_mem_closure_integralClosure_of_support_int_div`:
-  `lem:shadow-fracpow-laurent`.
+  the completed-integrality statement.
 
 ## References
 
@@ -108,9 +108,9 @@ theorem shadow_finsetSum_single (s : Finset ℚ) (f : ℚ → 𝔽ᵃ_[p]) :
     rw [Finset.sum_insert ha, Finset.sum_insert ha, shadow_add_of_disjoint hd,
       shadow_hahn_single, ih]
 
-/-- **Shadows of fractional-power Laurent series are completed-integral**
-(`lem:shadow-fracpow-laurent`): the shadow of a Hahn series with support in
-`(1/n)·ℤ` lies in the closure of the integral closure of `ℚᵘⁿ_[p]`. -/
+/-- **Shadows of fractional-power Laurent series are completed-integral**: the shadow
+of a Hahn series with support in `(1/n)·ℤ` lies in the closure of the integral
+closure of `ℚᵘⁿ_[p]`. -/
 theorem shadow_mem_closure_integralClosure_of_support_int_div (n : ℕ+)
     {h : HahnSeries ℚ (𝔽ᵃ_[p])}
     (hsupp : ∀ s ∈ h.support, ∃ k : ℤ, s = (k : ℚ) / (n : ℚ)) :

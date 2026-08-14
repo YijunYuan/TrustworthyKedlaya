@@ -24,7 +24,7 @@ about `s_max` are ever used, and we take them as the interface:
   `v(P.coeff j) ≥ v(P.coeff 0) - s_max(P)·j`;
 - **attainment** `exists_lastSlope_attained`: some index `j ≥ 1` attains equality.
 
-The key stability statement (Wang-Yuan, Lemma 2.4; blueprint `lem:newton-shift`) is that
+The key stability statement (Wang-Yuan, Lemma 2.4) is that
 the substitution `T ↦ T + z` with `v(z) ≥ s_max(P)` preserves the line bound
 (`le_val_taylor_coeff`), is exact at the top attaining index
 (`val_taylor_coeff_eq_of_forall_lt`), and can only increase the last slope
@@ -264,8 +264,8 @@ theorem exists_topAttainer {P : Polynomial 𝕃_[p]} (hP : P ≠ 0) (hn : P.natD
           exact (WithTop.coe_inj.mp heq).symm⟩
         exact absurd (Finset.le_max' A j hjA) (by omega)
 
-/-- **Shift stability of the last slope** (Wang-Yuan, Lemma 2.4; second half of
-`lem:newton-shift`): substituting `T ↦ T + z` with `v(z) ≥ s_max(P)` can only increase
+/-- **Shift stability of the last slope** (Wang-Yuan, Lemma 2.4, second half):
+substituting `T ↦ T + z` with `v(z) ≥ s_max(P)` can only increase
 the last slope, provided the shifted polynomial keeps a nonzero constant term. -/
 theorem lastSlope_le_lastSlope_taylor {P : Polynomial 𝕃_[p]} (hP : P ≠ 0)
     (hn : P.natDegree ≠ 0) (h0 : P.coeff 0 ≠ 0) {z : 𝕃_[p]}
@@ -423,7 +423,7 @@ theorem exists_taylor_residuePoly_coeff_ne_zero {P : Polynomial 𝕃_[p]} (hP : 
   rw [Polynomial.leadingCoeff, Polynomial.natDegree_taylor] at hlead
   exact ⟨(residuePoly P).natDegree, hR_deg, natDegree_residuePoly_le P, hlead⟩
 
-/-- **Newton step, part 1** (Wang-Yuan, Proposition 2.7(1); `lem:newton-step`): shifting
+/-- **Newton step, part 1** (Wang-Yuan, Proposition 2.7(1)): shifting
 by `[c]p^s` with `c` a root of the residue polynomial strictly increases the valuation
 of the constant term. -/
 theorem val_lt_val_taylor_coeff_zero {P : Polynomial 𝕃_[p]} (h0 : P.coeff 0 ≠ 0)
@@ -439,7 +439,7 @@ theorem val_lt_val_taylor_coeff_zero {P : Polynomial 𝕃_[p]} (h0 : P.coeff 0 �
   · exact h
   · exact absurd hres (coeff_val_ne_zero h.symm)
 
-/-- **Newton step, part 2** (Wang-Yuan, Proposition 2.7(2); `lem:newton-step`): if the
+/-- **Newton step, part 2** (Wang-Yuan, Proposition 2.7(2)): if the
 `T^q`-coefficient of `Res_P(T + c)` survives (for a root `c` of multiplicity exactly
 `q`) and the shifted polynomial keeps a nonzero constant term, the last slope strictly
 increases. -/

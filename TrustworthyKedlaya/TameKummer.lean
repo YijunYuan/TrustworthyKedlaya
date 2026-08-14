@@ -28,7 +28,7 @@ hence lies in the image of `K` — forcing `[B(β) : B] ≤ m/d < m`.  Bézout t
 (`exists_spectralNorm_uniformizer_pow_finrank`: finite extensions of `B` are totally
 ramified) forces `m ∣ [B(u) : B]`, hence `B(u) = L`.
 
-This is Lemma `lem:tame-kummer` of the blueprint (Kedlaya 2001a, proof of Lemma 3).
+This step is from Kedlaya 2001a, proof of Lemma 3.
 -/
 
 @[expose] public section

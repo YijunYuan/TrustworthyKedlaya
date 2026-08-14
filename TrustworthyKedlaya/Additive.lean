@@ -20,7 +20,7 @@ and negation act pointwise on values, so they preserve the data verbatim.
 
 The general addition statement (arbitrary parameters `a`, `a'`) reduces to this one
 by passing to a common slice width, which is the content of the exponent-rescaling
-lemma (`lem:up-rescale`); see `TrustworthyKedlaya.Rescale` for that upgrade and the
+lemma; see `TrustworthyKedlaya.Rescale` for that upgrade and the
 resulting unrestricted `IsUP.add`.
 
 ## Main statements

@@ -12,7 +12,7 @@ public import TrustworthyKedlaya.Truncation
 # UP is closed under Artin-Schreier roots
 
 If `y ∈ 𝔽̄_p((t^ℚ))` is uniformly periodic and `x^p - x = y`, then `x` is uniformly
-periodic (Kedlaya (2001a), Lemma 4; `prop:up-as-closed` of the blueprint).
+periodic (Kedlaya (2001a), Lemma 4).
 
 Present `y` by a slice witness `(a, b, c, M, N)` and truncate at `0`:
 `y = y₋ + y₀ + y₊` with `y₋, y₊` inheriting the witness verbatim
@@ -30,8 +30,8 @@ scaling by `p`, forcing its minimum to be `0`.
   Frobenius of `𝔽̄_p((t^ℚ))` are the constants (with value in `𝔽_p`).
 - `TrustworthyKedlaya.UP.exists_artinSchreier_root_isUP`: every UP series has a
   UP Artin-Schreier root (the construction).
-- `TrustworthyKedlaya.UP.isUP_of_artinSchreier_root`: the packaged statement
-  (`prop:up-as-closed`).
+- `TrustworthyKedlaya.UP.isUP_of_artinSchreier_root`: the packaged closure
+  statement.
 
 ## References
 
@@ -100,8 +100,8 @@ namespace UP
 variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 
 variable {p} in
-/-- **Every UP series has a UP Artin-Schreier root** (the construction half of
-`prop:up-as-closed`): if `y` is uniformly periodic then `X^p - X = y` has a root in
+/-- **Every UP series has a UP Artin-Schreier root** (the construction half of the
+closure property): if `y` is uniformly periodic then `X^p - X = y` has a root in
 `𝔽̄_p((t^ℚ))`, and one such root is uniformly periodic.  Truncate a witness of `y`
 at `0` and take the three roots (`ArtinSchreierNeg`, constants, `ArtinSchreierPos`). -/
 theorem exists_artinSchreier_root_isUP {y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : IsUP p y) :
@@ -140,7 +140,7 @@ theorem exists_artinSchreier_root_isUP {y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : 
   rw [hsplit, hASneg, hASμ, hASpos, ← hahnRestrict_tridecomp]
 
 variable {p} in
-/-- **UP is closed under Artin-Schreier roots** (`prop:up-as-closed`): if `y` is
+/-- **UP is closed under Artin-Schreier roots**: if `y` is
 uniformly periodic and `x^p - x = y`, then `x` is uniformly periodic.  `x` differs
 from the constructed UP root by a Frobenius fixed point, i.e. an `𝔽_p`-constant. -/
 theorem isUP_of_artinSchreier_root {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hy : IsUP p y)

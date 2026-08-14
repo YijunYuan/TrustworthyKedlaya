@@ -16,8 +16,8 @@ modulo `p^{K+1}`, `w` is the sum of the lifts of its digits
 `φ^{-i}(w.coeff i)` times `p^i` (`i ≤ K`), with `φ` the Frobenius.  Applying this
 to the sum of two Teichmüller lifts packages the Witt addition carries into
 **digit functions** `carryDigit i : 𝔽̄_p × 𝔽̄_p → 𝔽̄_p` with
-`[a] + [b] ≡ [a + b] + ∑_{1 ≤ i ≤ K} [carryDigit i a b]·pⁱ  (mod p^{K+1})`
-(`lem:teich-carry-digits`).  These functions vanish at `(0,0)`, so they can be
+`[a] + [b] ≡ [a + b] + ∑_{1 ≤ i ≤ K} [carryDigit i a b]·pⁱ  (mod p^{K+1})`.
+These functions vanish at `(0,0)`, so they can be
 applied coefficientwise to UP series (`TrustworthyKedlaya.Coeffwise`); no
 explicit Witt addition polynomials are needed.
 
@@ -26,7 +26,7 @@ explicit Witt addition polynomials are needed.
 - `TrustworthyKedlaya.teichDigit`: the `i`-th Teichmüller digit of a Witt vector.
 - `TrustworthyKedlaya.carryDigit`: the digit functions of a two-term carry.
 - `TrustworthyKedlaya.teichmuller_add_sub_sum_carryDigit_dvd`: the congruence
-  above (`lem:teich-carry-digits`).
+  above.
 
 ## References
 
@@ -76,7 +76,7 @@ theorem carryDigit_zero (a b : 𝔽ᵃ_[p]) : carryDigit p 0 a b = a + b := by
   rw [carryDigit, teichDigit_zero, WittVector.add_coeff_zero]
   simp
 
-/-- **Teichmüller digits of a two-term carry** (`lem:teich-carry-digits`): modulo
+/-- **Teichmüller digits of a two-term carry**: modulo
 `p^{K+1}`, the sum of two Teichmüller lifts is the lift of the sum plus carry
 terms `[carryDigit i a b]·pⁱ` for `1 ≤ i ≤ K`. -/
 theorem teichmuller_add_sub_sum_carryDigit_dvd (a b : 𝔽ᵃ_[p]) (K : ℕ) :

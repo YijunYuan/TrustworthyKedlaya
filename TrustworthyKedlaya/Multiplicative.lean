@@ -366,7 +366,7 @@ theorem mul_antidiagonal_transport {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ
 /-! ### Periodicity of the slices of a product -/
 
 variable {p} in
-/-- **Periodicity of the slices of a product** (core of `lem:up-mul`): at a common
+/-- **Periodicity of the slices of a product** (the core of `IsUP.mul`): at a common
 slice width `a`, every slice of `x * y` is periodic at level `c₁ + c₂` with data
 `(max(M₁,M₂) + (K + n₀), lcm(N₁,N₂))`, where `K = ⌊(c₁+c₂)/(p-1)⌋` and
 `n₀ = c₁+c₂+1`. -/
@@ -524,7 +524,7 @@ theorem isUP_mul_of_common_width {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+}
   exact Sabc_add_subset p (hxs hg₁) (hys hg₂)
 
 variable {p} in
-/-- **UP is stable under multiplication** (`lem:up-mul`): upgrade both presentations
+/-- **UP is stable under multiplication**: upgrade both presentations
 to the common slice width `a'·a` and transport the antidiagonal decompositions. -/
 theorem IsUP.mul {x y : HahnSeries ℚ (𝔽ᵃ_[p])} (hx : IsUP p x) (hy : IsUP p y) :
     IsUP p (x * y) := by

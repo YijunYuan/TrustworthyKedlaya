@@ -11,9 +11,9 @@ public import TrustworthyKedlaya.ShadowCongruence
 /-!
 # Root extraction against an adapted lift of a recentered hat polynomial
 
-Reusable extraction engine for the descaling route of blueprint
-`lem:approx-by-integral` (the published proof of Kedlaya 2001b, Theorem 7,
-part 2): a `ChainState` for the anchor `(r, s, Yhat, ahat)` packages a monic
+Reusable extraction engine for the descaling route of the published proof of
+Kedlaya 2001b, Theorem 7, part 2: a `ChainState` for the anchor
+`(r, s, Yhat, ahat)` packages a monic
 polynomial `P` over `𝕃_[p]` with coefficients in the closed integral closure
 `C` of `ℚᵘⁿ_[p]`, coefficientwise within `σ_{n-i}(W) + 1` of the shadows of
 the coefficients of the recentered split hat polynomial
@@ -60,12 +60,12 @@ open scoped TrustworthyKedlaya.UP
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
 /-- A **chain state** for the block anchor `(r, s, Yhat, ahat)` (an adapted
-lift in the sense of the descaling route of `lem:approx-by-integral`): `Yhat`
-is the root multiset of the hat polynomial and
+lift in the sense of the descaling route of Kedlaya 2001b, Theorem 7,
+part 2): `Yhat` is the root multiset of the hat polynomial and
 `ahat ∈ Yhat` the distinguished root whose shadow approximates the residual
 target `r` at depth `s + 1`.  The data are the accumulated char-`p` recentering
 `ĝ`, the accumulated `p`-adic extracted sum `g`, and the adapted lift `P`; the
-propositional fields are the blueprint invariants (1)–(3) in `j`-free form. -/
+propositional fields are the invariants (1)–(3) in `j`-free form. -/
 structure ChainState (r : 𝕃_[p]) (s : ℚ) (Yhat : Multiset (HahnSeries ℚ (𝔽ᵃ_[p])))
     (ahat : HahnSeries ℚ (𝔽ᵃ_[p])) where
   /-- the accumulated char-`p` recentering `ĝ` -/
@@ -182,8 +182,8 @@ depth `min (s + 1) (s_c + 1/m)`; recentering by the depth-one slice
 regenerates invariant (2) at the fixed depth `s + 1`.
 
 The step does **not** re-establish invariant (3) at the recentered state; in
-the one-shot descaling route of `lem:approx-by-integral` no re-established
-lift is needed. -/
+the one-shot descaling route of the published proof (Kedlaya 2001b, Theorem 7)
+no re-established lift is needed. -/
 theorem exists_step (St : ChainState r s Yhat ahat) (hahat : ahat ∈ Yhat) {sc : ℚ}
     (hsc : (ahat - St.recenter).orderTop = (sc : WithTop ℚ)) :
     ∃ z ∈ St.lift.roots, ∃ m : ℕ,
@@ -200,7 +200,7 @@ theorem exists_step (St : ChainState r s Yhat ahat) (hahat : ahat ∈ Yhat) {sc 
       ((s + 1 : ℚ) : WithTop ℚ) ≤ val p
         ((r - (St.extracted + z)) - shadow (ahat - (St.recenter + trunc (sc + 1) z))) := by
   classical
-  -- extraction: evaluation at the exact shadow root plus `lem:approx-root`,
+  -- extraction: evaluation at the exact shadow root plus the approximate-root bound,
   -- packaged as the forward continuity of roots
   obtain ⟨z, hzZ, hzval, hznear⟩ := roots_continuity_forward
     (Yhat.map fun y => y - St.recenter) St.lift.roots

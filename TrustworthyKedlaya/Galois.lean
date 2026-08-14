@@ -33,7 +33,7 @@ constructs the residue map and the tame character of `L/B`:
   of `θ` is a finite subgroup of `Kˣ`, hence cyclic, and its order is prime to the
   characteristic `p` of `K` (`Kˣ` has no `p`-torsion, by injectivity of Frobenius).
 
-This is Lemma `lem:tame-cyclic` of the blueprint (Kedlaya 2001a, proof of Lemma 3).
+This step is from Kedlaya 2001a, proof of Lemma 3.
 -/
 
 @[expose] public section

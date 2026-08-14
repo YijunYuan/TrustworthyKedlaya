@@ -25,7 +25,7 @@ subgroup `H` of order `p^{n-1}`; its index `p` is the smallest prime factor of t
 order, so `H` is normal, and the Galois correspondence turns `H` into the required
 intermediate field `M = E^H`.
 
-This is Lemma `lem:p-group-tower` of the blueprint (Kedlaya 2001a, proof of Lemma 3).
+This step is from Kedlaya 2001a, proof of Lemma 3.
 -/
 
 @[expose] public section

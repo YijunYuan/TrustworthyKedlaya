@@ -12,19 +12,18 @@ public import Mathlib.RingTheory.Valuation.Basic
 # Valuation floors and root matching for split polynomials
 
 Generic valued-ring toolkit for the cross-characteristic Newton comparison
-(blueprint `lem:split-coeff-floor` and `lem:valued-root-matching`; Kedlaya 2001b,
-the lemma on continuity of roots).  Throughout, `v : AddValuation F (WithTop ℚ)`
-on a commutative ring `F`.
+(Kedlaya 2001b, the lemma on continuity of roots).  Throughout,
+`v : AddValuation F (WithTop ℚ)` on a commutative ring `F`.
 
 The "sum of the `j` smallest elements" `σ_j(W)` of a multiset `W` of valuations is
 encoded by its attaining witnesses: a sub-multiset `T ≤ W` of size `j` whose sum is
 minimal among all such (`exists_min_sum_powersetCard`).  Statements quantify over
 such witnesses instead of a `σ` function.
 
-- `exists_sum_le_v_coeff_prod_X_sub_C` (`lem:split-coeff-floor`): the coefficient of
+- `exists_sum_le_v_coeff_prod_X_sub_C`: the coefficient of
   `X^i` in `∏_{y ∈ Y} (X - y)` has valuation at least `σ_{n-i}(v(Y))`, delivered as a
   minimal witness `T` with `T.sum ≤ v(coeff)`;
-- `exists_root_sub_valuation_le` (`lem:valued-root-matching`): if two split monic
+- `exists_root_sub_valuation_le`: if two split monic
   polynomials of the same degree `n` have equal valuation multisets `W` and their
   coefficients at `X^i` differ by valuation at least `σ_{n-i}(W) + k`, then for every
   root `u` of the first of valuation `s` there is a root `z` of the second with
@@ -98,7 +97,7 @@ theorem AddValuation.le_map_multiset_sum {M : Multiset F} {g : WithTop ℚ}
     exact v.map_le_add (h a (Multiset.mem_cons_self a t))
       (ih fun x hx => h x (Multiset.mem_cons_of_mem hx))
 
-/-! ### Coefficient floors of a split polynomial (`lem:split-coeff-floor`) -/
+/-! ### Coefficient floors of a split polynomial -/
 
 /-- A minimal-sum witness bounds the valuation of an elementary symmetric function:
 if `T ≤ Y.map v` has minimal sum among sub-multisets of its size, then
@@ -114,7 +113,7 @@ theorem sum_le_v_esymm (Y : Multiset F) {T : Multiset (WithTop ℚ)}
   refine hmin (T'.map v) (Multiset.map_le_map hT'mem.1) ?_
   rw [Multiset.card_map, hT'mem.2]
 
-/-- **Coefficient floor of a split polynomial** (`lem:split-coeff-floor`): the
+/-- **Coefficient floor of a split polynomial**: the
 coefficient of `X^i` in `∏_{y ∈ Y}(X - y)` has valuation at least the sum of the
 `card Y - i` smallest valuations of `Y`, delivered by a minimal witness `T`. -/
 theorem exists_sum_le_v_coeff_prod_X_sub_C (Y : Multiset F) {i : ℕ} (hi : i ≤ Y.card) :
@@ -131,9 +130,9 @@ theorem exists_sum_le_v_coeff_prod_X_sub_C (Y : Multiset F) {i : ℕ} (hi : i �
   have := sum_le_v_esymm v Y (by rw [hTcard]; exact hTmin)
   rwa [hTcard] at this
 
-/-! ### An approximate root is close to a root (`lem:approx-root`) -/
+/-! ### An approximate root is close to a root -/
 
-/-- **An approximate root is close to a root** (`lem:approx-root`): let `Z` be a
+/-- **An approximate root is close to a root**: let `Z` be a
 finite root multiset with `Q = ∏_{z ∈ Z}(X - z)`, and let `u` have valuation `s`,
 with `s` occurring in the valuation multiset `v(Z)` with multiplicity `m ≥ 1`.
 If `v(Q(u)) ≥ ∑_{z ∈ Z} min(s, v z) + k`, then some root `z ∈ Z` has `v z = s`
@@ -265,10 +264,10 @@ theorem exists_root_sub_valuation_le_of_le_v_eval [Nontrivial F]
       nlinarith [hkey]
     linarith [h2]
 
-/-! ### Root matching (`lem:valued-root-matching`) -/
+/-! ### Root matching -/
 
 /-- **Root matching for coefficientwise-close split polynomials**
-(`lem:valued-root-matching`; the single-field core of Kedlaya 2001b's continuity of
+(the single-field core of Kedlaya 2001b's continuity of
 roots).  Let `U, Z` be root multisets with equal valuation multisets `W`, and suppose
 the products `R = ∏_{u ∈ U}(X - u)` and `Q = ∏_{z ∈ Z}(X - z)` are coefficientwise
 close: for each `i < n` some size-`(n-i)` sub-multiset `T ≤ W` has
@@ -350,7 +349,7 @@ theorem exists_root_sub_valuation_le [Nontrivial F]
         _ ≤ v ((R - Q).coeff i) + i • ((s : WithTop ℚ)) := add_le_add hTbound le_rfl
         _ = v ((R - Q).coeff i) + v (u ^ i) := by rw [v.map_pow, hs]
         _ = v ((R - Q).coeff i * u ^ i) := (v.map_mul _ _).symm
-  -- delegate to `lem:approx-root`
+  -- delegate to the approximate-root lemma
   have hsZ : ((s : WithTop ℚ)) ∈ Z.map v := by rw [← hUZ]; exact hsW
   have hcount : W.count ((s : WithTop ℚ)) = (Z.map v).count ((s : WithTop ℚ)) := by
     rw [hUZ]
@@ -360,7 +359,7 @@ theorem exists_root_sub_valuation_le [Nontrivial F]
   rw [hcount]
   exact hzle
 
-/-! ### Rootwise perturbation of split polynomials (`lem:rootwise-perturbation`) -/
+/-! ### Rootwise perturbation of split polynomials -/
 
 /-- The valuation of a perturbed root dominates the original's:
 if `v δ ≥ v u + κ` with `κ ≥ 0`, then `v (u + δ) ≥ v u`. -/
@@ -371,7 +370,7 @@ private theorem le_v_add_of_le_shift {u δ : F} {κ : ℚ} (hκ : 0 ≤ κ)
     _ ≤ v u + (κ : WithTop ℚ) := by
         exact add_le_add le_rfl (by exact_mod_cast hκ)
 
-/-- **Rootwise perturbation** (`lem:rootwise-perturbation`): move each root `u` of a
+/-- **Rootwise perturbation**: move each root `u` of a
 split polynomial by a perturbation `δ` with `v δ ≥ v u + κ` (`κ ≥ 0`).  Then every
 coefficient of the difference of the two split polynomials carries the `σ`-floor of
 the *unperturbed* valuation multiset plus the full margin `κ`, delivered by a
@@ -379,7 +378,7 @@ minimal-sum witness `T` of size `card − i`.
 
 This is the single transport engine of the recentering iteration: it converts a
 matched root family (per-pair shadow distance `≥ v + κ`) into the coefficientwise
-congruence consumed by `lem:polygon-congruence` and `lem:valued-root-matching`, and
+congruence consumed by the polygon-congruence and root-matching lemmas, and
 it bounds the shadow-recentering defect (perturbations `δ_r = S(y_r) - S(ŷ) -
 S(y_r - ŷ)` with `κ = 1`). -/
 theorem coeff_prod_sub_prod_eq_zero_of_card_le [Nontrivial F] (E : Multiset (F × F)) {i : ℕ}

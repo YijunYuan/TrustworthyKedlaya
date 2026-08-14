@@ -28,10 +28,10 @@ Two results:
   (`K` algebraically closed of characteristic `p`) carries such a chain starting from
   `M₀ = B(u)` with `u^n = X` for some `n` prime to `p`.  The wild inertia subgroup
   `P = ker(tameCharacter)` is a normal `p`-Sylow subgroup with cyclic prime-to-`p`
-  quotient; its fixed field is `B(u)` by `lem:tame-kummer`, and the chain above it
-  comes from the wild part.
+  quotient; its fixed field is `B(u)` by the tame-Kummer description
+  (`TrustworthyKedlaya.TameKummer`), and the chain above it comes from the wild part.
 
-This is `prop:gal-tower` of the blueprint (Kedlaya 2001a, proof of Lemma 3).
+This is Kedlaya 2001a, proof of Lemma 3.
 -/
 
 @[expose] public section

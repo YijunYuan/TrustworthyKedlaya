@@ -15,7 +15,7 @@ public import Mathlib.Algebra.Polynomial.Expand
 
 Every polynomial over `B = 𝔽̄_p((t))` splits over the Hahn field `𝔽̄_p((t^ℚ))`, so the
 relative algebraic closure of `B` in the Hahn field is an algebraic closure of `B`
-(Kedlaya 2001a, Theorem 15 / 2001b; blueprint `lem:laurent-closure-in-hahn`).
+(Kedlaya 2001a, Theorem 15 / 2001b).
 
 The route: factor into irreducibles (`B[X]` is a UFD).  An irreducible `P` has a
 separable contraction `P = Q(X^{p^e})`; the splitting field of the separable `Q` is
@@ -84,7 +84,7 @@ theorem splits_expand_pow_char {K : Type*} [Field K] {q : ℕ} [Fact q.Prime] [C
 
 /-- A **separable** polynomial over `𝔽̄_p((t))` splits over the Hahn field: its
 splitting field is finite Galois over `𝔽̄_p((t))` and embeds into the Hahn field by
-the Artin-Schreier tower (`lem:tower-embedding`). -/
+the Artin-Schreier tower. -/
 theorem splits_map_intHahnEmbedding_of_separable {Q : ((𝔽ᵃ_[p])⸨X⸩)[X]}
     (hsep : Q.Separable) : (Q.map (intHahnEmbedding p)).Splits := by
   have : IsGalois ((𝔽ᵃ_[p])⸨X⸩) Q.SplittingField :=
@@ -111,8 +111,8 @@ theorem splits_map_intHahnEmbedding_of_irreducible {P : ((𝔽ᵃ_[p])⸨X⸩)[X
   rw [hkey]
   exact splits_expand_pow_char (splits_map_intHahnEmbedding_of_separable p hQsep) e
 
-/-- **Every polynomial over `𝔽̄_p((t))` splits over the Hahn field `𝔽̄_p((t^ℚ))`**
-(`lem:laurent-closure-in-hahn`): factor into irreducibles and split each factor. -/
+/-- **Every polynomial over `𝔽̄_p((t))` splits over the Hahn field `𝔽̄_p((t^ℚ))`**:
+factor into irreducibles and split each factor. -/
 theorem splits_map_intHahnEmbedding (f : ((𝔽ᵃ_[p])⸨X⸩)[X]) :
     (f.map (intHahnEmbedding p)).Splits := by
   induction f using WfDvdMonoid.induction_on_irreducible with
@@ -135,7 +135,7 @@ theorem exists_eval_map_intHahnEmbedding_eq_zero {f : ((𝔽ᵃ_[p])⸨X⸩)[X]}
 /-! ### The relative algebraic closure is an algebraic closure -/
 
 /-- **The relative algebraic closure of `𝔽̄_p((t))` in the Hahn field is an algebraic
-closure of `𝔽̄_p((t))`** (`lem:laurent-closure-in-hahn`; Kedlaya 2001a/2001b): it is
+closure of `𝔽̄_p((t))`** (Kedlaya 2001a/2001b): it is
 algebraic by definition, and every monic irreducible polynomial over `𝔽̄_p((t))` has a
 root in it (the root in the Hahn field is integral, hence lies in the relative
 algebraic closure), so Isaacs' theorem applies. -/

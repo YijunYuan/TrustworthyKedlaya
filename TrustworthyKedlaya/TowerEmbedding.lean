@@ -19,7 +19,7 @@ public import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
 
 Every finite Galois extension `L` of `B = 𝔽̄_p((t))` embeds over `B` into the Hahn
 field `𝔽̄_p((t^ℚ))` with image consisting of uniformly periodic series (Kedlaya
-(2001a), proof of Theorem 15; `lem:tower-embedding` of the blueprint).
+(2001a), proof of Theorem 15).
 
 The Artin-Schreier tower `B(t^{1/n}) = M₀ ≤ ⋯ ≤ M_r = L` of
 `TrustworthyKedlaya.Ext.exists_artinSchreier_tower` is embedded step by step:
@@ -27,20 +27,19 @@ The Artin-Schreier tower `B(t^{1/n}) = M₀ ≤ ⋯ ≤ M_r = L` of
 * the base `B(u)` (`u^n = t`, `n` prime to `p`) goes to `𝔽̄_p((t^{1/n}))`: the
   minimal polynomial of `u` divides `X^n - t`, which splits over the Hahn field
   with roots `ζ^i t^{1/n}` (Kummer theory, `ζ` a primitive `n`-th root of unity of
-  `𝔽̄_p`), and series supported on `(1/n)ℤ` are UP (`lem:up-laurent`);
+  `𝔽̄_p`), and series supported on `(1/n)ℤ` are UP;
 * each Artin-Schreier step `M_{i+1} = M_i(θ)`, `θ^p - θ = a ∈ M_i`, extends the
-  embedding `τᵢ`: `X^p - X - τᵢ(a)` has a UP root by `prop:up-as-closed`, and
-  translating by the `𝔽_p`-constants shows it splits, so the image of the minimal
-  polynomial of `θ` has a root — necessarily UP — to send `θ` to;
+  embedding `τᵢ`: `X^p - X - τᵢ(a)` has a UP root (the UP series are Artin-Schreier
+  closed), and translating by the `𝔽_p`-constants shows it splits, so the image of
+  the minimal polynomial of `θ` has a root — necessarily UP — to send `θ` to;
 * UP-ness of the image propagates because every element of a simple extension is a
-  polynomial in the generator (`lem:up-add`, `lem:up-mul`).
+  polynomial in the generator (UP series are closed under sums and products).
 
 ## Main statements
 
 - `TrustworthyKedlaya.UP.intHahnEmbedding`: the inclusion `𝔽̄_p((t)) →+* 𝔽̄_p((t^ℚ))`
   (definitionally equal copy of the one in `Kedlaya.lean`; pinned in `DefeqGuards`).
-- `TrustworthyKedlaya.UP.exists_ringHom_forall_isUP`: the embedding theorem
-  (`lem:tower-embedding`).
+- `TrustworthyKedlaya.UP.exists_ringHom_forall_isUP`: the embedding theorem.
 
 ## References
 
@@ -111,7 +110,7 @@ theorem isUP_aeval {R : Type*} [CommRing R] [Algebra R (HahnSeries ℚ (𝔽ᵃ_
     exact (hbase _).mul (hξ.pow i)
 
 /-- The image of a Laurent series in the Hahn field is UP: its support consists of
-integers (`lem:up-laurent` with `n = 1`). -/
+integers, and integer-supported series are UP. -/
 theorem isUP_intHahnEmbedding (b : (𝔽ᵃ_[p])⸨X⸩) : IsUP p (intHahnEmbedding p b) := by
   refine isUP_of_support_int_div 1 fun s hs => ?_
   have : s ∈ Set.range ((Int.castAddHom ℚ : ℤ →+ ℚ)) := by
@@ -278,8 +277,8 @@ theorem exists_algHom_adjoin_forall_isUP {u : L} {n : ℕ} (hnF : (n : 𝔽ᵃ_[
 
 /-- **One Artin-Schreier step**: an embedding of `N` into the Hahn field with UP image
 extends across `N' = N(θ)`, `θ^p - θ ∈ N` — the Artin-Schreier polynomial over the
-image has a UP root (`prop:up-as-closed`) and splits, so the image of the minimal
-polynomial of `θ` has a root, necessarily UP. -/
+image has a UP root and splits, so the image of the minimal polynomial of `θ` has a
+root, necessarily UP. -/
 theorem exists_algHom_sup_adjoin_forall_isUP {N N' : IntermediateField ((𝔽ᵃ_[p])⸨X⸩) L}
     (τ : N →ₐ[(𝔽ᵃ_[p])⸨X⸩] HahnSeries ℚ (𝔽ᵃ_[p])) (hτ : ∀ z, IsUP p (τ z)) {θ : L}
     (hAS : θ ^ p - θ ∈ N)
@@ -343,8 +342,8 @@ theorem exists_algHom_sup_adjoin_forall_isUP {N N' : IntermediateField ((𝔽ᵃ
       (IntermediateField.equivOfEq hEq).toAlgHom,
     fun z => hψUP _⟩
 
-/-- **Embedding the tower with UP image** (`lem:tower-embedding`; Kedlaya (2001a),
-proof of Theorem 15): every finite Galois extension `L` of `B = 𝔽̄_p((t))` admits a
+/-- **Embedding the tower with UP image** (Kedlaya (2001a), proof of Theorem 15):
+every finite Galois extension `L` of `B = 𝔽̄_p((t))` admits a
 `B`-embedding `τ : L → 𝔽̄_p((t^ℚ))` — over the inclusion `intHahnEmbedding` of `B` —
 whose image consists of uniformly periodic series.  The Artin-Schreier tower of
 `Ext.exists_artinSchreier_tower` is embedded stage by stage. -/

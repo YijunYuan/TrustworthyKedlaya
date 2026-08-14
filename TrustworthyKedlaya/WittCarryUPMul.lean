@@ -13,10 +13,10 @@ public import TrustworthyKedlaya.MulCombine
 
 The set `B'` of truncationwise-UP elements of `𝕃_[p]` is closed under
 multiplication, hence is a subring containing every integer polynomial in shadows
-of UP series (`lem:witt-carry-up-mul`).
+of UP series.
 
-The engine is the **digit expansion of a product of shadows**
-(`lem:shadow-mul-collapse`): at the lifted level, the column of
+The engine is the **digit expansion of a product of shadows**:
+at the lifted level, the column of
 `lift(y)·lift(y')` at an exponent `q` is the finite sum of Teichmüller lifts
 `∑ [u·u']` over the coefficient-pair multiset `mulPairs y y' q`, so its
 Teichmüller digits define **product-digit series** `Dᵢ` — convolution
@@ -31,9 +31,9 @@ truncations of a finite sum of shadows of UP series, and the sum engine
 - `TrustworthyKedlaya.pAdicHahnSeries.mulDigit` / `mulDigitSeries`: the product
   digits of a coefficient-pair column, and the digit series `Dᵢ`.
 - `TrustworthyKedlaya.pAdicHahnSeries.le_val_shadow_mul_collapse`: the digit
-  expansion (`lem:shadow-mul-collapse`).
+  expansion.
 - `TrustworthyKedlaya.pAdicHahnSeries.IsTruncUP.mul` / `truncUPSubring`: `B'` is
-  closed under multiplication and forms a subring (`lem:witt-carry-up-mul`).
+  closed under multiplication and forms a subring.
 
 ## References
 
@@ -52,8 +52,7 @@ variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 /-! ### Product digits of a coefficient-pair column -/
 
 /-- The `i`-th **product digit** of a coefficient-pair column: the `i`-th
-Teichmüller digit of the sum of the lifted pairwise products
-(`lem:shadow-mul-collapse`). -/
+Teichmüller digit of the sum of the lifted pairwise products. -/
 noncomputable def mulDigit (i : ℕ) (P : Multiset (𝔽ᵃ_[p] × 𝔽ᵃ_[p])) : 𝔽ᵃ_[p] :=
   teichDigit p i ((P.map fun uv => teichmuller p (uv.1 * uv.2)).sum)
 
@@ -72,7 +71,7 @@ theorem mulDigit_zero (P : Multiset (𝔽ᵃ_[p] × 𝔽ᵃ_[p])) :
       Multiset.map_cons, Multiset.sum_cons, ih, WittVector.teichmuller_coeff_zero]
 
 /-- The `i`-th **product-digit series** of two Hahn series: the convolution
-combination of `y, y'` under the `i`-th product digit (`lem:shadow-mul-collapse`). -/
+combination of `y, y'` under the `i`-th product digit. -/
 noncomputable def mulDigitSeries (i : ℕ) (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) :
     HahnSeries ℚ (𝔽ᵃ_[p]) :=
   UP.mulCombine p (mulDigit i) (mulDigit_empty i) y y'
@@ -93,7 +92,7 @@ theorem isUP_mulDigitSeries {y y' : HahnSeries ℚ (𝔽ᵃ_[p])}
   exact hy.mulCombine hy' (mulDigit i) (mulDigit_empty i)
 
 /-- Product-digit series vanish below the sum of the support floors
-(`lem:shadow-mul-collapse`, support clause). -/
+(the support clause of the digit expansion). -/
 theorem coeff_mulDigitSeries_eq_zero {y y' : HahnSeries ℚ (𝔽ᵃ_[p])} {v v' : ℚ}
     (hy : ∀ q < v, y.coeff q = 0) (hy' : ∀ q < v', y'.coeff q = 0) (i : ℕ)
     {q : ℚ} (hq : q < v + v') : (mulDigitSeries i y y').coeff q = 0 := by
@@ -102,7 +101,7 @@ theorem coeff_mulDigitSeries_eq_zero {y y' : HahnSeries ℚ (𝔽ᵃ_[p])} {v v'
 
 /-! ### The digit expansion of a product of shadows -/
 
-/-- **Digit expansion of a product of shadows** (`lem:shadow-mul-collapse`): with
+/-- **Digit expansion of a product of shadows**: with
 `Dᵢ` the product-digit series of `y` and `y'`, the defect
 `S(y)·S(y') - ∑_{i ≤ K} pⁱ·S(Dᵢ)` has valuation at least `v + v' + K + 1`, where
 `v, v'` bound the supports from below. -/
@@ -266,7 +265,7 @@ theorem isUP_trunc_shadow_mul {y y' : HahnSeries ℚ (𝔽ᵃ_[p])}
 
 /-! ### `B'` is closed under multiplication -/
 
-/-- **`B'` is closed under multiplication** (`lem:witt-carry-up-mul`): below a
+/-- **`B'` is closed under multiplication**: below a
 cutoff `n`, replace both factors by the shadows of their truncations at cutoffs
 shifted by the valuations; the product of shadows has UP truncations by the digit
 expansion, and the approximation is at `p`-adic distance `≥ n`. -/
@@ -360,8 +359,8 @@ protected theorem IsTruncUP.pow {g : 𝕃_[p]} (hg : IsTruncUP g) :
     exact (hg.pow n).mul hg
 
 variable (p) in
-/-- **`B'` as a subring of `𝕃_[p]`** (`lem:witt-carry-up-mul`, consequence
-clause): it contains every integer polynomial in shadows of UP series. -/
+/-- **`B'` as a subring of `𝕃_[p]`**: it contains every integer polynomial in
+shadows of UP series. -/
 noncomputable def truncUPSubring : Subring (𝕃_[p]) where
   carrier := {g | IsTruncUP g}
   zero_mem' := isTruncUP_zero

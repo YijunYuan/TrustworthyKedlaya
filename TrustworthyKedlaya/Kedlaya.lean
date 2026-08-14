@@ -93,8 +93,7 @@ noncomputable instance : Algebra (𝔽ᵃ_[p])⸨X⸩ (HahnSeries ℚ (𝔽ᵃ_[
 
 open LaurentSeries in
 /-- **Kedlaya (2017), Theorem 11.11 = Kedlaya (2001a), Theorem 15** (named `_half` for
-historical reasons; upgraded to the full equivalence per the owner's ruling in inbox
-I-0024).
+historical reasons; upgraded to the full equivalence with owner approval).
 
 A series `x = ∑ᵢ xᵢ tⁱ ∈ 𝔽̄_p((t^ℚ))` is integral over `𝔽̄_p((t))` if and only if:
 
@@ -107,8 +106,7 @@ A series `x = ∑ᵢ xᵢ tⁱ ∈ 𝔽̄_p((t^ℚ))` is integral over `𝔽̄_p
   at most `M` terms.
 
 The forward direction is `TrustworthyKedlaya.UP.isUP_of_isIntegral`; the converse
-(blueprint node `lem:up-algebraic`, needed for `kedlaya_2017_theorem13_4`) is
-`TrustworthyKedlaya.UP.IsUP.isIntegral`.
+(needed for `kedlaya_2017_theorem13_4`) is `TrustworthyKedlaya.UP.IsUP.isIntegral`.
 -/
 theorem kedlaya_2001a_theorem15_half (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
     IsIntegral (𝔽ᵃ_[p])⸨X⸩ x

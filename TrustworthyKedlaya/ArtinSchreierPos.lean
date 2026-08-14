@@ -14,8 +14,7 @@ public import TrustworthyKedlaya.FrobeniusUP
 For `y` uniformly periodic with support in `S_{a,b,c} ∩ (0, ∞)`, the series
 `x = -∑_{k ≥ 0} y^{p^k}` is a well-defined Hahn series supported on
 `S_{a,b,c} ∩ (0, ∞)`, satisfies `x^p - x = y`, and is uniformly periodic with the
-*same* data `(M, N)` (Kedlaya (2001a), part of the proof of Lemma 4;
-`lem:as-root-pos` of the blueprint).
+*same* data `(M, N)` (Kedlaya (2001a), part of the proof of Lemma 4).
 
 In contrast with the negative-support case, digit shifts here run forward: the `k`-th
 term of the defining sum, restricted to a slice and a twist datum, is a twist sequence
@@ -33,7 +32,7 @@ sequence with unchanged parameters — no orbit or ladder argument is needed.
 - `TrustworthyKedlaya.UP.exists_hahn_asRoot_of_pos_support`: existence of the root.
 - `TrustworthyKedlaya.UP.sliceWitness_asRoot_pos`: transfer of the slice witness.
 - `TrustworthyKedlaya.UP.exists_artinSchreier_root_of_support_pos`: the packaged
-  statement (`lem:as-root-pos`).
+  statement.
 
 ## References
 
@@ -299,8 +298,8 @@ theorem sliceWitness_asRoot_pos {x y : HahnSeries ℚ (𝔽ᵃ_[p])} {a : ℕ+} 
   rw [hexp (n + N), hexp n, neg_inj]
   exact finsum_congr fun k => hterm k
 
-/-- **Artin-Schreier roots of positively supported UP series** (`lem:as-root-pos`):
-if `y` has a width-`a` slice witness with data `(b, c, M, N)` and support in
+/-- **Artin-Schreier roots of positively supported UP series**: if `y` has a
+width-`a` slice witness with data `(b, c, M, N)` and support in
 `(0, ∞)`, then there is a Hahn series `x` with `x^p - x = y`, support in `(0, ∞)`,
 and the *same* slice witness data `(b, c, M, N)`; in particular `x` is uniformly
 periodic. -/
