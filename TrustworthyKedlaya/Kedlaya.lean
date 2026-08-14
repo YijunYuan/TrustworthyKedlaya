@@ -24,15 +24,6 @@ import TrustworthyKedlaya.AlgCoeffToIntegral
 - `TrustworthyKedlaya.kedlaya_2001b_ordinal_bound`: the ordinal bound `ω^ω` on the order type
   of the support of a `ℚ_[p]`-algebraic `p`-adic Hahn series, from Kedlaya (2001b), Section 4.
 
-## Implementation notes
-
-The statements still ending in `admit` are deliberately admitted; these are the only intentional
-`admit`s in the project. They are external inputs, not gaps in our own arguments.
-`kedlaya_2001a_theorem15_half` is fully proved, in both directions: its right-hand side is
-definitionally `TrustworthyKedlaya.UP.IsUP` (pinned in `DefeqGuards.lean`), established for
-integral elements in `TrustworthyKedlaya.SeparableUP` and, conversely, integral whenever it
-holds by `TrustworthyKedlaya.UPAlgebraic`.
-
 ## References
 
 - K. S. Kedlaya, *Power series and p-adic algebraic closures*, J. Number Theory 89 (2001)
