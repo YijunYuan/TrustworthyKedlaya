@@ -42,7 +42,8 @@ The proof is a Newton iteration steered towards `f`, restarted at every step:
   algebraic root to depth `val r + 1/n`.
 * Iteration (`exists_isTruncUP_near_of_root`): recenter `Q` by `X + C g` and repeat;
   the recentered coefficients stay in `B'` because `B'` is a subring, and the
-  recentered roots stay nonnegative.  The gain `1/n` per step makes the partial sums converge to `f`.
+  recentered roots stay nonnegative.
+  The gain `1/n` per step makes the partial sums converge to `f`.
 * Scaling (`isTruncUP_of_isIntegral_QpUn`): a general annihilator is first scaled
   by `p^N` to force all roots into the valuation ring; `B'` absorbs the scaling
   because it contains all integer monomials `[a]·p^m` and is a subring.

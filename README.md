@@ -1,5 +1,9 @@
 # TrustworthyKedlaya
 
+![CI](https://github.com/YijunYuan/TrustworthyKedlaya/actions/workflows/lean_action_ci.yml/badge.svg)
+[![Lean](https://img.shields.io/badge/Lean-4.33.0-5C2D91)](https://leanprover.github.io)
+[![mathlib](https://img.shields.io/badge/mathlib-db584cd6d46c92f209a44c0f1c829460d327499d-5C2D91)](https://github.com/leanprover-community/mathlib4)
+
 Formalize the three target theorems in
 `TrustworthyKedlaya/Kedlaya.lean`:
 
