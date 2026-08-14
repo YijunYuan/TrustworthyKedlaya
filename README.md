@@ -7,19 +7,20 @@ Formalize the three target theorems in
   support + eventually periodic twist sequences ([Kedlaya2001a] Thm 15).
   **Fully proved** (upgraded from ⇒ to ⇔ with owner approval, I-0024).
 - `kedlaya_2017_theorem13_4` — completed integral closure statement
-  ([Kedlaya2017] Thm 13.4, part).
+  ([Kedlaya2017] Thm 13.4, part). **Fully proved.**
 - `kedlaya_2001b_ordinal_bound` — support order type of a ℚ_p-algebraic p-adic
   Hahn series is ≤ ω^ω ([Kedlaya2001b] §4). **Fully proved.**
 
 Everything is specialized to K = F̄_p; per [Kedlaya2017, §2] the 2001a theory
 is valid in that case. The three target statements are protected (inbox
-I-0001): never alter them, only replace `by admit` with kernel-checked proofs.
-Target 2 (`kedlaya_2017_theorem13_4`) is the only remaining intentional
-`admit`: the forward inclusion is proved, and the reverse inclusion follows
-the published proof of [Kedlaya2001b] Thm 7 part 2 (pp. 335–336): one-shot
-p^k-th-root descaling plus Frobenius congruence amplification (route pivot
-I-0048, s0084). All four supporting blueprint leaves are proved; the
-`lem:approx-by-integral` assembly and closing iteration remain.
+I-0001): never alter or weaken them.
+
+**Status (2026-08-14): COMPLETE.** All three targets are kernel-checked with
+no `admit`/`sorry`; `lake build` is green and the hgraph is 100% lean_ok. The
+target-2 reverse inclusion follows the published proof of [Kedlaya2001b]
+Thm 7 part 2 (pp. 335–336): p^k-th-root descaling plus Frobenius congruence
+amplification (route pivot I-0048; closed s0086, commits 3212f0a, 64a367a).
+A docstring amendment awaits owner ruling on thread I-0042.
 
 ## Layout
 
