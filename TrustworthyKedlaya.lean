@@ -44,6 +44,7 @@ import TrustworthyKedlaya.SeparableUP
 import TrustworthyKedlaya.ShadowCalculus
 import TrustworthyKedlaya.ShadowCollapse
 import TrustworthyKedlaya.ShadowCongruence
+import TrustworthyKedlaya.ShadowFracpowLaurent
 import TrustworthyKedlaya.SliceSpan
 import TrustworthyKedlaya.SupportSets
 import TrustworthyKedlaya.TameKummer
