@@ -20,7 +20,7 @@ import TrustworthyKedlaya.AlgCoeffToIntegral
 - `TrustworthyKedlaya.kedlaya_2001a_theorem15`: the integrality criterion for Hahn series
   over `𝔽̄_p((t))`, i.e. Kedlaya (2017), Theorem 11.11 (equivalently Kedlaya (2001a), Theorem 15).
 - `TrustworthyKedlaya.kedlaya_2017_theorem13_4`: the description of the completed integral
-  closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`, i.e. Kedlaya (2017), Theorem 13.5.
+  closure of `ℚᶜᵘⁿ_[p]` in `𝕃_[p]`, i.e. Kedlaya (2017), Theorem 13.5.
 - `TrustworthyKedlaya.kedlaya_2001b_ordinal_bound`: the ordinal bound `ω^ω` on the order type
   of the support of a `ℚ_[p]`-algebraic `p`-adic Hahn series, from Kedlaya (2001b), Section 4.
 
@@ -123,11 +123,11 @@ theorem kedlaya_2001a_theorem15 (x : HahnSeries ℚ (𝔽ᵃ_[p])) :
   ⟨fun hx => UP.isUP_of_isIntegral hx, fun hx => UP.IsUP.isIntegral hx⟩
 
 open LaurentSeries in
-/-- **Kedlaya (2017), Theorem 13.4.** The completion of the integral closure of `ℚᵘⁿ_[p]` in
+/-- **Kedlaya (2017), Theorem 13.4.** The completion of the integral closure of `ℚᶜᵘⁿ_[p]` in
 `𝕃_[p]` coincides with the completion of the set of `p`-adic Hahn series whose coefficient function
 arises from an algebraic element of `𝔽̄_p((t^ℚ))`. -/
 theorem kedlaya_2017_theorem13_4 :
-    closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier =
+    closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier =
     closure { f : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]), IsAlgebraic (𝔽ᵃ_[p])⸨X⸩ f' ∧
       (exists_canonical_expansion f).choose.val = f'.coeff }
     := pAdicHahnSeries.closure_integralClosure_eq_closure_algebraic_coeff
@@ -138,6 +138,6 @@ Hahn series is at most `ω^ω`. -/
 theorem kedlaya_2001b_ordinal_bound (f : 𝕃_[p]) (hp : IsAlgebraic ℚ_[p] f) :
     typeLT f.support ≤ omega0 ^ omega0 :=
   pAdicHahnSeries.typeLT_support_le_of_isIntegral
-    (pAdicHahnSeries.alg_QpUn_of_alg_Qp p f hp).isIntegral
+    (pAdicHahnSeries.alg_QpCUn_of_alg_Qp p f hp).isIntegral
 
 end TrustworthyKedlaya

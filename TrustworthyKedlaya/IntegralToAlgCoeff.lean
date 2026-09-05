@@ -19,17 +19,17 @@ public import TrustworthyKedlaya.IntTruncation
 
 This file proves Kedlaya 2001b, Theorem 7, first part, with the recentering of
 the second part (Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]`
-integral over `ℚᵘⁿ_[p]` lies in the closure of the set of elements whose canonical
+integral over `ℚᶜᵘⁿ_[p]` lies in the closure of the set of elements whose canonical
 coefficient function is the coefficient function of a Hahn series algebraic over
 `𝔽̄_p((t))`.  That closure is the set `B'` of truncationwise-UP elements
 (`TrustworthyKedlaya.TruncUPClosure`), so the statement reduces to `IsTruncUP f`.
 
 The proof is a Newton iteration steered towards `f`, restarted at every step:
 
-* `ℚᵘⁿ_[p]` lands in `B'` (`isTruncUP_algebraMap_QpUn`): a Witt vector is the
+* `ℚᶜᵘⁿ_[p]` lands in `B'` (`isTruncUP_algebraMap_QpCUn`): a Witt vector is the
   `p`-adic limit of its Teichmüller digit partial sums, which are integer
   combinations of shadows of monomials, and `B'` is `p`-adically closed; a general
-  element of `ℚᵘⁿ_[p]` is a Witt vector divided by a power of `p`.
+  element of `ℚᶜᵘⁿ_[p]` is a Witt vector divided by a power of `p`.
 * One step (`exists_isTruncUP_approx_of_root`): given a monic `Q` over `𝕃_[p]`
   with coefficients in `B'` and all roots of valuation `≥ 0`, and a designated
   root `r`, truncate every coefficient below a single natural cutoff `θ` that
@@ -44,15 +44,15 @@ The proof is a Newton iteration steered towards `f`, restarted at every step:
   the recentered coefficients stay in `B'` because `B'` is a subring, and the
   recentered roots stay nonnegative.
   The gain `1/n` per step makes the partial sums converge to `f`.
-* Scaling (`isTruncUP_of_isIntegral_QpUn`): a general annihilator is first scaled
+* Scaling (`isTruncUP_of_isIntegral_QpCUn`): a general annihilator is first scaled
   by `p^N` to force all roots into the valuation ring; `B'` absorbs the scaling
   because it contains all integer monomials `[a]·p^m` and is a subring.
 
 ## Main statements
 
-- `TrustworthyKedlaya.pAdicHahnSeries.isTruncUP_algebraMap_QpUn`: `ℚᵘⁿ_[p] ⊆ B'`.
-- `TrustworthyKedlaya.pAdicHahnSeries.isTruncUP_of_isIntegral_QpUn`: integral
-  elements over `ℚᵘⁿ_[p]` are truncationwise UP.
+- `TrustworthyKedlaya.pAdicHahnSeries.isTruncUP_algebraMap_QpCUn`: `ℚᶜᵘⁿ_[p] ⊆ B'`.
+- `TrustworthyKedlaya.pAdicHahnSeries.isTruncUP_of_isIntegral_QpCUn`: integral
+  elements over `ℚᶜᵘⁿ_[p]` are truncationwise UP.
 - `TrustworthyKedlaya.pAdicHahnSeries.mem_closure_algebraic_coeff_of_isIntegral`:
   the forward inclusion (Kedlaya 2001b, Theorem 7, first part).
 
@@ -73,7 +73,7 @@ open scoped TrustworthyKedlaya.UP
 
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
-/-! ### `ℚᵘⁿ_[p]` lands in `B'` -/
+/-! ### `ℚᶜᵘⁿ_[p]` lands in `B'` -/
 
 /-- The one-term `p`-adic Hahn series is the shadow of the one-term Hahn series. -/
 theorem shadow_hahn_single (q : ℚ) (a : 𝔽ᵃ_[p]) :
@@ -104,15 +104,15 @@ theorem ZpUn_embd_teichmuller (a : 𝔽ᵃ_[p]) :
   rfl
 
 /-- The image of a Witt vector in `𝕃_[p]` has nonnegative valuation. -/
-theorem le_val_ZpUn_embd (b : ℤᵘⁿ_[p]) :
+theorem le_val_ZpUn_embd (b : ℤᶜᵘⁿ_[p]) :
     ((0 : ℚ) : WithTop ℚ) ≤ val p (ZpUn_embd b) :=
   le_val_mkLp_of_coeff_eq_zero fun q hq =>
     HahnSeries.coeff_single_of_ne (by exact_mod_cast hq.ne)
 
-/-- **Witt vectors are truncationwise UP**: the image of `ℤᵘⁿ_[p]` in `𝕃_[p]` lies
+/-- **Witt vectors are truncationwise UP**: the image of `ℤᶜᵘⁿ_[p]` in `𝕃_[p]` lies
 in `B'`.  The Teichmüller digit partial sums are `B'`-combinations of one-term
 series and approximate the Witt vector to arbitrary `p`-adic depth. -/
-theorem isTruncUP_ZpUn_embd (a : ℤᵘⁿ_[p]) : IsTruncUP (ZpUn_embd a) := by
+theorem isTruncUP_ZpUn_embd (a : ℤᶜᵘⁿ_[p]) : IsTruncUP (ZpUn_embd a) := by
   refine isTruncUP_of_forall_exists_near fun n => ?_
   refine ⟨∑ i ∈ Finset.Iic n, single (p := p) 0 (teichDigit p i a) * ((p : ℕ) : 𝕃_[p]) ^ i,
     ?_, ?_⟩
@@ -133,21 +133,21 @@ theorem isTruncUP_ZpUn_embd (a : ℤᵘⁿ_[p]) : IsTruncUP (ZpUn_embd a) := by
       _ ≤ (((n + 1 : ℕ) : ℚ) : WithTop ℚ) + val p (ZpUn_embd w) :=
           add_le_add le_rfl (le_val_ZpUn_embd w)
 
-/-- **`ℚᵘⁿ_[p]` lands in `B'`** (the coefficient step of the forward inclusion):
-the canonical coefficient function of an element of `ℚᵘⁿ_[p]` is a Laurent series,
+/-- **`ℚᶜᵘⁿ_[p]` lands in `B'`** (the coefficient step of the forward inclusion):
+the canonical coefficient function of an element of `ℚᶜᵘⁿ_[p]` is a Laurent series,
 so the element is truncationwise UP. -/
-theorem isTruncUP_algebraMap_QpUn (c : ℚᵘⁿ_[p]) :
-    IsTruncUP (algebraMap ℚᵘⁿ_[p] 𝕃_[p] c) := by
+theorem isTruncUP_algebraMap_QpCUn (c : ℚᶜᵘⁿ_[p]) :
+    IsTruncUP (algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] c) := by
   by_cases hc : c = 0
   · rw [hc, map_zero]
     exact isTruncUP_zero
-  -- clear the denominator: `p^k · c` has valuation `≤ 1`, hence lifts to `ℤᵘⁿ_[p]`
-  obtain ⟨k, hk⟩ : ∃ k : ℕ, Valued.v (((p : ℚᵘⁿ_[p]) ^ k) * c) ≤ 1 := by
+  -- clear the denominator: `p^k · c` has valuation `≤ 1`, hence lifts to `ℤᶜᵘⁿ_[p]`
+  obtain ⟨k, hk⟩ : ∃ k : ℕ, Valued.v (((p : ℚᶜᵘⁿ_[p]) ^ k) * c) ≤ 1 := by
     have hvc : Valued.v c ≠ 0 := by
       simpa using (Valuation.ne_zero_iff Valued.v).mpr hc
     refine ⟨(WithZero.log (Valued.v c)).toNat, ?_⟩
-    rw [Valued.v.map_mul, show ((p : ℚᵘⁿ_[p]) ^ ((WithZero.log (Valued.v c)).toNat : ℕ))
-        = (p : ℚᵘⁿ_[p]) ^ (((WithZero.log (Valued.v c)).toNat : ℤ)) from (zpow_natCast _ _).symm,
+    rw [Valued.v.map_mul, show ((p : ℚᶜᵘⁿ_[p]) ^ ((WithZero.log (Valued.v c)).toNat : ℕ))
+        = (p : ℚᶜᵘⁿ_[p]) ^ (((WithZero.log (Valued.v c)).toNat : ℤ)) from (zpow_natCast _ _).symm,
       valued_v_p_zpow]
     calc (((Multiplicative.ofAdd (-((WithZero.log (Valued.v c)).toNat : ℤ)) :
             Multiplicative ℤ)) : WithZero (Multiplicative ℤ)) * Valued.v c
@@ -163,12 +163,12 @@ theorem isTruncUP_algebraMap_QpUn (c : ℚᵘⁿ_[p]) :
       _ = 1 := WithZero.exp_zero
   obtain ⟨a, ha⟩ := existsCanonicalExpansionAux.exists_lift_of_valued_le_one hk
   -- push down to `𝕃_[p]` and cancel the `p`-power by the monomial `[1]·p^{-k}`
-  have htower : algebraMap ℚᵘⁿ_[p] 𝕃_[p] (algebraMap ℤᵘⁿ_[p] ℚᵘⁿ_[p] a) = ZpUn_embd a := by
-    change QpUn_embd (algebraMap ℤᵘⁿ_[p] ℚᵘⁿ_[p] a) = ZpUn_embd a
-    unfold QpUn_embd
+  have htower : algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] (algebraMap ℤᶜᵘⁿ_[p] ℚᶜᵘⁿ_[p] a) = ZpUn_embd a := by
+    change QpCUn_embd (algebraMap ℤᶜᵘⁿ_[p] ℚᶜᵘⁿ_[p] a) = ZpUn_embd a
+    unfold QpCUn_embd
     exact IsFractionRing.lift_algebraMap (g := ZpUn_embd) ZpUn_embd_injective a
-  have himg : ((p : ℕ) : 𝕃_[p]) ^ k * algebraMap ℚᵘⁿ_[p] 𝕃_[p] c = ZpUn_embd a := by
-    have h1 := congrArg (algebraMap ℚᵘⁿ_[p] 𝕃_[p]) ha
+  have himg : ((p : ℕ) : 𝕃_[p]) ^ k * algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] c = ZpUn_embd a := by
+    have h1 := congrArg (algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p]) ha
     rw [map_mul, map_pow, map_natCast] at h1
     rw [← h1]
     exact htower
@@ -176,7 +176,7 @@ theorem isTruncUP_algebraMap_QpUn (c : ℚᵘⁿ_[p]) :
     rw [p_pow_eq_single, single_mul_single, one_mul]
     rw [show ((-(k : ℤ) : ℤ) : ℚ) + (k : ℚ) = 0 by push_cast; ring]
     exact single_zero_one
-  have hfinal : algebraMap ℚᵘⁿ_[p] 𝕃_[p] c
+  have hfinal : algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] c
       = single (p := p) ((-(k : ℤ) : ℤ) : ℚ) 1 * ZpUn_embd a := by
     rw [← himg, ← mul_assoc, hcancel, one_mul]
   rw [hfinal]
@@ -553,21 +553,21 @@ theorem exists_isTruncUP_near_of_root
       rw [hcast, WithTop.coe_add]
       exact add_le_add hgnear le_rfl
 
-/-- **Integral elements over `ℚᵘⁿ_[p]` are truncationwise UP**
+/-- **Integral elements over `ℚᶜᵘⁿ_[p]` are truncationwise UP**
 (subring form).  Scale a monic annihilator by `p^N`
 so that all roots land in the valuation ring, run the steered Newton iteration,
 and let `B'`-closedness absorb the limit and the descaling monomial. -/
-theorem isTruncUP_of_isIntegral_QpUn {f : 𝕃_[p]}
-    (hf : IsIntegral ℚᵘⁿ_[p] f) : IsTruncUP f := by
+theorem isTruncUP_of_isIntegral_QpCUn {f : 𝕃_[p]}
+    (hf : IsIntegral ℚᶜᵘⁿ_[p] f) : IsTruncUP f := by
   classical
   obtain ⟨Q₀, hQ₀monic, hQ₀eval⟩ := hf
-  set Q₁ : Polynomial (𝕃_[p]) := Q₀.map (algebraMap ℚᵘⁿ_[p] 𝕃_[p]) with hQ₁
+  set Q₁ : Polynomial (𝕃_[p]) := Q₀.map (algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p]) with hQ₁
   have hQ₁monic : Q₁.Monic := hQ₀monic.map _
   set n : ℕ := Q₁.natDegree with hn
   have hQ₁coeffs : ∀ i, IsTruncUP (Q₁.coeff i) := by
     intro i
     rw [hQ₁, Polynomial.coeff_map]
-    exact isTruncUP_algebraMap_QpUn _
+    exact isTruncUP_algebraMap_QpCUn _
   have hQ₁eval : Q₁.eval f = 0 := by
     rw [hQ₁, Polynomial.eval_map, ← Polynomial.aeval_def]
     exact hQ₀eval
@@ -657,14 +657,14 @@ theorem isTruncUP_of_isIntegral_QpUn {f : 𝕃_[p]}
 
 /-- **Integral elements have coefficient functions from algebraic series: forward
 inclusion** (Kedlaya 2001b, Theorem 7, first part;
-Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]` integral over `ℚᵘⁿ_[p]` lies in the
+Kedlaya 2017, Theorem 13.5): every `f ∈ 𝕃_[p]` integral over `ℚᶜᵘⁿ_[p]` lies in the
 closure of the set of elements whose canonical coefficient function is the
 coefficient function of a Hahn series algebraic over `𝔽̄_p((t))`. -/
 theorem mem_closure_algebraic_coeff_of_isIntegral {f : 𝕃_[p]}
-    (hf : IsIntegral ℚᵘⁿ_[p] f) :
+    (hf : IsIntegral ℚᶜᵘⁿ_[p] f) :
     f ∈ closure {g : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]),
       IsAlgebraic ((𝔽ᵃ_[p])⸨X⸩) f' ∧ coeff g = f'.coeff} := by
   rw [closure_algebraic_coeff_eq_setOf_isTruncUP]
-  exact isTruncUP_of_isIntegral_QpUn hf
+  exact isTruncUP_of_isIntegral_QpCUn hf
 
 end TrustworthyKedlaya.pAdicHahnSeries

@@ -16,7 +16,7 @@ public import TrustworthyKedlaya.LevelCalculus
 Following the published proof of Kedlaya 2001b, Theorem 7, part 2,
 pp. 335–336: every nonzero truncationwise-UP element
 `r ∈ B'` of valuation `s` admits `z ∈ C` (the closure of the integral closure
-of `ℚᵘⁿ_[p]` in `𝕃_[p]`) with `val (r - z) ≥ s + 1` — a **full unit** of gain.
+of `ℚᶜᵘⁿ_[p]` in `𝕃_[p]`) with `val (r - z) ≥ s + 1` — a **full unit** of gain.
 
 The assembly is one-shot.  Since `B' = closure A`, pick a Hahn series `â`
 integral over `𝔽̄_p((t))` whose shadow approximates `r` at depth `s + 1`; the
@@ -143,11 +143,11 @@ theorem val_eq_of_le_val_sub {x y : 𝕃_[p]} {s : ℚ} (hx : val p x = (s : Wit
 /-- **Approximation by completed-integral elements, full unit gain**
 (Kedlaya 2001b, Theorem 7, part 2, published proof):
 every truncationwise-UP element `r ∈ B'` of exact valuation `s` admits an
-element `z` of the closure `C` of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`
+element `z` of the closure `C` of the integral closure of `ℚᶜᵘⁿ_[p]` in `𝕃_[p]`
 with `val (r - z) ≥ s + 1`. -/
 theorem exists_mem_closure_integralClosure_near_of_isTruncUP {r : 𝕃_[p]}
     (hr : IsTruncUP r) {s : ℚ} (hs : val p r = (s : WithTop ℚ)) :
-    ∃ z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier,
+    ∃ z ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier,
       ((s + 1 : ℚ) : WithTop ℚ) ≤ val p (r - z) := by
   classical
   -- ① an algebraic-coefficient approximant at depth `≥ s + 1`

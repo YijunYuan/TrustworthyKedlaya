@@ -76,8 +76,8 @@ theorem p_pow_mul_shadow (i : ℕ) (z : HahnSeries ℚ (𝔽ᵃ_[p])) :
 
 /-- Powers of the lifted one-term series `[1]·t¹`. -/
 private theorem lifted_single_one_pow (k : ℕ) :
-    (HahnSeries.single (1 : ℚ) (1 : ℤᵘⁿ_[p])) ^ k
-      = HahnSeries.single (k : ℚ) (1 : ℤᵘⁿ_[p]) := by
+    (HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p])) ^ k
+      = HahnSeries.single (k : ℚ) (1 : ℤᶜᵘⁿ_[p]) := by
   induction k with
   | zero => simp
   | succ n ih =>
@@ -89,15 +89,15 @@ divisible by `pᵏ`, and which vanishes below `v`, represents a class of valuati
 least `v + k`: divide coefficientwise, then trade the scalar `pᵏ` for the exponent
 shift `tᵏ` modulo null series. -/
 theorem le_val_mkLp_of_forall_pow_dvd_coeff {Δ : LiftedPAdicHahnSeries p} {k : ℕ}
-    (hdvd : ∀ q, ((p : ℤᵘⁿ_[p]) ^ k) ∣ Δ.coeff q) {v : ℚ}
+    (hdvd : ∀ q, ((p : ℤᶜᵘⁿ_[p]) ^ k) ∣ Δ.coeff q) {v : ℚ}
     (hbelow : ∀ q < v, Δ.coeff q = 0) :
     ((v + k : ℚ) : WithTop ℚ) ≤ val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ) := by
   classical
-  have hpk0 : ((p : ℤᵘⁿ_[p]) ^ k) ≠ 0 :=
+  have hpk0 : ((p : ℤᶜᵘⁿ_[p]) ^ k) ≠ 0 :=
     pow_ne_zero _ (WittVector.p_nonzero p (𝔽ᵃ_[p]))
   -- coefficientwise quotient by `p^k`
-  set c : ℚ → ℤᵘⁿ_[p] := fun q => (hdvd q).choose with hc
-  have hcspec : ∀ q, Δ.coeff q = ((p : ℤᵘⁿ_[p]) ^ k) * c q := fun q => (hdvd q).choose_spec
+  set c : ℚ → ℤᶜᵘⁿ_[p] := fun q => (hdvd q).choose with hc
+  have hcspec : ∀ q, Δ.coeff q = ((p : ℤᶜᵘⁿ_[p]) ^ k) * c q := fun q => (hdvd q).choose_spec
   have hczero : ∀ q, Δ.coeff q = 0 → c q = 0 := by
     intro q h0
     have h1 := hcspec q
@@ -110,7 +110,7 @@ theorem le_val_mkLp_of_forall_pow_dvd_coeff {Δ : LiftedPAdicHahnSeries p} {k : 
   set Δ' : LiftedPAdicHahnSeries p := ⟨c, Δ.isPWO_support'.mono hcsupp⟩ with hΔ'
   have hΔ'coeff : ∀ q, Δ'.coeff q = c q := fun q => rfl
   -- `Δ = [p^k]·Δ'` at the lifted level
-  have hfact : Δ = HahnSeries.single (0 : ℚ) ((p : ℤᵘⁿ_[p]) ^ k) * Δ' := by
+  have hfact : Δ = HahnSeries.single (0 : ℚ) ((p : ℤᶜᵘⁿ_[p]) ^ k) * Δ' := by
     apply HahnSeries.ext
     funext q
     rw [HahnSeries.coeff_single_mul, sub_zero, hΔ'coeff]
@@ -118,7 +118,7 @@ theorem le_val_mkLp_of_forall_pow_dvd_coeff {Δ : LiftedPAdicHahnSeries p} {k : 
   -- in the quotient, trade the scalar `p^k` for the shift `t^k`
   have hmk : Ideal.Quotient.mk (NullSeriesIdeal p) Δ
       = Ideal.Quotient.mk (NullSeriesIdeal p)
-          (HahnSeries.single (k : ℚ) (1 : ℤᵘⁿ_[p]) * Δ') := by
+          (HahnSeries.single (k : ℚ) (1 : ℤᶜᵘⁿ_[p]) * Δ') := by
     rw [hfact, ← lifted_single_one_pow, map_mul, map_mul]
     congr 1
     rw [← HahnSeries.C_apply, map_pow, map_natCast, map_pow, map_natCast,
@@ -160,23 +160,23 @@ theorem le_val_shadow_add_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v : �
       + LiftedPAdicHahnSeries.fromCoeff y'.coeff y'.isPWO_support'
       - LiftedPAdicHahnSeries.fromCoeff (y + y').coeff (y + y').isPWO_support'
       - ∑ i ∈ Finset.Icc 1 K,
-          HahnSeries.single (0 : ℚ) ((p : ℤᵘⁿ_[p]) ^ i) * Z i with hD
+          HahnSeries.single (0 : ℚ) ((p : ℤᶜᵘⁿ_[p]) ^ i) * Z i with hD
   -- the coefficients of the lifted defect, columnwise
   have hDcoeff : ∀ q : ℚ, D.coeff q
       = (teichmuller p (y.coeff q) + teichmuller p (y'.coeff q))
         - (teichmuller p (y.coeff q + y'.coeff q)
           + ∑ i ∈ Finset.Icc 1 K,
               teichmuller p (carryDigit p i (y.coeff q) (y'.coeff q))
-                * (p : ℤᵘⁿ_[p]) ^ i) := by
+                * (p : ℤᶜᵘⁿ_[p]) ^ i) := by
     intro q
     rw [hD]
     rw [HahnSeries.coeff_sub', HahnSeries.coeff_sub', HahnSeries.coeff_add']
     simp only [Pi.sub_apply, Pi.add_apply]
     have hsum : (∑ i ∈ Finset.Icc 1 K,
-        HahnSeries.single (0 : ℚ) ((p : ℤᵘⁿ_[p]) ^ i) * Z i).coeff q
+        HahnSeries.single (0 : ℚ) ((p : ℤᶜᵘⁿ_[p]) ^ i) * Z i).coeff q
         = ∑ i ∈ Finset.Icc 1 K,
             teichmuller p (carryDigit p i (y.coeff q) (y'.coeff q))
-              * (p : ℤᵘⁿ_[p]) ^ i := by
+              * (p : ℤᶜᵘⁿ_[p]) ^ i := by
       rw [HahnSeries.coeff_sum]
       refine Finset.sum_congr rfl fun i _ => ?_
       rw [HahnSeries.coeff_single_mul, sub_zero, mul_comm]
@@ -189,7 +189,7 @@ theorem le_val_shadow_add_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v : �
     rw [hadd]
     ring
   -- columnwise divisibility from the Teichmüller carry congruence
-  have hdvd : ∀ q, ((p : ℤᵘⁿ_[p]) ^ (K + 1)) ∣ D.coeff q := by
+  have hdvd : ∀ q, ((p : ℤᶜᵘⁿ_[p]) ^ (K + 1)) ∣ D.coeff q := by
     intro q
     rw [hDcoeff q]
     exact teichmuller_add_sub_sum_carryDigit_dvd p (y.coeff q) (y'.coeff q) K

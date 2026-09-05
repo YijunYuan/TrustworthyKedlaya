@@ -15,7 +15,7 @@ Reusable extraction engine for the descaling route of the published proof of
 Kedlaya 2001b, Theorem 7, part 2: a `ChainState` for the anchor
 `(r, s, Yhat, ahat)` packages a monic
 polynomial `P` over `𝕃_[p]` with coefficients in the closed integral closure
-`C` of `ℚᵘⁿ_[p]`, coefficientwise within `σ_{n-i}(W) + 1` of the shadows of
+`C` of `ℚᶜᵘⁿ_[p]`, coefficientwise within `σ_{n-i}(W) + 1` of the shadows of
 the coefficients of the recentered split hat polynomial
 `∏_{y ∈ Yhat}(X - (y - ĝ))`, together with a residual approximation
 `val ((r - g) - S(ahat - ĝ)) ≥ s + 1`.  In the one-shot descaling argument
@@ -75,11 +75,11 @@ structure ChainState (r : 𝕃_[p]) (s : ℚ) (Yhat : Multiset (HahnSeries ℚ (
   /-- the adapted monic lift `P` of the recentered hat polynomial -/
   lift : Polynomial 𝕃_[p]
   /-- the extracted sum lies in the closed integral closure `C` -/
-  extracted_mem : extracted ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier
+  extracted_mem : extracted ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier
   lift_monic : lift.Monic
   lift_natDegree : lift.natDegree = Yhat.card
   /-- the lift's coefficients lie in the closed integral closure `C` -/
-  lift_coeff_mem : ∀ i, lift.coeff i ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier
+  lift_coeff_mem : ∀ i, lift.coeff i ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier
   /-- invariant (1), `j`-free residue: the current hat-root depth never falls
   below `s` -/
   le_orderTop : (s : WithTop ℚ) ≤ (ahat - recenter).orderTop
@@ -190,7 +190,7 @@ theorem exists_step (St : ChainState r s Yhat ahat) (hahat : ahat ∈ Yhat) {sc 
       m = ((Yhat.map fun y => y - St.recenter).map HahnSeries.orderTop).count
         ((sc : WithTop ℚ)) ∧
       0 < m ∧ m ≤ Yhat.card ∧
-      z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier ∧
+      z ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier ∧
       val p z = (sc : WithTop ℚ) ∧
       ((sc + 1 / (m : ℚ) : ℚ) : WithTop ℚ) ≤ val p (shadow (ahat - St.recenter) - z) ∧
       min ((s + 1 : ℚ) : WithTop ℚ) ((sc + 1 / (m : ℚ) : ℚ) : WithTop ℚ)
@@ -218,7 +218,7 @@ theorem exists_step (St : ChainState r s Yhat ahat) (hahat : ahat ∈ Yhat) {sc 
     refine le_trans (Multiset.count_le_card _ _) ?_
     rw [Multiset.card_map, Multiset.card_map]
   -- the extracted root lies in `C`
-  have hzC : z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier :=
+  have hzC : z ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier :=
     mem_closure_integralClosure_of_monic_root St.lift_monic St.lift_coeff_mem
       (Polynomial.mem_roots'.mp hzZ).2
   -- `s ≤ s_c` from invariant (1)

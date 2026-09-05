@@ -12,10 +12,10 @@ public import TrustworthyKedlaya.SabcOrderType
 # Support bound for integral `p`-adic Hahn series
 
 The support bound and the `ω^ω` bound of Kedlaya (2001b), Section 4, for
-`ℚᵘⁿ_[p]`-integral elements.
+`ℚᶜᵘⁿ_[p]`-integral elements.
 
-An element `f ∈ 𝕃_[p]` integral over `ℚᵘⁿ_[p]` is truncationwise UP
-(`isTruncUP_of_isIntegral_QpUn`, the subring form of the result that integral
+An element `f ∈ 𝕃_[p]` integral over `ℚᶜᵘⁿ_[p]` is truncationwise UP
+(`isTruncUP_of_isIntegral_QpCUn`, the subring form of the result that integral
 elements have algebraic coefficient series).  Below a natural cutoff `n` the canonical
 coefficient function of `f` agrees with its truncation below `n + 1`, whose
 support lies in a support set `S_{a,b,c}` by the support clause of `IsUP`; hence
@@ -28,7 +28,7 @@ support lies in a support set `S_{a,b,c}` by the support clause of `IsUP`; hence
 - `TrustworthyKedlaya.pAdicHahnSeries.support_subset_Sabc_union_Ioi_of_isIntegral`:
   the support bound.
 - `TrustworthyKedlaya.pAdicHahnSeries.typeLT_support_le_of_isIntegral`: the
-  `ω^ω` bound for `ℚᵘⁿ_[p]`-integral elements.
+  `ω^ω` bound for `ℚᶜᵘⁿ_[p]`-integral elements.
 
 ## References
 
@@ -44,11 +44,11 @@ variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
 /-- **Support bound for integral `p`-adic Hahn series**: below every natural cutoff
 `n`, the support of an element of `𝕃_[p]` integral over
-`ℚᵘⁿ_[p]` lies in a support set `S_{a,b,c}`. -/
+`ℚᶜᵘⁿ_[p]` lies in a support set `S_{a,b,c}`. -/
 theorem support_subset_Sabc_union_Ioi_of_isIntegral {f : 𝕃_[p]}
-    (hf : IsIntegral ℚᵘⁿ_[p] f) (n : ℕ) :
+    (hf : IsIntegral ℚᶜᵘⁿ_[p] f) (n : ℕ) :
     ∃ (a : ℕ+) (b c : ℕ), f.support ⊆ UP.Sabc p a b c ∪ Set.Ioi (n : ℚ) := by
-  obtain ⟨a, b, c, hsupp, -⟩ := isTruncUP_of_isIntegral_QpUn hf (n + 1)
+  obtain ⟨a, b, c, hsupp, -⟩ := isTruncUP_of_isIntegral_QpCUn hf (n + 1)
   refine ⟨a, b, c, fun q hq => ?_⟩
   rcases lt_or_ge (n : ℚ) q with hqn | hqn
   · exact Or.inr hqn
@@ -58,11 +58,11 @@ theorem support_subset_Sabc_union_Ioi_of_isIntegral {f : 𝕃_[p]}
     exact (mem_support_iff f q).mp hq
 
 open Ordinal in
-/-- The order type of the support of a `ℚᵘⁿ_[p]`-integral `p`-adic Hahn series is at
+/-- The order type of the support of a `ℚᶜᵘⁿ_[p]`-integral `p`-adic Hahn series is at
 most `ω^ω`: combine the support bound above with the order-type bound for the sets
 `S_{a,b,c}`. -/
 theorem typeLT_support_le_of_isIntegral {f : 𝕃_[p]}
-    (hf : IsIntegral ℚᵘⁿ_[p] f) :
+    (hf : IsIntegral ℚᶜᵘⁿ_[p] f) :
     typeLT f.support ≤ omega0 ^ omega0 := by
   have hWF : f.support.IsWF := by
     simpa [pAdicHahnSeries.support] using (TrustworthyKedlaya.support_IsPWO (p := p) f).isWF

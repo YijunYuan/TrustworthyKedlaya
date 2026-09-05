@@ -12,7 +12,7 @@ public import TrustworthyKedlaya.ApproxByIntegral
 
 This file proves Kedlaya 2001b, Theorem 7, part 2 (Kedlaya 2017, Theorem
 13.5): the shadow of a Hahn series integral over `𝔽̄_p((t))` lies in the
-closure `C` of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`, and consequently
+closure `C` of the integral closure of `ℚᶜᵘⁿ_[p]` in `𝕃_[p]`, and consequently
 the closure of the algebraic-coefficient set equals `C`.
 
 The iteration consumes the full-unit-gain approximation by integral elements
@@ -48,23 +48,23 @@ open LaurentSeries
 
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
-/-- Every element of the closure of the integral closure of `ℚᵘⁿ_[p]` is
+/-- Every element of the closure of the integral closure of `ℚᶜᵘⁿ_[p]` is
 truncationwise UP: `C ⊆ B'` (`B'` is `p`-adically closed and contains the
 integral elements). -/
 theorem isTruncUP_of_mem_closure_integralClosure {z : 𝕃_[p]}
-    (hz : z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) : IsTruncUP z := by
+    (hz : z ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier) : IsTruncUP z := by
   refine isTruncUP_of_forall_exists_near fun n => ?_
   obtain ⟨a, haS, hval⟩ := exists_near_of_mem_closure hz n
-  exact ⟨a, isTruncUP_of_isIntegral_QpUn haS, hval⟩
+  exact ⟨a, isTruncUP_of_isIntegral_QpCUn haS, hval⟩
 
 /-- **Shadows of integral Hahn series are completed-integral**
 (the iteration): the shadow of a Hahn series
 integral over `𝔽̄_p((t))` lies in the closure of the integral closure of
-`ℚᵘⁿ_[p]` in `𝕃_[p]`.  Iterate the full unit gain of the approximation by
+`ℚᶜᵘⁿ_[p]` in `𝕃_[p]`.  Iterate the full unit gain of the approximation by
 integral elements, staying inside `B'` at every stage. -/
 theorem shadow_mem_closure_integralClosure_of_isIntegral
     {f' : HahnSeries ℚ (𝔽ᵃ_[p])} (hf' : IsIntegral ((𝔽ᵃ_[p])⸨X⸩) f') :
-    shadow f' ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    shadow f' ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   classical
   set f : 𝕃_[p] := shadow f' with hf
   have hfB : IsTruncUP f := isTruncUP_shadow (UP.isUP_of_isIntegral hf')
@@ -74,7 +74,7 @@ theorem shadow_mem_closure_integralClosure_of_isIntegral
   have hne : val p f ≠ ⊤ := fun h => hf0 (val_eq_top_iff.mp h)
   obtain ⟨s₀, hs₀⟩ := WithTop.ne_top_iff_exists.mp hne
   -- at every stage `k` there is an approximant in `C` at depth `s₀ + k`
-  have hiter : ∀ k : ℕ, ∃ g ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier,
+  have hiter : ∀ k : ℕ, ∃ g ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier,
       ((s₀ + k : ℚ) : WithTop ℚ) ≤ val p (f - g) := by
     intro k
     induction k with
@@ -106,7 +106,7 @@ theorem shadow_mem_closure_integralClosure_of_isIntegral
         push_cast
         linarith
   -- `f` is approximated at arbitrary depth by elements of the closed set `C`
-  have hmem : f ∈ closure (closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) := by
+  have hmem : f ∈ closure (closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier) := by
     refine mem_closure_of_forall_exists_near fun N => ?_
     obtain ⟨kN, hkN⟩ := exists_nat_ge ((N : ℚ) - s₀)
     obtain ⟨g, hgC, hgval⟩ := hiter kN
@@ -118,11 +118,11 @@ theorem shadow_mem_closure_integralClosure_of_isIntegral
 /-- **Algebraic coefficient functions give completed-integral elements**
 (closure form): the closure of the
 algebraic-coefficient set is contained in the closure of the integral closure
-of `ℚᵘⁿ_[p]`. -/
+of `ℚᶜᵘⁿ_[p]`. -/
 theorem closure_algebraic_coeff_subset_closure_integralClosure :
     closure {g : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]),
         IsAlgebraic ((𝔽ᵃ_[p])⸨X⸩) f' ∧ coeff g = f'.coeff}
-      ⊆ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+      ⊆ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   refine closure_minimal ?_ isClosed_closure
   rintro g ⟨f', hf'alg, hf'coeff⟩
   have hg : g = shadow f' := by
@@ -134,11 +134,11 @@ theorem closure_algebraic_coeff_subset_closure_integralClosure :
 
 /-- **Kedlaya (2017), Theorem 13.4 / Kedlaya (2001b), Theorem 7**
 (stated below `Kedlaya.lean` in the import graph):
-the closure of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]` coincides with the
+the closure of the integral closure of `ℚᶜᵘⁿ_[p]` in `𝕃_[p]` coincides with the
 closure of the set of elements whose canonical coefficient function is the
 coefficient function of a Hahn series algebraic over `𝔽̄_p((t))`. -/
 theorem closure_integralClosure_eq_closure_algebraic_coeff :
-    closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier
+    closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier
       = closure {g : 𝕃_[p] | ∃ f' : HahnSeries ℚ (𝔽ᵃ_[p]),
           IsAlgebraic ((𝔽ᵃ_[p])⸨X⸩) f' ∧ coeff g = f'.coeff} := by
   refine Set.Subset.antisymm ?_ closure_algebraic_coeff_subset_closure_integralClosure

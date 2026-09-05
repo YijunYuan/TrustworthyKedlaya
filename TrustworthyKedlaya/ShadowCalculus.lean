@@ -117,7 +117,7 @@ theorem le_val_mkLp_of_coeff_eq_zero {Δ : LiftedPAdicHahnSeries p} {q₀ : ℚ}
         by_contra hne
         exact absurd ((support_IsPWO x).isWF.min_le
           (support_nonempty_of_nonzero p x hx0) hne) (not_le.mpr hq')
-      change (0 : ℤᵘⁿ_[p]) - teichmuller p (x.coeff q') = 0
+      change (0 : ℤᶜᵘⁿ_[p]) - teichmuller p (x.coeff q') = 0
       rw [hzero]
       simp
 
@@ -166,7 +166,7 @@ theorem val_mkLp_eq_of_isUnit_leading {Δ : LiftedPAdicHahnSeries p} {q₀ : ℚ
         by_contra hne
         exact absurd ((support_IsPWO x).isWF.min_le
           (support_nonempty_of_nonzero p x hx0) hne) (not_le.mpr (hq'.trans hlt))
-      change (0 : ℤᵘⁿ_[p]) - teichmuller p (x.coeff q') = 0
+      change (0 : ℤᶜᵘⁿ_[p]) - teichmuller p (x.coeff q') = 0
       rw [hzero]
       simp
 
@@ -234,24 +234,24 @@ open Filter Topology in
 /-- The `t = p` identification: `single 1 1 - p` is a null series (its only integer
 column carries `1·p¹ - p·p⁰ = 0`). -/
 theorem single_one_sub_p_isNullSeries :
-    IsNullSeries ((HahnSeries.single (1 : ℚ) (1 : ℤᵘⁿ_[p]))
+    IsNullSeries ((HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p]))
       - (p : LiftedPAdicHahnSeries p)) := by
   set δ : LiftedPAdicHahnSeries p :=
-    HahnSeries.single (1 : ℚ) (1 : ℤᵘⁿ_[p]) - (p : LiftedPAdicHahnSeries p) with hδ
+    HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p]) - (p : LiftedPAdicHahnSeries p) with hδ
   have hpcoeff : ∀ q : ℚ, (p : LiftedPAdicHahnSeries p).coeff q
-      = if q = 0 then (p : ℤᵘⁿ_[p]) else 0 := by
+      = if q = 0 then (p : ℤᶜᵘⁿ_[p]) else 0 := by
     intro q
     rw [show (p : LiftedPAdicHahnSeries p)
-        = HahnSeries.single (0 : ℚ) (p : ℤᵘⁿ_[p]) from by
-      rw [← map_natCast (HahnSeries.C : ℤᵘⁿ_[p] →+* LiftedPAdicHahnSeries p) p]; rfl]
+        = HahnSeries.single (0 : ℚ) (p : ℤᶜᵘⁿ_[p]) from by
+      rw [← map_natCast (HahnSeries.C : ℤᶜᵘⁿ_[p] →+* LiftedPAdicHahnSeries p) p]; rfl]
     rw [HahnSeries.coeff_single]
     simp
   have hδcoeff : ∀ q : ℚ, δ.coeff q
-      = (if q = 1 then (1 : ℤᵘⁿ_[p]) else 0) - (if q = 0 then (p : ℤᵘⁿ_[p]) else 0) := by
+      = (if q = 1 then (1 : ℤᶜᵘⁿ_[p]) else 0) - (if q = 0 then (p : ℤᶜᵘⁿ_[p]) else 0) := by
     intro q
     rw [hδ, HahnSeries.coeff_sub', Pi.sub_apply, HahnSeries.coeff_single, hpcoeff]
     simp
-  have hp0 : (p : ℤᵘⁿ_[p]) ≠ 0 := WittVector.p_nonzero p _
+  have hp0 : (p : ℤᶜᵘⁿ_[p]) ≠ 0 := WittVector.p_nonzero p _
   intro g
   refine Tendsto.congr' ?_ tendsto_const_nhds
   rw [EventuallyEq, eventually_atTop]
@@ -290,16 +290,16 @@ theorem single_one_sub_p_isNullSeries :
           · rw [hδcoeff, if_pos hq1, if_neg (by rw [hq1]; norm_num)]
             simp
     rw [Finset.sum_coe_sort ((finiteBelow δ g M).toFinset)
-      (fun m => (p : QpUn p) ^ (m : ℤ) * algebraMap (OQpUn p) (QpUn p) (δ.coeff (g + (m : ℚ))))]
+      (fun m => (p : QpCUn p) ^ (m : ℤ) * algebraMap (OQpCUn p) (QpCUn p) (δ.coeff (g + (m : ℚ))))]
     rw [hset, Finset.sum_pair (by omega : n₀ ≠ n₀ + 1)]
     rw [hδcoeff, hδcoeff, if_neg (by rw [hq0]; norm_num), if_pos hq0,
       if_pos hq1, if_neg (by rw [hq1]; norm_num)]
     rw [zero_sub, sub_zero, map_neg, map_one, mul_one]
-    have hpQ : ((p : QpUn p)) ≠ 0 := by
+    have hpQ : ((p : QpCUn p)) ≠ 0 := by
       intro h
       exact (WittVector.p_nonzero p (𝔽ᵃ_[p]))
         (IsFractionRing.to_map_eq_zero_iff.mp (by push_cast at h ⊢; exact h))
-    have halg : algebraMap (OQpUn p) (QpUn p) (p : ℤᵘⁿ_[p]) = (p : QpUn p) := by
+    have halg : algebraMap (OQpCUn p) (QpCUn p) (p : ℤᶜᵘⁿ_[p]) = (p : QpCUn p) := by
       push_cast
       rfl
     rw [halg, zpow_add₀ hpQ n₀ 1, zpow_one]
@@ -318,7 +318,7 @@ theorem single_one_sub_p_isNullSeries :
 
 /-- In `𝕃_[p]` the element `p` equals the class of `single 1 1`: `t` becomes `p`. -/
 theorem mkLp_single_one :
-    Ideal.Quotient.mk (NullSeriesIdeal p) (HahnSeries.single (1 : ℚ) (1 : ℤᵘⁿ_[p]))
+    Ideal.Quotient.mk (NullSeriesIdeal p) (HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p]))
       = (p : 𝕃_[p]) := by
   rw [← sub_eq_zero, ← map_natCast (Ideal.Quotient.mk (NullSeriesIdeal p)) p, ← map_sub,
     Ideal.Quotient.eq_zero_iff_mem]
@@ -339,7 +339,7 @@ theorem val_p_eq_one : val p ((p : ℕ) : 𝕃_[p]) = (1 : ℚ) := by
 /-- The Teichmüller carry `[a+b] - [a] - [b]` is divisible by `p` in `W(𝔽̄_p)`. -/
 theorem teichmuller_add_sub_mem_span (a b : 𝔽ᵃ_[p]) :
     teichmuller p (a + b) - teichmuller p a - teichmuller p b
-      ∈ Ideal.span {(p : ℤᵘⁿ_[p])} := by
+      ∈ Ideal.span {(p : ℤᶜᵘⁿ_[p])} := by
   have hEq : ∀ i < 1, (teichmuller p (a + b)).coeff i
       = (teichmuller p a + teichmuller p b).coeff i := by
     intro i hi
@@ -380,8 +380,8 @@ theorem le_val_shadow_add_sub (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) (q₀ : ℚ)
         by_contra hy'
         exact absurd (hov q hy hy') (not_le.mpr hq)
       rw [hy', add_zero, WittVector.teichmuller_zero, sub_zero, sub_self]
-  have hdvd : ∀ q, ∃ wq : ℤᵘⁿ_[p],
-      Δ.coeff q = (p : ℤᵘⁿ_[p]) * wq ∧ (Δ.coeff q = 0 → wq = 0) := by
+  have hdvd : ∀ q, ∃ wq : ℤᶜᵘⁿ_[p],
+      Δ.coeff q = (p : ℤᶜᵘⁿ_[p]) * wq ∧ (Δ.coeff q = 0 → wq = 0) := by
     intro q
     by_cases h0 : Δ.coeff q = 0
     · exact ⟨0, by rw [h0, mul_zero], fun _ => rfl⟩
@@ -446,7 +446,7 @@ theorem support_fromCoeff (s : ℚ → 𝔽ᵃ_[p]) (hs : (Function.support s).I
 
 /-- The Teichmüller carry of a negation: `[-a] + [a]` is divisible by `p` in `W(𝔽̄_p)`. -/
 theorem teichmuller_neg_add_mem_span (a : 𝔽ᵃ_[p]) :
-    teichmuller p (-a) + teichmuller p a ∈ Ideal.span {(p : ℤᵘⁿ_[p])} := by
+    teichmuller p (-a) + teichmuller p a ∈ Ideal.span {(p : ℤᶜᵘⁿ_[p])} := by
   have h := teichmuller_add_sub_mem_span (p := p) (-a) a
   rw [neg_add_cancel, WittVector.teichmuller_zero] at h
   have h' := neg_mem h
@@ -457,7 +457,7 @@ theorem teichmuller_neg_add_mem_span (a : 𝔽ᵃ_[p]) :
 multiple of `p`: iterate the binary carry `teichmuller_add_sub_mem_span`. -/
 theorem teichmuller_sum_sub_mem_span {ι : Type*} (s : Finset ι) (f : ι → 𝔽ᵃ_[p]) :
     teichmuller p (∑ i ∈ s, f i) - ∑ i ∈ s, teichmuller p (f i)
-      ∈ Ideal.span {(p : ℤᵘⁿ_[p])} := by
+      ∈ Ideal.span {(p : ℤᶜᵘⁿ_[p])} := by
   classical
   induction s using Finset.cons_induction with
   | empty =>
@@ -479,11 +479,11 @@ theorem teichmuller_sum_sub_mem_span {ι : Type*} (s : Finset ι) (f : ι → �
 vanishing below `q₀`, has class of valuation at least `q₀ + 1` in `𝕃_[p]`. -/
 theorem le_val_mkLp_add_one_of_forall_mem_span {Δ : LiftedPAdicHahnSeries p} {q₀ : ℚ}
     (hvanish : ∀ q, q < q₀ → Δ.coeff q = 0)
-    (hdvd : ∀ q, Δ.coeff q ∈ Ideal.span {(p : ℤᵘⁿ_[p])}) :
+    (hdvd : ∀ q, Δ.coeff q ∈ Ideal.span {(p : ℤᶜᵘⁿ_[p])}) :
     ((q₀ + 1 : ℚ) : WithTop ℚ) ≤ val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ) := by
   classical
-  have hdvd' : ∀ q, ∃ wq : ℤᵘⁿ_[p],
-      Δ.coeff q = (p : ℤᵘⁿ_[p]) * wq ∧ (Δ.coeff q = 0 → wq = 0) := by
+  have hdvd' : ∀ q, ∃ wq : ℤᶜᵘⁿ_[p],
+      Δ.coeff q = (p : ℤᶜᵘⁿ_[p]) * wq ∧ (Δ.coeff q = 0 → wq = 0) := by
     intro q
     by_cases h0 : Δ.coeff q = 0
     · exact ⟨0, by rw [h0, mul_zero], fun _ => rfl⟩

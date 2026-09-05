@@ -10,15 +10,15 @@ public import TrustworthyKedlaya.LpAlgClosed
 public import TrustworthyKedlaya.NewtonPolygonRoots
 
 /-!
-# The closed integral closure of `ℚᵘⁿ_[p]` is closed under roots of monic polynomials
+# The closed integral closure of `ℚᶜᵘⁿ_[p]` is closed under roots of monic polynomials
 
-Write `C` for the closure (valued topology) of the integral closure of `ℚᵘⁿ_[p]`
+Write `C` for the closure (valued topology) of the integral closure of `ℚᶜᵘⁿ_[p]`
 in `𝕃_[p]`.  Every root in `𝕃_[p]` of a monic polynomial with coefficients in `C`
 lies in `C`.
 
 Perturb each coefficient to an integral element at valuation depth `Θ`: the
 perturbed polynomial `P'` is monic with integral coefficients, so all of its roots
-are integral over `ℚᵘⁿ_[p]` (integrality is transitive through the integral
+are integral over `ℚᶜᵘⁿ_[p]` (integrality is transitive through the integral
 closure), and `v(P'(u)) ≥ Θ - B` with `B` fixed by the degree and `v(u)`.  Since
 `P'` splits over the algebraically closed `𝕃_[p]` and `v(P'(u))` is the sum of the
 `n` root distances `v(u - z)`, some root is within `(Θ - B)/n` of `u`; letting
@@ -44,36 +44,36 @@ open scoped TrustworthyKedlaya.UP
 
 variable {p : ℕ} [hp : Fact (Nat.Prime p)]
 
-/-- A root of a monic polynomial whose coefficients are integral over `ℚᵘⁿ_[p]` is
-itself integral over `ℚᵘⁿ_[p]`: integrality is transitive through the integral
+/-- A root of a monic polynomial whose coefficients are integral over `ℚᶜᵘⁿ_[p]` is
+itself integral over `ℚᶜᵘⁿ_[p]`: integrality is transitive through the integral
 closure. -/
-theorem isIntegral_QpUn_of_monic_root {P : Polynomial 𝕃_[p]} (hP : P.Monic)
-    (hcoeff : ∀ i, IsIntegral ℚᵘⁿ_[p] (P.coeff i)) {z : 𝕃_[p]} (hz : P.IsRoot z) :
-    IsIntegral ℚᵘⁿ_[p] z := by
-  have : Nontrivial (integralClosure ℚᵘⁿ_[p] 𝕃_[p]) :=
+theorem isIntegral_QpCUn_of_monic_root {P : Polynomial 𝕃_[p]} (hP : P.Monic)
+    (hcoeff : ∀ i, IsIntegral ℚᶜᵘⁿ_[p] (P.coeff i)) {z : 𝕃_[p]} (hz : P.IsRoot z) :
+    IsIntegral ℚᶜᵘⁿ_[p] z := by
+  have : Nontrivial (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]) :=
     ⟨⟨0, 1, fun h => zero_ne_one (α := 𝕃_[p]) (congrArg Subtype.val h)⟩⟩
   -- lift `P` to a polynomial over the integral closure
-  have hmem : P ∈ Polynomial.lifts (algebraMap (integralClosure ℚᵘⁿ_[p] 𝕃_[p]) 𝕃_[p]) := by
+  have hmem : P ∈ Polynomial.lifts (algebraMap (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]) 𝕃_[p]) := by
     rw [Polynomial.lifts_iff_coeff_lifts]
     exact fun i => ⟨⟨P.coeff i, hcoeff i⟩, rfl⟩
   obtain ⟨P₀, hP₀⟩ := hmem
   rw [Polynomial.coe_mapRingHom] at hP₀
   have hP₀monic : P₀.Monic := by
-    have hinj : Function.Injective (algebraMap (integralClosure ℚᵘⁿ_[p] 𝕃_[p]) 𝕃_[p]) :=
+    have hinj : Function.Injective (algebraMap (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]) 𝕃_[p]) :=
       Subtype.val_injective
     exact Polynomial.monic_of_injective hinj (by rwa [hP₀])
-  refine isIntegral_trans (A := integralClosure ℚᵘⁿ_[p] 𝕃_[p]) z ⟨P₀, hP₀monic, ?_⟩
+  refine isIntegral_trans (A := integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]) z ⟨P₀, hP₀monic, ?_⟩
   have := hz
   rw [Polynomial.IsRoot, ← hP₀, Polynomial.eval_map] at this
   exact this
 
 /-- **The closed integral closure is closed under roots of monic polynomials**:
-let `C` be the closure of the integral closure of `ℚᵘⁿ_[p]` in `𝕃_[p]`.  Every root
+let `C` be the closure of the integral closure of `ℚᶜᵘⁿ_[p]` in `𝕃_[p]`.  Every root
 in `𝕃_[p]` of a monic polynomial with coefficients in `C` lies in `C`. -/
 theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP : P.Monic)
-    (hcoeff : ∀ i, P.coeff i ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hcoeff : ∀ i, P.coeff i ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier)
     {u : 𝕃_[p]} (hu : P.IsRoot u) :
-    u ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    u ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   classical
   set n : ℕ := P.natDegree with hn
   -- degree zero is impossible: a monic constant does not vanish
@@ -93,7 +93,7 @@ theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP 
   refine mem_closure_of_forall_exists_near fun n₀ => ?_
   -- integral approximants of the coefficients at depth `Θ = n·n₀ + b`
   set Θ : ℕ := n * n₀ + b with hΘ
-  have happrox : ∀ i : ℕ, ∃ a ∈ (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier,
+  have happrox : ∀ i : ℕ, ∃ a ∈ (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier,
       ((Θ : ℚ) : WithTop ℚ) ≤ val p (P.coeff i - a) := fun i =>
     exists_near_of_mem_closure (hcoeff i) Θ
   choose a haS hanear using happrox
@@ -112,7 +112,7 @@ theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP 
         (by rw [Polynomial.degree_X_pow]; exact hsumdeg), Polynomial.degree_X_pow]
     exact Polynomial.natDegree_eq_of_degree_eq_some hdeg
   -- the perturbed coefficients are integral
-  have hP'coeffint : ∀ i, IsIntegral ℚᵘⁿ_[p] (P'.coeff i) := by
+  have hP'coeffint : ∀ i, IsIntegral ℚᶜᵘⁿ_[p] (P'.coeff i) := by
     intro i
     rcases lt_trichotomy i n with hi | rfl | hi
     · have hcoeffi : P'.coeff i = a i := by
@@ -248,9 +248,9 @@ theorem mem_closure_integralClosure_of_monic_root {P : Polynomial 𝕃_[p]} (hP 
     rw [hrepl] at hlt
     exact absurd hevaldeep (not_le.mpr hlt)
   obtain ⟨z, hzroots, hznear⟩ := hnear
-  -- the near root is integral over `ℚᵘⁿ_[p]`
-  have hzint : IsIntegral ℚᵘⁿ_[p] z :=
-    isIntegral_QpUn_of_monic_root hP'monic hP'coeffint
+  -- the near root is integral over `ℚᶜᵘⁿ_[p]`
+  have hzint : IsIntegral ℚᶜᵘⁿ_[p] z :=
+    isIntegral_QpCUn_of_monic_root hP'monic hP'coeffint
       (Polynomial.isRoot_of_mem_roots hzroots)
   exact ⟨z, hzint, hznear⟩
 
@@ -266,7 +266,7 @@ private theorem coe_nsmul_withTop (m : ℕ) (r : ℚ) :
 /-- **Artin-Schreier depth transfer**: let `u ∈ 𝕃_[p]`
 have valuation `γ > 0` and let `q ≥ 2`, so that `u` is an exact root of
 `X^q - X + c*` with `c* := u - u^q` of valuation `γ`.  If `c' ∈ C` (the closed
-integral closure of `ℚᵘⁿ_[p]`) approximates `c*` to valuation `γ + e` with
+integral closure of `ℚᶜᵘⁿ_[p]`) approximates `c*` to valuation `γ + e` with
 `e > 0`, then some root `z` of `X^q - X + c'` satisfies `v(u - z) ≥ γ + e`, and
 `z ∈ C`.
 
@@ -284,9 +284,9 @@ recentered root-difference polygon in the width-refined benign regime
 theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
     (hγ : 0 < γ) (he : 0 < e) {q : ℕ} (hq : 2 ≤ q)
     (hu : val p u = ((γ : ℚ) : WithTop ℚ))
-    (hc' : c' ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hc' : c' ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier)
     (hnear : ((γ + e : ℚ) : WithTop ℚ) ≤ val p ((u - u ^ q) - c')) :
-    ∃ z ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier,
+    ∃ z ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier,
       ((γ + e : ℚ) : WithTop ℚ) ≤ val p (u - z) := by
   classical
   -- `c* = u - u^q` has valuation exactly `γ`, hence so does `c'`
@@ -476,7 +476,7 @@ theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
     rw [hevalsum, h1] at hAvaleval
     exact hAvaleval
   -- the designated root lies in the closed integral closure
-  have hAcoeffC : ∀ i, A.coeff i ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+  have hAcoeffC : ∀ i, A.coeff i ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
     intro i
     rcases Nat.eq_zero_or_pos i with rfl | hipos
     · rw [hcoeff0]
@@ -494,23 +494,23 @@ theorem exists_mem_closure_near_of_artinSchreier {u c' : 𝕃_[p]} {γ e : ℚ}
     split
     · exact subset_closure (Subalgebra.one_mem _)
     · exact subset_closure (Subalgebra.zero_mem _)
-  have hz₀C : z₀ ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier :=
+  have hz₀C : z₀ ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier :=
     mem_closure_integralClosure_of_monic_root hAmonic hAcoeffC
       (Polynomial.isRoot_of_mem_roots hz₀Z)
   exact ⟨z₀, hz₀C, hz₀near⟩
 
 /-! ### The closed integral closure is a subring -/
 
-/-- `C` contains the image of `ℚᵘⁿ_[p]`. -/
-theorem algebraMap_mem_closure_integralClosure (c : ℚᵘⁿ_[p]) :
-    algebraMap ℚᵘⁿ_[p] 𝕃_[p] c ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier :=
+/-- `C` contains the image of `ℚᶜᵘⁿ_[p]`. -/
+theorem algebraMap_mem_closure_integralClosure (c : ℚᶜᵘⁿ_[p]) :
+    algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] c ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier :=
   subset_closure (Subalgebra.algebraMap_mem _ c)
 
 /-- `C` is closed under addition: approximants add. -/
 theorem add_mem_closure_integralClosure {x y : 𝕃_[p]}
-    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
-    (hy : y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) :
-    x + y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    (hx : x ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hy : y ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier) :
+    x + y ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   refine mem_closure_of_forall_exists_near fun n => ?_
   obtain ⟨a, haS, hax⟩ := exists_near_of_mem_closure hx n
   obtain ⟨b, hbS, hby⟩ := exists_near_of_mem_closure hy n
@@ -521,8 +521,8 @@ theorem add_mem_closure_integralClosure {x y : 𝕃_[p]}
 
 /-- `C` is closed under negation. -/
 theorem neg_mem_closure_integralClosure {x : 𝕃_[p]}
-    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) :
-    -x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    (hx : x ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier) :
+    -x ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   refine mem_closure_of_forall_exists_near fun n => ?_
   obtain ⟨a, haS, hax⟩ := exists_near_of_mem_closure hx n
   refine ⟨-a, Subalgebra.neg_mem _ haS, ?_⟩
@@ -534,9 +534,9 @@ theorem neg_mem_closure_integralClosure {x : 𝕃_[p]}
 valuations of `x` and `b` are bounded below independently of the approximation
 depth. -/
 theorem mul_mem_closure_integralClosure {x y : 𝕃_[p]}
-    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier)
-    (hy : y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) :
-    x * y ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    (hx : x ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier)
+    (hy : y ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier) :
+    x * y ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   rcases eq_or_ne x 0 with rfl | hx0
   · rw [zero_mul]
     exact subset_closure (Subalgebra.zero_mem _)
@@ -592,8 +592,8 @@ theorem mul_mem_closure_integralClosure {x y : 𝕃_[p]}
 
 /-- `C` is closed under powers. -/
 theorem pow_mem_closure_integralClosure {x : 𝕃_[p]}
-    (hx : x ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier) (n : ℕ) :
-    x ^ n ∈ closure (integralClosure ℚᵘⁿ_[p] 𝕃_[p]).carrier := by
+    (hx : x ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier) (n : ℕ) :
+    x ^ n ∈ closure (integralClosure ℚᶜᵘⁿ_[p] 𝕃_[p]).carrier := by
   induction n with
   | zero =>
     rw [pow_zero]

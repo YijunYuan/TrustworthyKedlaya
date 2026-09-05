@@ -45,19 +45,19 @@ variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 /-- The `i`-th **Teichmüller digit** of a Witt vector over `𝔽̄_p`: the
 Frobenius-inverse iterate of its `i`-th Witt coordinate.  Modulo `p^{K+1}` a Witt
 vector is the sum of the Teichmüller lifts of its digits times `p^i`, `i ≤ K`. -/
-noncomputable def teichDigit (i : ℕ) (w : ℤᵘⁿ_[p]) : 𝔽ᵃ_[p] :=
+noncomputable def teichDigit (i : ℕ) (w : ℤᶜᵘⁿ_[p]) : 𝔽ᵃ_[p] :=
   ((_root_.frobeniusEquiv (𝔽ᵃ_[p]) p).symm ^ i) (w.coeff i)
 
 /-- The Teichmüller digit expansion of a Witt vector, truncated at `K`, agrees with
 it modulo `p^{K+1}` (mathlib's
 `WittVector.dvd_sub_sum_teichmuller_iterateFrobeniusEquiv_coeff`). -/
-theorem sub_sum_teichDigit_dvd (w : ℤᵘⁿ_[p]) (K : ℕ) :
-    (p : ℤᵘⁿ_[p]) ^ (K + 1) ∣
-      w - ∑ i ∈ Finset.Iic K, teichmuller p (teichDigit p i w) * (p : ℤᵘⁿ_[p]) ^ i :=
+theorem sub_sum_teichDigit_dvd (w : ℤᶜᵘⁿ_[p]) (K : ℕ) :
+    (p : ℤᶜᵘⁿ_[p]) ^ (K + 1) ∣
+      w - ∑ i ∈ Finset.Iic K, teichmuller p (teichDigit p i w) * (p : ℤᶜᵘⁿ_[p]) ^ i :=
   WittVector.dvd_sub_sum_teichmuller_iterateFrobeniusEquiv_coeff w K
 
 /-- The zeroth Teichmüller digit is the zeroth Witt coordinate. -/
-theorem teichDigit_zero (w : ℤᵘⁿ_[p]) : teichDigit p 0 w = w.coeff 0 := by
+theorem teichDigit_zero (w : ℤᶜᵘⁿ_[p]) : teichDigit p 0 w = w.coeff 0 := by
   simp [teichDigit]
 
 /-- The **carry digit functions** of a two-term Teichmüller sum: the Teichmüller
@@ -80,9 +80,9 @@ theorem carryDigit_zero (a b : 𝔽ᵃ_[p]) : carryDigit p 0 a b = a + b := by
 `p^{K+1}`, the sum of two Teichmüller lifts is the lift of the sum plus carry
 terms `[carryDigit i a b]·pⁱ` for `1 ≤ i ≤ K`. -/
 theorem teichmuller_add_sub_sum_carryDigit_dvd (a b : 𝔽ᵃ_[p]) (K : ℕ) :
-    (p : ℤᵘⁿ_[p]) ^ (K + 1) ∣
+    (p : ℤᶜᵘⁿ_[p]) ^ (K + 1) ∣
       (teichmuller p a + teichmuller p b) - (teichmuller p (a + b) +
-        ∑ i ∈ Finset.Icc 1 K, teichmuller p (carryDigit p i a b) * (p : ℤᵘⁿ_[p]) ^ i) := by
+        ∑ i ∈ Finset.Icc 1 K, teichmuller p (carryDigit p i a b) * (p : ℤᶜᵘⁿ_[p]) ^ i) := by
   have h := sub_sum_teichDigit_dvd p (teichmuller p a + teichmuller p b) K
   have hsplit : Finset.Iic K = insert 0 (Finset.Icc 1 K) := by
     ext i

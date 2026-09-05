@@ -112,14 +112,14 @@ theorem le_val_shadow_mul_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v v' :
         - ∑ i ∈ Finset.Iic K, ((p : ℕ) : 𝕃_[p]) ^ i * shadow (mulDigitSeries i y y')) := by
   classical
   -- the summed lifted column at each exponent
-  set colsum : ℚ → ℤᵘⁿ_[p] := fun q =>
+  set colsum : ℚ → ℤᶜᵘⁿ_[p] := fun q =>
     ((UP.mulPairs p y y' q).map fun uv => teichmuller p (uv.1 * uv.2)).sum with hcolsum
   -- the lifted defect
   set Δ : LiftedPAdicHahnSeries p :=
     LiftedPAdicHahnSeries.fromCoeff y.coeff y.isPWO_support'
         * LiftedPAdicHahnSeries.fromCoeff y'.coeff y'.isPWO_support'
       - ∑ i ∈ Finset.Iic K,
-          HahnSeries.single (0 : ℚ) ((p : ℤᵘⁿ_[p]) ^ i)
+          HahnSeries.single (0 : ℚ) ((p : ℤᶜᵘⁿ_[p]) ^ i)
             * LiftedPAdicHahnSeries.fromCoeff (mulDigitSeries i y y').coeff
                 (mulDigitSeries i y y').isPWO_support' with hΔ
   -- supports of the lifts agree with the originals
@@ -167,7 +167,7 @@ theorem le_val_shadow_mul_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v v' :
   -- the coefficients of the lifted defect, columnwise
   have hΔcoeff : ∀ q : ℚ, Δ.coeff q
       = colsum q - ∑ i ∈ Finset.Iic K,
-          teichmuller p (teichDigit p i (colsum q)) * (p : ℤᵘⁿ_[p]) ^ i := by
+          teichmuller p (teichDigit p i (colsum q)) * (p : ℤᶜᵘⁿ_[p]) ^ i := by
     intro q
     rw [hΔ]
     rw [HahnSeries.coeff_sub']
@@ -179,7 +179,7 @@ theorem le_val_shadow_mul_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v v' :
     rw [HahnSeries.coeff_single_mul, sub_zero, mul_comm]
     rfl
   -- columnwise divisibility from the Teichmüller digit expansion
-  have hdvd : ∀ q, ((p : ℤᵘⁿ_[p]) ^ (K + 1)) ∣ Δ.coeff q := by
+  have hdvd : ∀ q, ((p : ℤᶜᵘⁿ_[p]) ^ (K + 1)) ∣ Δ.coeff q := by
     intro q
     rw [hΔcoeff q]
     exact sub_sum_teichDigit_dvd p (colsum q) K
@@ -193,13 +193,13 @@ theorem le_val_shadow_mul_collapse (y y' : HahnSeries ℚ (𝔽ᵃ_[p])) {v v' :
     simp [teichDigit]
   -- the scalar `p`-power singles represent the `p`-powers of `𝕃_[p]`
   have hpow : ∀ i : ℕ, Ideal.Quotient.mk (NullSeriesIdeal p)
-      (HahnSeries.single (0 : ℚ) ((p : ℤᵘⁿ_[p]) ^ i) : LiftedPAdicHahnSeries p)
+      (HahnSeries.single (0 : ℚ) ((p : ℤᶜᵘⁿ_[p]) ^ i) : LiftedPAdicHahnSeries p)
       = ((p : ℕ) : 𝕃_[p]) ^ i := by
     intro i
     rw [← HahnSeries.C_apply, map_pow, map_natCast, map_pow, map_natCast]
   -- each lifted summand represents `pⁱ·S(Dᵢ)`
   have hsummand : ∀ i : ℕ, Ideal.Quotient.mk (NullSeriesIdeal p)
-      (HahnSeries.single (0 : ℚ) ((p : ℤᵘⁿ_[p]) ^ i)
+      (HahnSeries.single (0 : ℚ) ((p : ℤᶜᵘⁿ_[p]) ^ i)
         * LiftedPAdicHahnSeries.fromCoeff (mulDigitSeries i y y').coeff
             (mulDigitSeries i y y').isPWO_support')
       = ((p : ℕ) : 𝕃_[p]) ^ i * shadow (mulDigitSeries i y y') := by
