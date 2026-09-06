@@ -5,20 +5,19 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.Lp.LpValued
-public import TrustworthyKedlaya.Lp.LpAlgClosed
-public import TrustworthyKedlaya.Kedlaya.ShadowCalculus
+public import TrustworthyKedlaya.Lp.Valued
+public import TrustworthyKedlaya.Lp.AlgClosed
 public import Mathlib.NumberTheory.Padics.Complex
 
 /-!
 # Embedding `ℂ_p` into `𝕃_p`
 
-Since `𝕃_[p]` is algebraically closed (`LpAlgClosed.lean`) and a `ℚ_[p]`-algebra, the
+Since `𝕃_[p]` is algebraically closed (`AlgClosed.lean`) and a `ℚ_[p]`-algebra, the
 algebraic closure `PadicAlgCl p` of `ℚ_[p]` embeds into it over `ℚ_[p]`.  The embedding is
 **isometric**: the composite `ℚ_[p] → 𝕃_[p]` preserves the valuation, and by the uniqueness of
 the extension of the `p`-adic norm to an algebraic extension of the complete field `ℚ_[p]`
 (`spectralNorm_unique_field_norm_ext`) the pulled-back norm `‖·‖ ∘ embd` must be the spectral
-norm of `PadicAlgCl p`.  As `𝕃_[p]` is complete (`LpValued.lean`), the embedding extends
+norm of `PadicAlgCl p`.  As `𝕃_[p]` is complete (`Valued.lean`), the embedding extends
 continuously to the completion `ℂ_[p]` of `PadicAlgCl p`, again isometrically.
 
 ## Main declarations

@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.Lp.PAdicHahnSeries
+public import TrustworthyKedlaya.Lp.Basic
 
 /-!
 # Coefficient calculus for `𝕃_p`
@@ -25,6 +25,14 @@ provides that calculus (Wang-Yuan, Lemma 2.2):
 - `TrustworthyKedlaya.pAdicHahnSeries.coeff_add_of_le_val` / `coeff_sub_of_le_val` /
   `coeff_sum_of_le_val`: at a position at or below the valuations of all operands,
   the coefficient map is additive (2.2(4)).
+
+It also records two facts about the valuation of a class represented by a lifted series:
+
+- `TrustworthyKedlaya.pAdicHahnSeries.val_mkLp_eq_of_isUnit_leading`: the **master
+  valuation lemma** — a lifted series with unit leading coefficient at `q₀` has valuation
+  exactly `q₀` in the quotient (both inequalities via `null_series_no_unit_leading`);
+- `TrustworthyKedlaya.pAdicHahnSeries.val_p_eq_one`: the element `p ∈ 𝕃_[p]` has
+  valuation `1` (the `t = p` identification: `single 1 1 - p` is a null series).
 -/
 
 @[expose] public section
@@ -334,5 +342,210 @@ theorem coeff_sum_of_le_val {ι : Type*} {s : Finset ι} {f : ι → 𝕃_[p]} {
       coeff_add_of_le_val (h a (Finset.mem_cons_self a s))
         ((val p).map_le_sum fun i hi => h i (Finset.mem_cons_of_mem hi)),
       ih fun i hi => h i (Finset.mem_cons_of_mem hi)]
+
+/-! ### The master valuation lemma -/
+
+/-- If all coefficients of a lifted series `Δ` below `q₀` vanish, the class of `Δ` in
+`𝕃_[p]` has valuation at least `q₀`: the canonical expansion cannot begin below `q₀`,
+else the difference from `Δ` would be a null series with a unit (Teichmüller) leading
+coefficient. -/
+theorem le_val_mkLp_of_coeff_eq_zero {Δ : LiftedPAdicHahnSeries p} {q₀ : ℚ}
+    (hlead : ∀ q < q₀, Δ.coeff q = 0) :
+    (q₀ : WithTop ℚ) ≤ val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ) := by
+  set x : 𝕃_[p] := Ideal.Quotient.mk (NullSeriesIdeal p) Δ with hx
+  by_cases hx0 : x = 0
+  · rw [hx0, val_zero_eq_top]
+    exact le_top
+  · -- the difference between `Δ` and the canonical representative is a null series
+    have hν : Δ - LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x)
+        ∈ NullSeriesIdeal p := by
+      rw [← Ideal.Quotient.eq_zero_iff_mem, map_sub]
+      have h2 : Ideal.Quotient.mk (NullSeriesIdeal p)
+          (LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x)) = x :=
+        fromCoeff_of_coeff_eq_self x
+      rw [h2, ← hx, sub_self]
+    rw [val_apply, dif_neg hx0]
+    set m : ℚ := (support_IsPWO x).isWF.min (support_nonempty_of_nonzero p x hx0) with hm
+    rw [WithTop.coe_le_coe]
+    by_contra hlt
+    push Not at hlt
+    -- the null series has leading position `m < q₀` with coefficient `-[x.coeff m]`
+    have hmmem : m ∈ Function.support x.coeff :=
+      (support_IsPWO x).isWF.min_mem (support_nonempty_of_nonzero p x hx0)
+    have hmne : x.coeff m ≠ 0 := hmmem
+    refine null_series_no_unit_leading hν (q := m) ?_ ?_
+    · have hcoeff : (Δ - LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x)).coeff m
+          = -(teichmuller p (x.coeff m)) := by
+        rw [HahnSeries.coeff_sub', Pi.sub_apply, hlead m hlt]
+        change 0 - teichmuller p (x.coeff m) = _
+        ring
+      rw [hcoeff]
+      have hunit : IsUnit (teichmuller p (x.coeff m)) := by
+        simpa using teich_sub_isUnit (a := x.coeff m) (b := 0) hmne
+      exact hunit.neg
+    · intro q' hq'
+      rw [HahnSeries.coeff_sub', Pi.sub_apply, hlead q' (hq'.trans hlt)]
+      have hzero : x.coeff q' = 0 := by
+        by_contra hne
+        exact absurd ((support_IsPWO x).isWF.min_le
+          (support_nonempty_of_nonzero p x hx0) hne) (not_le.mpr hq')
+      change (0 : ℤᶜᵘⁿ_[p]) - teichmuller p (x.coeff q') = 0
+      rw [hzero]
+      simp
+
+/-- **Master valuation lemma**: a lifted series whose coefficients vanish below `q₀`
+and whose coefficient at `q₀` is a unit represents a class of valuation exactly `q₀`. -/
+theorem val_mkLp_eq_of_isUnit_leading {Δ : LiftedPAdicHahnSeries p} {q₀ : ℚ}
+    (hunit : IsUnit (Δ.coeff q₀)) (hlead : ∀ q < q₀, Δ.coeff q = 0) :
+    val p (Ideal.Quotient.mk (NullSeriesIdeal p) Δ) = (q₀ : WithTop ℚ) := by
+  set x : 𝕃_[p] := Ideal.Quotient.mk (NullSeriesIdeal p) Δ with hx
+  -- `x ≠ 0`: a null series cannot have a unit leading coefficient
+  have hx0 : x ≠ 0 := by
+    intro h0
+    have hΔ : Δ ∈ NullSeriesIdeal p := by
+      rwa [← Ideal.Quotient.eq_zero_iff_mem, ← hx]
+    exact null_series_no_unit_leading hΔ hunit hlead
+  have hν : Δ - LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x)
+      ∈ NullSeriesIdeal p := by
+    rw [← Ideal.Quotient.eq_zero_iff_mem, map_sub]
+    rw [show Ideal.Quotient.mk (NullSeriesIdeal p)
+        (LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x)) = x from
+      fromCoeff_of_coeff_eq_self x, ← hx, sub_self]
+  have hge : (q₀ : WithTop ℚ) ≤ val p x := le_val_mkLp_of_coeff_eq_zero hlead
+  rw [val_apply, dif_neg hx0] at hge ⊢
+  set m : ℚ := (support_IsPWO x).isWF.min (support_nonempty_of_nonzero p x hx0) with hm
+  rw [WithTop.coe_le_coe] at hge
+  rw [WithTop.coe_inj]
+  -- remains to rule out `q₀ < m`: the null series would lead at `q₀` with a unit
+  rcases eq_or_lt_of_le hge with h | hlt
+  · exact h.symm
+  · exfalso
+    refine null_series_no_unit_leading hν (q := q₀) ?_ ?_
+    · have hzero : x.coeff q₀ = 0 := by
+        by_contra hne
+        exact absurd ((support_IsPWO x).isWF.min_le
+          (support_nonempty_of_nonzero p x hx0) hne) (not_le.mpr hlt)
+      have hcoeff : (Δ - LiftedPAdicHahnSeries.fromCoeff x.coeff (support_IsPWO x)).coeff q₀
+          = Δ.coeff q₀ := by
+        rw [HahnSeries.coeff_sub', Pi.sub_apply]
+        change _ - teichmuller p (x.coeff q₀) = _
+        rw [hzero]
+        simp
+      rwa [hcoeff]
+    · intro q' hq'
+      rw [HahnSeries.coeff_sub', Pi.sub_apply, hlead q' hq']
+      have hzero : x.coeff q' = 0 := by
+        by_contra hne
+        exact absurd ((support_IsPWO x).isWF.min_le
+          (support_nonempty_of_nonzero p x hx0) hne) (not_le.mpr (hq'.trans hlt))
+      change (0 : ℤᶜᵘⁿ_[p]) - teichmuller p (x.coeff q') = 0
+      rw [hzero]
+      simp
+
+/-! ### The element `p` has valuation one -/
+
+open Filter Topology in
+/-- The `t = p` identification: `single 1 1 - p` is a null series (its only integer
+column carries `1·p¹ - p·p⁰ = 0`). -/
+theorem single_one_sub_p_isNullSeries :
+    IsNullSeries ((HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p]))
+      - (p : LiftedPAdicHahnSeries p)) := by
+  set δ : LiftedPAdicHahnSeries p :=
+    HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p]) - (p : LiftedPAdicHahnSeries p) with hδ
+  have hpcoeff : ∀ q : ℚ, (p : LiftedPAdicHahnSeries p).coeff q
+      = if q = 0 then (p : ℤᶜᵘⁿ_[p]) else 0 := by
+    intro q
+    rw [show (p : LiftedPAdicHahnSeries p)
+        = HahnSeries.single (0 : ℚ) (p : ℤᶜᵘⁿ_[p]) from by
+      rw [← map_natCast (HahnSeries.C : ℤᶜᵘⁿ_[p] →+* LiftedPAdicHahnSeries p) p]; rfl]
+    rw [HahnSeries.coeff_single]
+    simp
+  have hδcoeff : ∀ q : ℚ, δ.coeff q
+      = (if q = 1 then (1 : ℤᶜᵘⁿ_[p]) else 0) - (if q = 0 then (p : ℤᶜᵘⁿ_[p]) else 0) := by
+    intro q
+    rw [hδ, HahnSeries.coeff_sub', Pi.sub_apply, HahnSeries.coeff_single, hpcoeff]
+    simp
+  have hp0 : (p : ℤᶜᵘⁿ_[p]) ≠ 0 := WittVector.p_nonzero p _
+  intro g
+  refine Tendsto.congr' ?_ tendsto_const_nhds
+  rw [EventuallyEq, eventually_atTop]
+  refine ⟨1, fun M hM => ?_⟩
+  symm
+  by_cases hg : ∃ n₀ : ℤ, g + (n₀ : ℚ) = 0
+  · -- the integer column: the partial sum is `p^{n₀+1}·1 - p^{n₀}·p = 0` once `M ≥ 1`
+    obtain ⟨n₀, hn₀⟩ := hg
+    have hq0 : g + ((n₀ : ℤ) : ℚ) = 0 := hn₀
+    have hq1 : g + (((n₀ + 1 : ℤ)) : ℚ) = 1 := by push_cast; linarith
+    have hset : (finiteBelow δ g M).toFinset = ({n₀, n₀ + 1} : Finset ℤ) := by
+      ext n
+      simp only [Set.Finite.mem_toFinset, Finset.mem_insert, Finset.mem_singleton]
+      constructor
+      · rintro ⟨-, hne⟩
+        rw [hδcoeff] at hne
+        by_contra hcon
+        push Not at hcon
+        have h1 : g + (n : ℚ) ≠ 1 := by
+          intro h
+          have : (n : ℚ) = ((n₀ + 1 : ℤ) : ℚ) := by push_cast at hq1 ⊢; linarith
+          exact hcon.2 (by exact_mod_cast this)
+        have h0 : g + (n : ℚ) ≠ 0 := by
+          intro h
+          have : (n : ℚ) = ((n₀ : ℤ) : ℚ) := by linarith
+          exact hcon.1 (by exact_mod_cast this)
+        rw [if_neg h1, if_neg h0, sub_zero] at hne
+        exact hne rfl
+      · rintro (rfl | rfl)
+        · constructor
+          · rw [hq0]; exact_mod_cast Nat.zero_le M
+          · rw [hδcoeff, if_neg (by rw [hq0]; norm_num), if_pos hq0]
+            simpa using hp0
+        · constructor
+          · rw [hq1]; exact_mod_cast hM
+          · rw [hδcoeff, if_pos hq1, if_neg (by rw [hq1]; norm_num)]
+            simp
+    rw [Finset.sum_coe_sort ((finiteBelow δ g M).toFinset)
+      (fun m => (p : QpCUn p) ^ (m : ℤ) * algebraMap (OQpCUn p) (QpCUn p) (δ.coeff (g + (m : ℚ))))]
+    rw [hset, Finset.sum_pair (by omega : n₀ ≠ n₀ + 1)]
+    rw [hδcoeff, hδcoeff, if_neg (by rw [hq0]; norm_num), if_pos hq0,
+      if_pos hq1, if_neg (by rw [hq1]; norm_num)]
+    rw [zero_sub, sub_zero, map_neg, map_one, mul_one]
+    have hpQ : ((p : QpCUn p)) ≠ 0 := by
+      intro h
+      exact (WittVector.p_nonzero p (𝔽ᵃ_[p]))
+        (IsFractionRing.to_map_eq_zero_iff.mp (by push_cast at h ⊢; exact h))
+    have halg : algebraMap (OQpCUn p) (QpCUn p) (p : ℤᶜᵘⁿ_[p]) = (p : QpCUn p) := by
+      push_cast
+      rfl
+    rw [halg, zpow_add₀ hpQ n₀ 1, zpow_one]
+    ring
+  · -- no integer column: every coefficient in the column vanishes
+    have hempty : ∀ n : ℤ, δ.coeff (g + n) = 0 := by
+      intro n
+      rw [hδcoeff]
+      have h1 : g + (n : ℚ) ≠ 1 := by
+        intro h
+        exact hg ⟨n - 1, by push_cast; linarith⟩
+      have h0 : g + (n : ℚ) ≠ 0 := fun h => hg ⟨n, h⟩
+      rw [if_neg h1, if_neg h0, sub_zero]
+    refine Finset.sum_eq_zero fun n _ => ?_
+    rw [hempty n, map_zero, mul_zero]
+
+/-- In `𝕃_[p]` the element `p` equals the class of `single 1 1`: `t` becomes `p`. -/
+theorem mkLp_single_one :
+    Ideal.Quotient.mk (NullSeriesIdeal p) (HahnSeries.single (1 : ℚ) (1 : ℤᶜᵘⁿ_[p]))
+      = (p : 𝕃_[p]) := by
+  rw [← sub_eq_zero, ← map_natCast (Ideal.Quotient.mk (NullSeriesIdeal p)) p, ← map_sub,
+    Ideal.Quotient.eq_zero_iff_mem]
+  exact single_one_sub_p_isNullSeries
+
+/-- The element `p ∈ 𝕃_[p]` has valuation `1`. -/
+@[simp]
+theorem val_p_eq_one : val p ((p : ℕ) : 𝕃_[p]) = (1 : ℚ) := by
+  rw [← mkLp_single_one]
+  refine val_mkLp_eq_of_isUnit_leading ?_ ?_
+  · rw [HahnSeries.coeff_single, if_pos rfl]
+    exact isUnit_one
+  · intro q hq
+    rw [HahnSeries.coeff_single, if_neg (by exact fun h => absurd h (ne_of_lt hq))]
 
 end TrustworthyKedlaya.pAdicHahnSeries

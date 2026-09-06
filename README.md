@@ -28,19 +28,18 @@ is valid in that case.
   and the `ℝ≥0`-valued absolute value used throughout.
 - `TrustworthyKedlaya/Lp/` — the field `𝕃_[p]` of `p`-adic Hahn series and its
   basic theory (module prefix `TrustworthyKedlaya.Lp`):
-  `PAdicHahnSeries.lean` (definition, valuation, canonical expansion),
-  `LpCoeff.lean` (coefficient calculus), `NewtonSlope.lean` (last Newton
-  slope), `LpAlgClosed.lean` (algebraic closedness via the transfinite Newton
-  algorithm), `LpValued.lean` (complete valued/normed field), `LpEmbedding.lean`
-  (isometric embedding of `ℂ_[p]`).
+  `Basic.lean` (definition, valuation, canonical expansion), `Coeff.lean`
+  (coefficient calculus), `NewtonSlope.lean` (last Newton slope),
+  `AlgClosed.lean` (algebraic closedness via the transfinite Newton algorithm),
+  `Valued.lean` (complete valued/normed field), `Embedding.lean` (isometric
+  embedding of `ℂ_[p]`). Nothing in `Lp/` imports `Kedlaya/`.
 - `TrustworthyKedlaya/Kedlaya/` — the proof machinery for the main theorems
   (module prefix `TrustworthyKedlaya.Kedlaya`): UP series, Artin–Schreier and
   Galois towers, the Witt-carry/truncation engine, the steered Newton
   iteration, and the ordinal bound. Everything here sits below
-  `MainResults.lean` in the import graph; `DefeqGuards.lean` pins restated
-  definitions to the originals by `rfl` so drift breaks the build.
+  `MainResults.lean` in the import graph.
 
-`PAdicHahnSeries.lean`, `WittVector.lean` and `Miscellaneous.lean` are
+`Lp/Basic.lean`, `WittVector.lean` and `Miscellaneous.lean` are
 human-provided infrastructure.
 
 ## Build

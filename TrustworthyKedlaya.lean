@@ -10,7 +10,6 @@ import TrustworthyKedlaya.Kedlaya.CRootClosed
 import TrustworthyKedlaya.Kedlaya.ChainStep
 import TrustworthyKedlaya.Kedlaya.Coeffwise
 import TrustworthyKedlaya.Kedlaya.ColumnAddition
-import TrustworthyKedlaya.Kedlaya.DefeqGuards
 import TrustworthyKedlaya.Kedlaya.Digits
 import TrustworthyKedlaya.Kedlaya.EngineTruncUP
 import TrustworthyKedlaya.Kedlaya.Extension
@@ -50,12 +49,12 @@ import TrustworthyKedlaya.Kedlaya.TwistPeriodicity
 import TrustworthyKedlaya.Kedlaya.UPAlgebraic
 import TrustworthyKedlaya.Kedlaya.WittCarryUP
 import TrustworthyKedlaya.Kedlaya.WittCarryUPMul
-import TrustworthyKedlaya.Lp.LpAlgClosed
-import TrustworthyKedlaya.Lp.LpCoeff
-import TrustworthyKedlaya.Lp.LpEmbedding
-import TrustworthyKedlaya.Lp.LpValued
+import TrustworthyKedlaya.Lp.AlgClosed
+import TrustworthyKedlaya.Lp.Basic
+import TrustworthyKedlaya.Lp.Coeff
+import TrustworthyKedlaya.Lp.Embedding
 import TrustworthyKedlaya.Lp.NewtonSlope
-import TrustworthyKedlaya.Lp.PAdicHahnSeries
+import TrustworthyKedlaya.Lp.Valued
 import TrustworthyKedlaya.MainResults
 import TrustworthyKedlaya.Miscellaneous
 import TrustworthyKedlaya.WittVector

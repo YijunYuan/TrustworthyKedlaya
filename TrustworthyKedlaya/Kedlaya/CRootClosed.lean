@@ -6,7 +6,7 @@ Authors: Yijun Yuan
 module
 
 public import TrustworthyKedlaya.Kedlaya.TruncUPClosure
-public import TrustworthyKedlaya.Lp.LpAlgClosed
+public import TrustworthyKedlaya.Lp.AlgClosed
 public import TrustworthyKedlaya.Kedlaya.NewtonPolygonRoots
 
 /-!

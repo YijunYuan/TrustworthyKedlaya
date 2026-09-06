@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.Lp.PAdicHahnSeries
+public import TrustworthyKedlaya.Lp.Basic
 public import Mathlib.Data.PNat.Prime
 
 /-!

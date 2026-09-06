@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.Lp.LpCoeff
+public import TrustworthyKedlaya.Lp.Coeff
 public import Mathlib.Algebra.Polynomial.Taylor
 
 /-!

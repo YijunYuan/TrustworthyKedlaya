@@ -38,7 +38,7 @@ The Artin-Schreier tower `B(t^{1/n}) = M₀ ≤ ⋯ ≤ M_r = L` of
 ## Main statements
 
 - `TrustworthyKedlaya.UP.intHahnEmbedding`: the inclusion `𝔽̄_p((t)) →+* 𝔽̄_p((t^ℚ))`
-  (definitionally equal copy of the one in `MainResults.lean`; pinned in `DefeqGuards`).
+  (definitionally equal copy of the one in `MainResults.lean`).
 - `TrustworthyKedlaya.UP.exists_ringHom_forall_isUP`: the embedding theorem.
 
 ## References
@@ -57,8 +57,7 @@ variable (p : ℕ) [hp : Fact (Nat.Prime p)]
 
 /-- The order-embedding `ℤ ↪ ℚ` of value groups induces the ring inclusion of the
 integer-supported Hahn series `𝔽̄_p((t))` into `𝔽̄_p((t^ℚ))` (definitionally equal
-copy, below `MainResults.lean` in the import graph, of `intHahnEmbedding` there; the
-`rfl`-guard lives in `DefeqGuards.lean`). -/
+copy, below `MainResults.lean` in the import graph, of `intHahnEmbedding` there). -/
 noncomputable def intHahnEmbedding :
     (𝔽ᵃ_[p])⸨X⸩ →+* HahnSeries ℚ (𝔽ᵃ_[p]) :=
   HahnSeries.embDomainRingHom (Int.castAddHom ℚ) Rat.intCast_injective

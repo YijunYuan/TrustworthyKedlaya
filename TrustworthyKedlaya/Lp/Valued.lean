@@ -151,7 +151,7 @@ theorem lt_val_sub_of_forall_coeff_eq {x y : 𝕃_[p]} {q : ℚ}
 
 /-! ### The valued field structure -/
 
-/-- The valued-field structure on `𝕃_[p]` (installed in `PAdicHahnSeries.lean` as
+/-- The valued-field structure on `𝕃_[p]` (installed in `Basic.lean` as
 `Valued.mk' (val p)`) has `Valued.v x = val p x`, viewed multiplicatively. -/
 theorem valued_v_apply (x : 𝕃_[p]) :
     (Valued.v x : Multiplicative (WithTop ℚ)ᵒᵈ)

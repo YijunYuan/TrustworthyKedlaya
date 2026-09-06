@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.Lp.PAdicHahnSeries
+public import TrustworthyKedlaya.Lp.Basic
 public import Mathlib.RingTheory.IntegralClosure.Algebra.Basic
 public import Mathlib.RingTheory.LaurentSeries
 public import Mathlib.Topology.Defs.Basic

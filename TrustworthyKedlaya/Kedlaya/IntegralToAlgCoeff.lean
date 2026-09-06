@@ -10,7 +10,7 @@ public import TrustworthyKedlaya.Kedlaya.WittCarryUPMul
 public import TrustworthyKedlaya.Kedlaya.ShadowCongruence
 public import TrustworthyKedlaya.Kedlaya.NewtonPolygonRoots
 public import TrustworthyKedlaya.Kedlaya.LaurentClosure
-public import TrustworthyKedlaya.Lp.LpAlgClosed
+public import TrustworthyKedlaya.Lp.AlgClosed
 public import TrustworthyKedlaya.Kedlaya.TeichCarry
 public import TrustworthyKedlaya.Kedlaya.IntTruncation
 
