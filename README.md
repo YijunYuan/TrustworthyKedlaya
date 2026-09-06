@@ -5,7 +5,7 @@
 [![mathlib](https://img.shields.io/badge/mathlib-db584cd6d46c92f209a44c0f1c829460d327499d-5C2D91)](https://github.com/leanprover-community/mathlib4)
 
 Formalize the three target theorems in
-`TrustworthyKedlaya/Kedlaya.lean`:
+`TrustworthyKedlaya/MainResults.lean`:
 
 - `kedlaya_2001a_theorem15` — integral over F̄_p((t)) ⇔ S_{a,b,c}
   support + eventually periodic twist sequences ([Kedlaya2001a] Thm 15).
@@ -20,11 +20,28 @@ is valid in that case.
 
 ## Layout
 
-- `TrustworthyKedlaya/` — Lean sources. Proof machinery sits below
-  `Kedlaya.lean` in the import graph; `DefeqGuards.lean` pins restated
+- `TrustworthyKedlaya/MainResults.lean` — the three target theorems above,
+  together with the definitions they are stated in terms of (`Sabc`, `Tc`,
+  `twistSeq`, …).
+- `TrustworthyKedlaya/WittVector.lean`, `TrustworthyKedlaya/Miscellaneous.lean`
+  — shared infrastructure: the Witt-vector model of `ℤᶜᵘⁿ_[p]` / `ℚᶜᵘⁿ_[p]`,
+  and the `ℝ≥0`-valued absolute value used throughout.
+- `TrustworthyKedlaya/Lp/` — the field `𝕃_[p]` of `p`-adic Hahn series and its
+  basic theory (module prefix `TrustworthyKedlaya.Lp`):
+  `PAdicHahnSeries.lean` (definition, valuation, canonical expansion),
+  `LpCoeff.lean` (coefficient calculus), `NewtonSlope.lean` (last Newton
+  slope), `LpAlgClosed.lean` (algebraic closedness via the transfinite Newton
+  algorithm), `LpValued.lean` (complete valued/normed field), `LpEmbedding.lean`
+  (isometric embedding of `ℂ_[p]`).
+- `TrustworthyKedlaya/Kedlaya/` — the proof machinery for the main theorems
+  (module prefix `TrustworthyKedlaya.Kedlaya`): UP series, Artin–Schreier and
+  Galois towers, the Witt-carry/truncation engine, the steered Newton
+  iteration, and the ordinal bound. Everything here sits below
+  `MainResults.lean` in the import graph; `DefeqGuards.lean` pins restated
   definitions to the originals by `rfl` so drift breaks the build.
-  `PAdicHahnSeries.lean`, `WittVector.lean`, `Miscellaneous.lean` are
-  human-provided infrastructure.
+
+`PAdicHahnSeries.lean`, `WittVector.lean` and `Miscellaneous.lean` are
+human-provided infrastructure.
 
 ## Build
 
