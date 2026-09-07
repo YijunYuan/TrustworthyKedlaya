@@ -29,8 +29,9 @@ is valid in that case.
   throughout), `QpCUn.lean` (the Witt-vector model of `ℤᶜᵘⁿ_[p]` / `ℚᶜᵘⁿ_[p]`),
   `QpUn.lean` (the maximal unramified extension `ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p]` and its
   maximality), `QpUnEmbedding.lean` (the tower
-  `ℚ_[p] ⊆ ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p] ⊆ ℂ_[p]`, `ℚᵘⁿ_[p] → PadicAlgCl p ⊆ ℂ_[p]`,
-  with all its compatibilities).
+  `ℚ_[p] ⊆ ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p] ⊆ ℂ_[p]`, `ℚᵘⁿ_[p] ⊆ PadicAlgCl p ⊆ ℂ_[p]`,
+  with all its compatibilities; `PadicAlgCl p` is an algebraic closure of
+  `ℚᵘⁿ_[p]`, so `ℚᵘⁿ_[p](a)` is `ℚᵘⁿ_[p]⟮a⟯`).
   `𝕃_[p]`: `Basic.lean` (definition, valuation, canonical expansion),
   `Coeff.lean` (coefficient calculus), `NewtonSlope.lean` (last Newton slope),
   `AlgClosed.lean` (algebraic closedness via the transfinite Newton algorithm),

@@ -12,9 +12,10 @@ public import TrustworthyKedlaya.Lp.QpUnEmbedding
 /-!
 # Embedding `ℂ_p` into `𝕃_p`
 
-Since `𝕃_[p]` is algebraically closed (`AlgClosed.lean`) and a `ℚᵘⁿ_[p]`-algebra, the
-algebraic closure `PadicAlgCl p` of `ℚ_[p]` (which is a `ℚᵘⁿ_[p]`-algebra through the embedding
-`QpUn.algClEmbd` of `QpUnEmbedding.lean`) embeds into it **over `ℚᵘⁿ_[p]`**.  The embedding is
+Since `𝕃_[p]` is algebraically closed (`AlgClosed.lean`) and a `ℚᵘⁿ_[p]`-algebra (through
+`ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p] → 𝕃_[p]`), the algebraic closure `PadicAlgCl p` of `ℚ_[p]` (which is a
+`ℚᵘⁿ_[p]`-algebra through the embedding `QpUn.algClEmbd` of `QpUnEmbedding.lean`) embeds into it
+**over `ℚᵘⁿ_[p]`**.  The embedding is
 **isometric**: the composite `ℚ_[p] → 𝕃_[p]` preserves the valuation, and by the uniqueness of
 the extension of the `p`-adic norm to an algebraic extension of the complete field `ℚ_[p]`
 (`spectralNorm_unique_field_norm_ext`) the pulled-back norm `‖·‖ ∘ embd` must be the spectral
@@ -40,11 +41,12 @@ commutes (`IsScalarTower ℚᶜᵘⁿ_[p] ℂ_[p] 𝕃_[p]`, `IsScalarTower ℚ_
 - `TrustworthyKedlaya.pAdicHahnSeries.algClEmbd`: the embedding
   `PadicAlgCl p →ₐ[ℚ_[p]] 𝕃_[p]`, obtained by restricting scalars from the `ℚᵘⁿ_[p]`-linear
   lift `algClEmbdQpUn`; `norm_algClEmbd : ‖algClEmbd p x‖ = ‖x‖` and
-  `algClEmbd_QpUn : algClEmbd p (QpUn.algClEmbd p x) = algebraMap ℚᵘⁿ_[p] 𝕃_[p] x`;
+  `algClEmbd_coe : algClEmbd p (x : PadicAlgCl p) = algebraMap ℚᵘⁿ_[p] 𝕃_[p] x`;
 - `TrustworthyKedlaya.pAdicHahnSeries.complexEmbd`: the continuous extension
   `ℂ_[p] →ₐ[ℚᶜᵘⁿ_[p]] 𝕃_[p]` of `algClEmbd p`, as a bundled `ℚᶜᵘⁿ_[p]`-algebra homomorphism,
   and the instance `Algebra ℂ_[p] 𝕃_[p]` it defines, with the towers
-  `IsScalarTower ℚᶜᵘⁿ_[p] ℂ_[p] 𝕃_[p]` and `IsScalarTower ℚ_[p] ℂ_[p] 𝕃_[p]`;
+  `IsScalarTower ℚᶜᵘⁿ_[p] ℂ_[p] 𝕃_[p]`, `IsScalarTower ℚᵘⁿ_[p] ℂ_[p] 𝕃_[p]` and
+  `IsScalarTower ℚ_[p] ℂ_[p] 𝕃_[p]`;
 - `TrustworthyKedlaya.pAdicHahnSeries.ofPadicComplex`: the same map as a plain function,
   registered as the coercion `ℂ_[p] → 𝕃_[p]`.  This is the **user-facing API** and the only
   map into `𝕃_[p]` defined in this file: one writes `(x : 𝕃_[p])` for `x : ℂ_[p]`, and `simp`
@@ -196,7 +198,7 @@ theorem valQ_algebraMap_Qp {x : ℚ_[p]} (hx : x ≠ 0) :
   exact_mod_cast this
 
 /-- **The structure map `ℚ_[p] → 𝕃_[p]` is isometric.** -/
-theorem norm_algebraMap_Qp (x : ℚ_[p]) : ‖algebraMap ℚ_[p] 𝕃_[p] x‖ = ‖x‖ := by
+@[simp] theorem norm_algebraMap_Qp (x : ℚ_[p]) : ‖algebraMap ℚ_[p] 𝕃_[p] x‖ = ‖x‖ := by
   by_cases hx : x = 0
   · rw [hx, map_zero, norm_zero, norm_zero]
   · have hxL : algebraMap ℚ_[p] 𝕃_[p] x ≠ 0 :=
@@ -207,7 +209,7 @@ theorem norm_algebraMap_Qp (x : ℚ_[p]) : ‖algebraMap ℚ_[p] 𝕃_[p] x‖ =
     rfl
 
 /-- **The structure map `ℚᶜᵘⁿ_[p] → 𝕃_[p]` is isometric.** -/
-theorem norm_algebraMap_QpCUn (y : ℚᶜᵘⁿ_[p]) : ‖algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] y‖ = ‖y‖ := by
+@[simp] theorem norm_algebraMap_QpCUn (y : ℚᶜᵘⁿ_[p]) : ‖algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] y‖ = ‖y‖ := by
   by_cases hy : y = 0
   · rw [hy, map_zero, norm_zero, norm_zero]
   · have hyL : algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] y ≠ 0 :=
@@ -228,52 +230,39 @@ theorem continuous_algebraMap_QpCUn : Continuous (algebraMap ℚᶜᵘⁿ_[p] �
 
 /-! ### `ℚᵘⁿ_[p]` inside `𝕃_[p]`
 
-`Algebra ℚᵘⁿ_[p] 𝕃_[p]` is the restriction of the structure map `ℚᶜᵘⁿ_[p] → 𝕃_[p]` to the
-subfield `ℚᵘⁿ_[p]` (Mathlib's `Algebra.ofSubsemiring`); in particular
-`IsScalarTower ℚᵘⁿ_[p] ℚᶜᵘⁿ_[p] 𝕃_[p]` holds definitionally. -/
+`𝕃_[p]` is a `ℚᵘⁿ_[p]`-algebra through the restriction of the structure map `ℚᶜᵘⁿ_[p] → 𝕃_[p]`
+to `ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p]`; `IsScalarTower ℚᵘⁿ_[p] ℚᶜᵘⁿ_[p] 𝕃_[p]` holds definitionally.  (Since
+`ℚᵘⁿ_[p]` is a type synonym and not a subtype, this instance has to be declared by hand; see
+`TrustworthyKedlaya.Lp.QpUn`.) -/
 
+/-- `𝕃_[p]` as a `ℚᵘⁿ_[p]`-algebra, through `ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p] → 𝕃_[p]`. -/
+noncomputable instance : Algebra ℚᵘⁿ_[p] 𝕃_[p] :=
+  ((algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p]).comp (algebraMap ℚᵘⁿ_[p] ℚᶜᵘⁿ_[p])).toAlgebra
+
+/-- `simp` normal form: the image of `x : ℚᵘⁿ_[p]` in `𝕃_[p]` is that of `(x : ℚᶜᵘⁿ_[p])`. -/
 @[simp] theorem algebraMap_QpUn_apply (x : ℚᵘⁿ_[p]) :
     algebraMap ℚᵘⁿ_[p] 𝕃_[p] x = algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] (x : ℚᶜᵘⁿ_[p]) :=
   rfl
+
+instance : IsScalarTower ℚᵘⁿ_[p] ℚᶜᵘⁿ_[p] 𝕃_[p] :=
+  IsScalarTower.of_algebraMap_eq fun _ => rfl
 
 instance : IsScalarTower ℚ_[p] ℚᵘⁿ_[p] 𝕃_[p] :=
   IsScalarTower.of_algebraMap_eq fun _ => rfl
 
 theorem norm_algebraMap_QpUn (x : ℚᵘⁿ_[p]) : ‖algebraMap ℚᵘⁿ_[p] 𝕃_[p] x‖ = ‖x‖ := by
-  rw [algebraMap_QpUn_apply, norm_algebraMap_QpCUn]
-  norm_cast
+  rw [algebraMap_QpUn_apply, norm_algebraMap_QpCUn, QpUn.norm_coe]
 
 /-! ### The embedding of the algebraic closure of `ℚ_[p]`
 
-`PadicAlgCl p` is a `ℚᵘⁿ_[p]`-algebra through `QpUn.algClEmbd`, and algebraic over `ℚᵘⁿ_[p]`
-since it is algebraic over `ℚ_[p]`; so it embeds into the algebraically closed `ℚᵘⁿ_[p]`-algebra
-`𝕃_[p]` over `ℚᵘⁿ_[p]`.  The `ℚᵘⁿ_[p]`-algebra structure of `PadicAlgCl p` is only a *local*
-instance (see the implementation notes of `QpUnEmbedding.lean`); what is exported is the
-`ℚ_[p]`-algebra homomorphism `algClEmbd` together with the identity `algClEmbd_QpUn`. -/
-
-section AlgClEmbd
-
-/-- `PadicAlgCl p` as a `ℚᵘⁿ_[p]`-algebra, through `QpUn.algClEmbd`.  Only a local instance. -/
-@[instance_reducible] noncomputable def algebraQpUnPadicAlgCl (p : ℕ) [Fact (Nat.Prime p)] :
-    Algebra ℚᵘⁿ_[p] (PadicAlgCl p) :=
-  (QpUn.algClEmbd p).toAlgebra
-
-attribute [local instance] algebraQpUnPadicAlgCl
-
-theorem isScalarTower_Qp_QpUn_PadicAlgCl : IsScalarTower ℚ_[p] ℚᵘⁿ_[p] (PadicAlgCl p) :=
-  IsScalarTower.of_algebraMap_eq fun k => ((QpUn.algClEmbd p).commutes k).symm
-
-attribute [local instance] isScalarTower_Qp_QpUn_PadicAlgCl
-
-theorem isAlgebraic_QpUn_PadicAlgCl : Algebra.IsAlgebraic ℚᵘⁿ_[p] (PadicAlgCl p) :=
-  Algebra.IsAlgebraic.tower_top (K := ℚ_[p]) ℚᵘⁿ_[p]
-
-attribute [local instance] isAlgebraic_QpUn_PadicAlgCl
+`PadicAlgCl p` is a `ℚᵘⁿ_[p]`-algebra (through `QpUn.algClEmbd`, see `QpUnEmbedding.lean`) and
+algebraic over `ℚᵘⁿ_[p]`; so it embeds into the algebraically closed `ℚᵘⁿ_[p]`-algebra `𝕃_[p]`
+over `ℚᵘⁿ_[p]`.  We export the `ℚ_[p]`-algebra homomorphism `algClEmbd` together with the
+`ℚᵘⁿ_[p]`-linearity `algClEmbd_coe`. -/
 
 /-- An embedding of the algebraic closure `PadicAlgCl p` of `ℚ_[p]` into `𝕃_[p]` over
 `ℚᵘⁿ_[p]`, provided by the algebraic closedness of `𝕃_[p]`.  (Any two such embeddings differ
-by a `ℚᵘⁿ_[p]`-automorphism of `PadicAlgCl p`.)  Its type mentions the local instance
-`algebraQpUnPadicAlgCl`; use `algClEmbd` and `algClEmbd_QpUn` instead. -/
+by a `ℚᵘⁿ_[p]`-automorphism of `PadicAlgCl p`.) -/
 noncomputable def algClEmbdQpUn (p : ℕ) [Fact (Nat.Prime p)] :
     PadicAlgCl p →ₐ[ℚᵘⁿ_[p]] 𝕃_[p] :=
   IsAlgClosed.lift
@@ -285,13 +274,11 @@ noncomputable def algClEmbd (p : ℕ) [Fact (Nat.Prime p)] : PadicAlgCl p →ₐ
 
 theorem algClEmbd_apply (x : PadicAlgCl p) : algClEmbd p x = algClEmbdQpUn p x := rfl
 
-/-- **The embedding `PadicAlgCl p → 𝕃_[p]` is `ℚᵘⁿ_[p]`-linear**: on the image of `ℚᵘⁿ_[p]` in
-`PadicAlgCl p` it is the structure map `ℚᵘⁿ_[p] → 𝕃_[p]`. -/
-theorem algClEmbd_QpUn (x : ℚᵘⁿ_[p]) :
-    algClEmbd p (QpUn.algClEmbd p x) = algebraMap ℚᵘⁿ_[p] 𝕃_[p] x :=
+/-- **The embedding `PadicAlgCl p → 𝕃_[p]` is `ℚᵘⁿ_[p]`-linear**: on `ℚᵘⁿ_[p] ⊆ PadicAlgCl p`
+it is the structure map `ℚᵘⁿ_[p] → 𝕃_[p]`. -/
+@[simp] theorem algClEmbd_coe (x : ℚᵘⁿ_[p]) :
+    algClEmbd p (x : PadicAlgCl p) = algebraMap ℚᵘⁿ_[p] 𝕃_[p] x :=
   (algClEmbdQpUn p).commutes x
-
-end AlgClEmbd
 
 theorem algClEmbd_injective : Function.Injective (algClEmbd p) :=
   (algClEmbd p : PadicAlgCl p →+* 𝕃_[p]).injective
@@ -349,7 +336,7 @@ theorem continuous_algClEmbd : Continuous (algClEmbd p) :=
 
 `ℂ_[p]` is the completion of `PadicAlgCl p`, and `𝕃_[p]` is complete, so the continuous
 ring homomorphism `algClEmbd p` extends uniquely to a continuous ring homomorphism
-`ℂ_[p] → 𝕃_[p]`.  It is `ℚᶜᵘⁿ_[p]`-linear, because it is `ℚᵘⁿ_[p]`-linear (`algClEmbd_QpUn`)
+`ℂ_[p] → 𝕃_[p]`.  It is `ℚᶜᵘⁿ_[p]`-linear, because it is `ℚᵘⁿ_[p]`-linear (`algClEmbd_coe`)
 and `ℚᵘⁿ_[p]` is dense in `ℚᶜᵘⁿ_[p]`. -/
 
 /-- The continuous extension of `algClEmbd p` to the `p`-adic complex numbers, as a ring
@@ -367,17 +354,15 @@ theorem continuous_complexEmbdRingHom : Continuous (complexEmbdRingHom p) :=
 
 /-- **The embedding `ℂ_[p] → 𝕃_[p]` is `ℚᶜᵘⁿ_[p]`-linear**: composed with the embedding
 `ℚᶜᵘⁿ_[p] → ℂ_[p]` it is the structure map `ℚᶜᵘⁿ_[p] → 𝕃_[p]`.  Both sides are continuous and
-agree on the dense subfield `ℚᵘⁿ_[p]` by `algClEmbd_QpUn`. -/
+agree on the dense subfield `ℚᵘⁿ_[p]` by `algClEmbd_coe`. -/
 theorem complexEmbdRingHom_algebraMap_QpCUn (y : ℚᶜᵘⁿ_[p]) :
     complexEmbdRingHom p (algebraMap ℚᶜᵘⁿ_[p] ℂ_[p] y) = algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] y := by
-  refine (QpUn.denseRange_subtype p).induction_on y ?_ ?_
+  refine (QpUn.denseRange_algebraMap p).induction_on y ?_ ?_
   · exact isClosed_eq (continuous_complexEmbdRingHom.comp QpCUn.continuous_algebraMap_complex)
       continuous_algebraMap_QpCUn
   · intro x
-    change complexEmbdRingHom p (algebraMap ℚᶜᵘⁿ_[p] ℂ_[p] (x : ℚᶜᵘⁿ_[p]))
-      = algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] (x : ℚᶜᵘⁿ_[p])
-    rw [← QpCUn.coe_algClEmbd, complexEmbdRingHom_coe, algClEmbd_QpUn]
-    rfl
+    rw [QpUn.algebraMap_QpCUn_apply, QpCUn.algebraMap_complex_coe, complexEmbdRingHom_coe,
+      algClEmbd_coe, algebraMap_QpUn_apply]
 
 /-- The continuous extension of `algClEmbd p` to the `p`-adic complex numbers, as a
 `ℚᶜᵘⁿ_[p]`-algebra homomorphism `ℂ_[p] →ₐ[ℚᶜᵘⁿ_[p]] 𝕃_[p]`.
@@ -485,10 +470,16 @@ theorem coe_ne_zero {x : ℂ_[p]} : (x : 𝕃_[p]) ≠ 0 ↔ x ≠ 0 := coe_eq_z
     ((algebraMap ℚᶜᵘⁿ_[p] ℂ_[p] y : ℂ_[p]) : 𝕃_[p]) = algebraMap ℚᶜᵘⁿ_[p] 𝕃_[p] y :=
   (complexEmbd p).commutes y
 
-/-- On `ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p] ⊆ ℂ_[p]` the coercion is the structure map `ℚᵘⁿ_[p] → 𝕃_[p]`. -/
+/-- On `ℚᵘⁿ_[p] ⊆ PadicAlgCl p ⊆ ℂ_[p]` the coercion is the structure map `ℚᵘⁿ_[p] → 𝕃_[p]`
+(which is also the image of `x` through `ℚᵘⁿ_[p] ⊆ ℚᶜᵘⁿ_[p] → ℂ_[p]`, by
+`QpCUn.algebraMap_complex_coe`). -/
+@[simp] theorem coe_coe_toAlgCl (x : ℚᵘⁿ_[p]) :
+    (((x : PadicAlgCl p) : ℂ_[p]) : 𝕃_[p]) = algebraMap ℚᵘⁿ_[p] 𝕃_[p] x := by
+  rw [coe_coe, algClEmbd_coe]
+
 theorem coe_algebraMap_QpUn (x : ℚᵘⁿ_[p]) :
     ((algebraMap ℚᵘⁿ_[p] ℂ_[p] x : ℂ_[p]) : 𝕃_[p]) = algebraMap ℚᵘⁿ_[p] 𝕃_[p] x :=
-  coe_algebraMap_QpCUn (x : ℚᶜᵘⁿ_[p])
+  coe_coe_toAlgCl x
 
 /-- On `ℚ_[p] ⊆ ℂ_[p]` the coercion is the structure map `ℚ_[p] → 𝕃_[p]`. -/
 @[simp] theorem coe_algebraMap (x : ℚ_[p]) :
@@ -525,8 +516,10 @@ instance : IsScalarTower ℚᶜᵘⁿ_[p] ℂ_[p] 𝕃_[p] :=
 instance : IsScalarTower ℚ_[p] ℂ_[p] 𝕃_[p] :=
   IsScalarTower.of_algebraMap_eq fun k => (coe_algebraMap k).symm
 
-/-- The tower `ℚᵘⁿ_[p] ⊆ ℂ_[p] ⊆ 𝕃_[p]` commutes (found by Mathlib from the previous one). -/
-example : IsScalarTower ℚᵘⁿ_[p] ℂ_[p] 𝕃_[p] := inferInstance
+/-- **The tower `ℚᵘⁿ_[p] ⊆ ℂ_[p] ⊆ 𝕃_[p]` commutes**: the `ℚᵘⁿ_[p]`-linearity of the lift
+`PadicAlgCl p → 𝕃_[p]`. -/
+instance : IsScalarTower ℚᵘⁿ_[p] ℂ_[p] 𝕃_[p] :=
+  IsScalarTower.of_algebraMap_eq fun x => (coe_algebraMap_QpUn x).symm
 
 /-! #### Metric properties -/
 
