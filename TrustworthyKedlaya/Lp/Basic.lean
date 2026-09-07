@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.WittVector
+public import TrustworthyKedlaya.Lp.QpCUn
 public import Mathlib.Analysis.Normed.Unbundled.SpectralNorm
 public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.FieldTheory.Finiteness
@@ -995,26 +995,6 @@ lemma exists_lift_of_valued_le_one {z : ℚᶜᵘⁿ_[p]} (hz : Valued.v z ≤ 1
   rw [WithVal.algebraMap_right_apply] at *
   simpa [WithVal.equiv] using ha
 
-/-- The norm on `ℚᶜᵘⁿ_[p]` agrees with `WithZeroMulInt.toNNReal` applied to its valuation. In
-v4.31 the `Valued.toNormedField` norm is `RankOne.hom (Valued.v.restrict ·)` rather than being
-defeq to `toNNReal (Valued.v ·)`, so this requires the rank-one `hom` bridge plus surjectivity of
-`Valued.v` (it used to hold by `rfl`). -/
-lemma norm_eq_toNNReal_valued (a : ℚᶜᵘⁿ_[p]) :
-    ‖a‖ = ((WithZeroMulInt.toNNReal (p_ne_zero p) (Valued.v a) : NNReal) : ℝ) := by
-  have hsurj : Function.Surjective (Valued.v : ℚᶜᵘⁿ_[p] → WithZero (Multiplicative ℤ)) := by
-    intro x
-    obtain ⟨y, hy⟩ := (IsDiscreteValuationRing.maximalIdeal (ℤᶜᵘⁿ_[p])).valuation_surjective
-      (FractionRing (ℤᶜᵘⁿ_[p])) x
-    exact ⟨WithVal.toVal _ y, by rw [WithVal.valued_toVal]; exact hy⟩
-  rw [Valued.toNormedField.norm_def]
-  norm_cast
-  rw [show (Valuation.RankOne.hom (Valued.v : Valuation ℚᶜᵘⁿ_[p] _)) (Valued.v.restrict a)
-        = WithZeroMulInt.toNNReal (p_ne_zero p)
-            ((Valuation.IsRankOneDiscrete.valueGroup₀_equiv_withZeroMulInt
-              (v := (Valued.v : Valuation ℚᶜᵘⁿ_[p] _))) (Valued.v.restrict a)) from rfl,
-     Valuation.IsRankOneDiscrete.valueGroup₀_equiv_withZeroMulInt_restrict_apply_of_surjective
-       hsurj a]
-
 /--
 **Cauchy partial sums** (sub-claim of existence). For each `g : ℚ`, the
 integer-cutoff partial sums `intPartial α g K` form a Cauchy sequence in
@@ -1029,10 +1009,10 @@ lemma intPartial_isCauchy (α : LiftedPAdicHahnSeries p) (g : ℚ) :
   -- a "tail" sum whose entries each have valuation `≤ ofAdd(-(min K K' + 1))`,
   -- then convert to norm via `WithZeroMulInt.toNNReal_strictMono`.
   intro ε hε
-  -- Norm conversion: `‖a‖ = ↑(toNNReal (Valued.v a))` (see `norm_eq_toNNReal_valued`).
+  -- Norm conversion: `‖a‖ = ↑(toNNReal (Valued.v a))` (see `QpCUn.norm_eq_toNNReal_valued`).
   have hnorm_eq : ∀ a : QpCUn p, ‖a‖ =
       ((WithZeroMulInt.toNNReal (p_ne_zero p) (Valued.v a) : NNReal) : ℝ) :=
-    norm_eq_toNNReal_valued
+    QpCUn.norm_eq_toNNReal_valued
   -- p > 1 in NNReal
   have hp1 : (1 : NNReal) < p := by exact_mod_cast (Fact.out : Nat.Prime p).one_lt
   have hp_pos : (0 : NNReal) < p := zero_lt_one.trans hp1
@@ -1189,7 +1169,7 @@ lemma intPartial_isCauchy (α : LiftedPAdicHahnSeries p) (g : ℚ) :
 **Limit of partial sums** (sub-claim of existence). The partial sums of `α` at
 coset `g` converge in the complete DVR `ℚᶜᵘⁿ_[p]` to a limit `f_g`.
 Uses `intPartial_isCauchy` and `CompleteSpace ℚᶜᵘⁿ_[p]` (which itself is an
-instance available in `WittVector.lean`).
+instance available in `QpCUn.lean`).
 -/
 lemma exists_lim_intPartial (α : LiftedPAdicHahnSeries p) (g : ℚ) :
     ∃ y : ℚᶜᵘⁿ_[p], Filter.Tendsto (intPartial α g) Filter.atTop (nhds y) := by
@@ -1237,7 +1217,7 @@ lemma exists_lim_intPartial (α : LiftedPAdicHahnSeries p) (g : ℚ) :
           ‖intPartial α g K' - intPartial α g K‖ =
             ((WithZeroMulInt.toNNReal (p_ne_zero p)
               (Valued.v (intPartial α g K' - intPartial α g K)) : NNReal) : ℝ) :=
-        norm_eq_toNNReal_valued _
+        QpCUn.norm_eq_toNNReal_valued _
       rw [h_norm_eq] at h_norm
       have h_NN :
           (WithZeroMulInt.toNNReal (p_ne_zero p)
@@ -4660,7 +4640,6 @@ lemma alg_of_fin_supp (p : ℕ) [Fact (Nat.Prime p)] (f : 𝕃_[p]) (hf : f.supp
       have hfeq : f = g + h := by rw [hg_def]; ring
       rw [hfeq]
       exact hg_alg.add hh_alg
-
 
 end pAdicHahnSeries
 

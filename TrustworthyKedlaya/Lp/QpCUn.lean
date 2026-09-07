@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.Miscellaneous
+public import TrustworthyKedlaya.Lp.Miscellaneous
 public import Mathlib.Analysis.Normed.Field.WithAbs
 public import Mathlib.NumberTheory.Padics.Complex
 public import Mathlib.RingTheory.AdicCompletion.Topology
@@ -45,11 +45,11 @@ vector construction:
 
 - `TrustworthyKedlaya.injective_teichmuller`: the Teichmüller lift `𝔽ᵃ_[p] → ℤᶜᵘⁿ_[p]`
   is injective.
-- `TrustworthyKedlaya.QpCUn.Qp_embd_keep_val`: the embedding `ℚ_[p] → ℚᶜᵘⁿ_[p]`
-  preserves the valuation.
+- `TrustworthyKedlaya.QpCUn.Qp_embd_keep_val`, `TrustworthyKedlaya.QpCUn.norm_Qp_embd`: the
+  embedding `ℚ_[p] → ℚᶜᵘⁿ_[p]` preserves the valuation, hence is isometric.
 - The valuation on `ℚᶜᵘⁿ_[p]` is rank-one discrete, making `ℚᶜᵘⁿ_[p]` a complete nontrivially normed
-  field. These are standard facts of algebraic number theory, so the proofs are only lightly
-  commented.
+  field, with `‖a‖ = p ^ (log (Valued.v a))` (`TrustworthyKedlaya.QpCUn.norm_eq_zpow_log_valued`).
+  These are standard facts of algebraic number theory, so the proofs are only lightly commented.
 
 ## Notation
 
@@ -312,6 +312,49 @@ noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] : NontriviallyNormedField 
 -- View ℚᶜᵘⁿ_[p] as an algebra over ℚ_[p] via the embedding defined above.
 noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] : Algebra ℚ_[p] (ℚᶜᵘⁿ_[p]) :=
   (Qp_embd).toAlgebra
+
+theorem algebraMap_Qp_apply {p : ℕ} [Fact (Nat.Prime p)] (x : ℚ_[p]) :
+    algebraMap ℚ_[p] ℚᶜᵘⁿ_[p] x = Qp_embd x :=
+  rfl
+
+/-! ### The norm on `ℚᶜᵘⁿ_[p]` -/
+
+/-- The norm on `ℚᶜᵘⁿ_[p]` agrees with `WithZeroMulInt.toNNReal` applied to its valuation. In
+v4.31 the `Valued.toNormedField` norm is `RankOne.hom (Valued.v.restrict ·)` rather than being
+defeq to `toNNReal (Valued.v ·)`, so this requires the rank-one `hom` bridge plus surjectivity of
+`Valued.v` (it used to hold by `rfl`). -/
+lemma norm_eq_toNNReal_valued {p : ℕ} [Fact (Nat.Prime p)] (a : ℚᶜᵘⁿ_[p]) :
+    ‖a‖ = ((WithZeroMulInt.toNNReal (p_ne_zero p) (Valued.v a) : NNReal) : ℝ) := by
+  have hsurj : Function.Surjective (Valued.v : ℚᶜᵘⁿ_[p] → WithZero (Multiplicative ℤ)) := by
+    intro x
+    obtain ⟨y, hy⟩ := (IsDiscreteValuationRing.maximalIdeal (ℤᶜᵘⁿ_[p])).valuation_surjective
+      (FractionRing (ℤᶜᵘⁿ_[p])) x
+    exact ⟨WithVal.toVal _ y, by rw [WithVal.valued_toVal]; exact hy⟩
+  rw [Valued.toNormedField.norm_def]
+  norm_cast
+  rw [show (Valuation.RankOne.hom (Valued.v : Valuation ℚᶜᵘⁿ_[p] _)) (Valued.v.restrict a)
+        = WithZeroMulInt.toNNReal (p_ne_zero p)
+            ((Valuation.IsRankOneDiscrete.valueGroup₀_equiv_withZeroMulInt
+              (v := (Valued.v : Valuation ℚᶜᵘⁿ_[p] _))) (Valued.v.restrict a)) from rfl,
+     Valuation.IsRankOneDiscrete.valueGroup₀_equiv_withZeroMulInt_restrict_apply_of_surjective
+       hsurj a]
+
+/-- The norm of a nonzero `a : ℚᶜᵘⁿ_[p]` is `p ^ (log (Valued.v a))`. -/
+lemma norm_eq_zpow_log_valued {p : ℕ} [Fact (Nat.Prime p)] {a : ℚᶜᵘⁿ_[p]} (ha : a ≠ 0) :
+    ‖a‖ = (p : ℝ) ^ (WithZero.log (Valued.v a)) := by
+  rw [norm_eq_toNNReal_valued, WithZeroMulInt.toNNReal_neg_apply _ ((Valued.v).ne_zero_iff.mpr ha),
+    WithZero.toAdd_unzero_eq_log, NNReal.coe_zpow, NNReal.coe_natCast]
+
+/-- **The embedding `ℚ_[p] → ℚᶜᵘⁿ_[p]` is isometric.** -/
+theorem norm_Qp_embd {p : ℕ} [Fact (Nat.Prime p)] (x : ℚ_[p]) : ‖Qp_embd x‖ = ‖x‖ := by
+  by_cases hx : x = 0
+  · rw [hx, map_zero, norm_zero, norm_zero]
+  · rw [norm_eq_zpow_log_valued ((map_ne_zero_iff _ Qp_embd.injective).mpr hx), ← Qp_embd_keep_val,
+      Padic.mulValuation_toFun, if_neg hx, WithZero.log_exp, Padic.norm_eq_zpow_neg_valuation hx]
+
+theorem norm_algebraMap_Qp {p : ℕ} [Fact (Nat.Prime p)] (x : ℚ_[p]) :
+    ‖algebraMap ℚ_[p] ℚᶜᵘⁿ_[p] x‖ = ‖x‖ :=
+  norm_Qp_embd x
 
 end QpCUn
 

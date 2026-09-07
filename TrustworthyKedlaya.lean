@@ -53,8 +53,10 @@ import TrustworthyKedlaya.Lp.AlgClosed
 import TrustworthyKedlaya.Lp.Basic
 import TrustworthyKedlaya.Lp.Coeff
 import TrustworthyKedlaya.Lp.Embedding
+import TrustworthyKedlaya.Lp.Miscellaneous
 import TrustworthyKedlaya.Lp.NewtonSlope
+import TrustworthyKedlaya.Lp.QpCUn
+import TrustworthyKedlaya.Lp.QpUn
+import TrustworthyKedlaya.Lp.QpUnEmbedding
 import TrustworthyKedlaya.Lp.Valued
 import TrustworthyKedlaya.MainResults
-import TrustworthyKedlaya.Miscellaneous
-import TrustworthyKedlaya.WittVector

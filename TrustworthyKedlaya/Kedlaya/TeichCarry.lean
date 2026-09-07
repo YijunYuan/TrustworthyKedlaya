@@ -5,7 +5,7 @@ Authors: Yijun Yuan
 -/
 module
 
-public import TrustworthyKedlaya.WittVector
+public import TrustworthyKedlaya.Lp.QpCUn
 public import Mathlib.RingTheory.WittVector.TeichmullerSeries
 
 /-!
